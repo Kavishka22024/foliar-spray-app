@@ -559,6 +559,12 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .exp-pt { stroke: var(--surface); stroke-width: 2; }
 .exp-tip { position: absolute; z-index: 5; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow-md); font-size: 13px; min-width: 190px; }
 .exp-tip .tt-d { font-weight: 800; margin-bottom: 4px; } .exp-tip .tt-r { margin-top: 4px; } .exp-tip .tt-r b { margin-left: 4px; } .exp-tip .tt-s { margin-left: 16px; font-size: 12px; color: var(--ink-2); }
+
+/* ---- three KPI cards ---- */
+.exp-heads { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); } .exp-head .eh-num { font-size: clamp(44px, 4.4vw, 64px); }
+.exp-head .eh-kick { font-size: 14px; letter-spacing: .07em; color: var(--ink); } .exp-head .eh-word { font-size: 22px; }
+@media (min-width: 1100px) { .exp-heads .kpi-unit:not(.open) .eh-sub { min-height: 4.4em; } }   /* the three cards line up whatever the length of their sentence */
+.exp-val.drone { fill: var(--drone); } .exp-val.manual { fill: var(--manual); } .exp-val { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
 </style>
 
 </head>
@@ -2548,16 +2554,24 @@ function roundsScreen(host, kind, load) {
  *  on top always uses ALL the data, whatever period is chosen below it. */
 const EXP_METHODS = ['Drone', 'Manual'];
 const EXP_MODES = {
-  eff: { label: 'Coverage efficiency', title: 'Foliar used per hectare', unit: 'kg/ha', lowerBetter: true,
+  eff: { name: 'Foliar saving', icon: 'droplet', label: 'Foliar saving', title: 'Foliar used per hectare', unit: 'kg/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
+    has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 ? c.kg / c.ha : null; },
     words: function (pct) { return pct < 0 ? ['less', 'foliar per hectare with drones than with manual spraying'] : ['more', 'foliar per hectare with drones than with manual spraying']; },
     tip: function (c) { return num(c.kg, 1) + ' kg on ' + num(c.ha, 2) + ' ha'; },
-    help: 'Each bar is the foliar applied (kg) divided by the area covered (ha) by that method in that day, month or year. A shorter bar means less foliar is used to cover the same area.' },
-  speed: { label: 'Speed', title: 'Area covered per hour', unit: 'ha/hour', lowerBetter: false,
+    help: 'Each point is the foliar applied (kg) divided by the area covered (ha) by that method. A lower point means less foliar is used to cover the same area.' },
+  speed: { name: 'Work speed', icon: 'trend', label: 'Work speed', title: 'Area covered per hour', unit: 'ha/hour', lowerBetter: false, first: 'first_spray', needs: 'spray events by both methods',
+    has: function (c) { return c.events > 0; },
     value: function (c) { return c.hours > 0 && c.ha > 0 ? c.ha / c.hours : null; },
     words: function (pct) { return pct > 0 ? ['faster', 'area covered per hour with drones than with manual spraying'] : ['slower', 'area covered per hour with drones than with manual spraying']; },
     tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
-    help: 'Each bar is the area covered (ha) divided by the hours worked, for that method in that day, month or year. A taller bar means more area covered per hour.' }
+    help: 'Each point is the area covered (ha) divided by the hours worked by that method. A higher point means more area covered per hour.' },
+  leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
+    has: function (c) { return c.leaf_n > 0; },
+    value: function (c) { return c.leaf_ha > 0 ? c.leaf_kg / c.leaf_ha : null; },
+    words: function (pct) { return pct > 0 ? ['more', 'green leaf per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'green leaf per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
+    tip: function (c) { return num(c.leaf_kg, 0) + ' kg from ' + num(c.leaf_ha, 2) + ' ha plucked'; },
+    help: 'Each point is the green leaf plucked (kg) divided by the area plucked (ha), from the parts of the fields sprayed by that method (a field sprayed partly by drone and partly by hand counts its two parts separately). A higher point means more leaf from the same area. This is a plain comparison: it does not yet correct for the age since pruning or for each field\'s own earlier yield.' }
 };
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
@@ -2567,8 +2581,11 @@ const isoOf = function (n) { return new Date(n * 86400000).toISOString().slice(0
 const fullDate = function (iso) { return Number(iso.slice(8)) + ' ' + MON3[Number(iso.slice(5, 7)) - 1] + ' ' + iso.slice(0, 4); };
 
 function expSum(days, from, to, m) {
-  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0 };
-  days.forEach(function (d) { if (d.date >= from && d.date <= to && d[m].events) { c.kg += d[m].kg; c.ha += d[m].ha; c.hours += d[m].hours; c.events += d[m].events; c.days += 1; } });
+  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 };
+  days.forEach(function (d) {
+    if (d.date < from || d.date > to) return;
+    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; if (x.events || x.leaf_n) c.days += 1;
+  });
   return c;
 }
 function expFmt(v) { return Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
@@ -2580,10 +2597,10 @@ function expSeries(data, mode, period) {
   const M = EXP_MODES[mode], out = { keys: {}, dots: {}, lines: {} };
   EXP_METHODS.forEach(function (m) {
     const cells = {};                                                                        // day number -> that day's totals
-    data.days.forEach(function (d) { if (d[m].events) cells[dayNo(d.date)] = d[m]; });
+    data.days.forEach(function (d) { if (M.has(d[m])) cells[dayNo(d.date)] = d[m]; });
     const nums = Object.keys(cells).map(Number).sort(function (a, b) { return a - b; });
-    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.days += 1; return c; };
-    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0 }; };
+    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.days += 1; return c; };
+    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 }; };
     const keyOf = function (t, label) { const k = out.keys[t] || (out.keys[t] = { t: t, label: label }); return k; };
     out.dots[m] = []; out.lines[m] = [];
     if (period === 'day') {
@@ -2613,11 +2630,18 @@ function expSeries(data, mode, period) {
 }
 
 /** The whole history in one window: time along the bottom (every month marked), the KPI up the side; blue drone, orange manual; hover or tap to read a day. */
+/** A round axis step (1, 1.5, 2, 2.5, 3, 4, 5, 6, 8 x a power of ten) at least as big as raw: finer than 1-2-5, so the axis stays close to the data. */
+function expStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p, f = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]; for (let i = 0; i < f.length; i++) if (f[i] >= n - 1e-9) return f[i] * p; return 10 * p; }
+let EXP_CLIP = 0;
+
 function expLineChart(data, mode, period, W, tip) {
   const M = EXP_MODES[mode], ser = expSeries(data, mode, period), small = W < 560, H = small ? 280 : 340, G0 = small ? 40 : 48, R = 14, TOP = 22, BOT = 36, plotH = H - TOP - BOT;
-  const first = dayNo(data.first || data.today), last = Math.max(dayNo(data.today), first + 1), span = last - first, X = function (t) { return G0 + (t - first) / span * (W - G0 - R); };
+  let first = dayNo(data[M.first] || data.first || data.today), last = Math.max(dayNo(data.today), first + 1);
+  if (period === 'month') { const a = new Date(first * 86400000), b = new Date(last * 86400000); first = Math.floor(Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), 1) / 86400000); last = Math.floor(Date.UTC(b.getUTCFullYear(), b.getUTCMonth() + 1, 1) / 86400000) - 1; }
+  if (period === 'year') { first = dayNo(isoOf(first).slice(0, 4) + '-01-01'); last = dayNo(isoOf(last).slice(0, 4) + '-12-31'); }
+  const span = last - first, X = function (t) { return G0 + (t - first) / span * (W - G0 - R); };
   let max = 0; EXP_METHODS.forEach(function (m) { ser.dots[m].concat([].concat.apply([], ser.lines[m])).forEach(function (p) { max = Math.max(max, p.v); }); });
-  const step = niceStep(Math.max(max, 0.0001) * 1.1 / 4), hi = step * 4, Y = function (v) { return TOP + plotH - v / hi * plotH; };
+  const step = expStep(Math.max(max, 0.0001) * 1.08 / 4), hi = step * 4, Y = function (v) { return TOP + plotH - v / hi * plotH; };
   const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': M.title + ' over time, drone and manual' });
   for (let i = 0; i <= 4; i++) {
     svg.appendChild(svgEl('line', { x1: G0, x2: W - R, y1: Y(step * i), y2: Y(step * i), style: 'stroke:var(--line)', 'stroke-width': 1 }));
@@ -2625,32 +2649,48 @@ function expLineChart(data, mode, period, W, tip) {
   }
   svg.appendChild(svgEl('text', { x: 4, y: 12, style: 'fill:var(--muted);font-size:11px;font-weight:700' }, M.unit));
   // the months along the bottom; January gets a line and its year; labels are thinned out so they never touch
-  const d0 = new Date(first * 86400000), perMonth = (W - G0 - R) / Math.max(span / 30.4, 1), every = Math.max(1, Math.ceil(56 / perMonth));
+  const d0 = new Date(first * 86400000), perMonth = (W - G0 - R) / Math.max(span / 30.4, 1);
   let y = d0.getUTCFullYear(), mo = d0.getUTCMonth(), idx = 0;
+  const ticks = [];
   for (;;) {
     const n = dayNo(y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1) + '-01');
     if (n > last) break;
-    if (n >= first) {
-      const x = X(n), jan = mo === 0;
-      if (jan) svg.appendChild(svgEl('line', { x1: x, x2: x, y1: TOP, y2: TOP + plotH, style: 'stroke:var(--line-strong)', 'stroke-width': 1, 'stroke-dasharray': '3 4' }));
-      if (idx % every === 0 || jan) svg.appendChild(svgEl('text', { x: x, y: H - 12, 'text-anchor': 'middle', style: 'fill:' + (jan ? 'var(--ink)' : 'var(--muted)') + ';font-size:11px;font-weight:' + (jan ? 700 : 500) }, jan || idx === 0 ? MON3[mo] + ' ' + String(y).slice(2) : MON3[mo]));
-      idx++;
-    }
+    if (n >= first) { ticks.push({ x: X(n), jan: mo === 0, text: mo === 0 || idx === 0 ? MON3[mo] + ' ' + String(y).slice(2) : MON3[mo], idx: idx }); idx++; }
     mo++; if (mo > 11) { mo = 0; y++; }
   }
+  // which months get a label: left to right, never closer than 54 px; a January (with its year) wins over the label before it
+  const picked = [];
+  ticks.forEach(function (t) {
+    const lp = picked[picked.length - 1];
+    if (!lp || t.x - lp.x >= 54) { picked.push(t); return; }
+    if (t.jan) { picked.pop(); const pp = picked[picked.length - 1]; if (!pp || t.x - pp.x >= 54) picked.push(t); else picked.push(lp); }
+  });
+  ticks.forEach(function (t) { if (t.jan) svg.appendChild(svgEl('line', { x1: t.x, x2: t.x, y1: TOP, y2: TOP + plotH, style: 'stroke:var(--line-strong)', 'stroke-width': 1, 'stroke-dasharray': '3 4' })); });
+  picked.forEach(function (t) { svg.appendChild(svgEl('text', { x: t.x, y: H - 12, 'text-anchor': 'middle', style: 'fill:' + (t.jan ? 'var(--ink)' : 'var(--muted)') + ';font-size:11px;font-weight:' + (t.jan ? 700 : 500) }, t.text)); });
   svg.appendChild(svgEl('line', { x1: G0, x2: W - R, y1: Y(0), y2: Y(0), style: 'stroke:var(--line-strong)', 'stroke-width': 1.5 }));
+  const clipId = 'expclip' + (++EXP_CLIP), defs = svgEl('defs'), cp = svgEl('clipPath', { id: clipId });
+  cp.appendChild(svgEl('rect', { x: G0 - 6, y: TOP - 6, width: W - R - G0 + 12, height: plotH + 12 })); defs.appendChild(cp); svg.appendChild(defs);
+  const layer = svgEl('g', { 'clip-path': 'url(#' + clipId + ')' }); svg.appendChild(layer);
   EXP_METHODS.forEach(function (m) {
     const cls = m.toLowerCase();
-    if (period === 'day') ser.dots[m].forEach(function (p) { svg.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: small ? 1.9 : 2.5, 'class': 'exp-dot ' + cls })); });
+    if (period === 'day') ser.dots[m].forEach(function (p) { layer.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: small ? 1.9 : 2.5, 'class': 'exp-dot ' + cls })); });
     ser.lines[m].forEach(function (seg) {
-      if (seg.length > 1) svg.appendChild(svgEl('path', { d: seg.map(function (p, i) { return (i ? 'L' : 'M') + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1); }).join(' '), 'class': 'exp-trend ' + cls }));
-      else svg.appendChild(svgEl('circle', { cx: X(seg[0].t), cy: Y(seg[0].v), r: 4, 'class': 'exp-trend-dot ' + cls }));
+      if (seg.length > 1) layer.appendChild(svgEl('path', { d: seg.map(function (p, i) { return (i ? 'L' : 'M') + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1); }).join(' '), 'class': 'exp-trend ' + cls }));
+      else if (period === 'day') layer.appendChild(svgEl('circle', { cx: X(seg[0].t), cy: Y(seg[0].v), r: 4, 'class': 'exp-trend-dot ' + cls }));
     });
-    if (period !== 'day') ser.dots[m].forEach(function (p) {
-      svg.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: 5, 'class': 'exp-pt ' + cls }));
-      if (period === 'year' || perMonth >= 40) svg.appendChild(svgEl('text', { x: X(p.t), y: Y(p.v) - 10, 'text-anchor': 'middle', 'class': 'exp-val' }, expFmt(p.v)));
-    });
+    if (period !== 'day') ser.dots[m].forEach(function (p) { layer.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: 5, 'class': 'exp-pt ' + cls })); });
   });
+  if (period !== 'day' && (period === 'year' || perMonth >= 40)) {
+    const at = {};                                                                           // the values written next to the points, per month / year
+    EXP_METHODS.forEach(function (m) { ser.dots[m].forEach(function (p) { (at[p.t] = at[p.t] || []).push({ m: m, v: p.v, y: Y(p.v), t: p.t }); }); });
+    Object.keys(at).forEach(function (k) {
+      const items = at[k].sort(function (a, b) { return a.y - b.y; }), close = items.length > 1 && items[1].y - items[0].y < 26;
+      items.forEach(function (it, i) {
+        const below = close && i === 1, ty = Math.min(Math.max(below ? it.y + 19 : it.y - 10, TOP + 9), TOP + plotH - 6);
+        svg.appendChild(svgEl('text', { x: X(it.t), y: ty, 'text-anchor': 'middle', 'class': 'exp-val ' + it.m.toLowerCase() }, expFmt(it.v)));
+      });
+    });
+  }
   // reading a value: move over the chart, or tap it
   const guide = svgEl('line', { y1: TOP, y2: TOP + plotH, style: 'stroke:var(--ink-2);opacity:.45', 'stroke-width': 1, visibility: 'hidden' });
   svg.appendChild(guide);
@@ -2687,9 +2727,9 @@ function expHeadline(data, mode) {
       h('span', { class: 'cmp-track' }, v === null ? null : h('i', { class: 'cmp-fill', style: 'width:' + Math.max(4, v / top * 100) + '%' })),
       h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + M.unit));
   }));
-  const topRow = h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(mode === 'eff' ? 'droplet' : 'trend')), h('span', { class: 'eh-kick' }, M.label), h('i', { class: 'chev', 'aria-hidden': 'true' }));
+  const topRow = h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name), h('i', { class: 'chev', 'aria-hidden': 'true' }));
   if (dv === null || mv === null || mv === 0) {
-    return h('div', { class: 'exp-head none' }, topRow, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), bars);
+    return h('div', { class: 'exp-head none' }, topRow, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs ' + M.needs + '.'), bars);
   }
   const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct), up = pct > 0;
   const num1 = (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '%';
@@ -2718,10 +2758,10 @@ function experimentScreen(host) {
     const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(data, mode, period, W, tip)); plot.appendChild(tip); };
     setTimeout(render, 0);
     if (window.ResizeObserver) { const ro = new ResizeObserver(function () { if (!plot.isConnected) { ro.disconnect(); return; } const w = Math.floor(plot.clientWidth); if (w && w !== plot._w) render(); }); ro.observe(plot); }
-    const sub = period === 'day' ? 'Every day from ' + fullDate(data.first) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(data.first) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(data.first) + ' to ' + fullDate(data.today));
+    const f0 = data[M.first] || data.first, sub = period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(data.today));
     return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
       h('div', { class: 'mon-ctl' }, periodBar()),
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no spray events by that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a value describes the events of its day.')), 'How to read this')),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, sub),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
       plot);
@@ -2738,7 +2778,7 @@ function experimentScreen(host) {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('speed')));
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('speed'), kpiCard('leaf')));
   }
 }
 
