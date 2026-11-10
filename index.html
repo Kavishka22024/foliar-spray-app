@@ -1412,8 +1412,8 @@ VIEWS['users.manage'] = function (root) {
   }
 
   function showTemp(name, username, pw) {
-    modal('Temporary password for ' + name, h('div', { class: 'stack' }, h('div', null, 'Username: ', h('strong', null, username)), h('div', { class: 'pw' }, pw),
-      msgBox('warn', 'Write this down or pass it on now. It is shown only once and is not stored. The user must choose their own password at first login.')), [{ label: 'Done', kind: 'primary', onclick: function (m) { m.close(); } }]);
+    modal('Starting password for ' + name, h('div', { class: 'stack' }, h('div', null, 'Username: ', h('strong', null, username)), h('div', { class: 'pw' }, pw),
+      msgBox('warn', 'The user must choose their own password at first login. Until they do, anyone who knows the username can log in with this one, so ask them to log in soon. You can set it back with Reset at any time.')), [{ label: 'Done', kind: 'primary', onclick: function (m) { m.close(); } }]);
   }
 
   function edit(u, roles, estate) {
@@ -1463,7 +1463,7 @@ VIEWS['users.manage'] = function (root) {
       } }]);
   }
   function reset(u) {
-    modal('Reset password?', h('div', null, 'Create a new temporary password for ' + u.display_name + ' (' + u.username + ')? Their current password stops working immediately.'), [
+    modal('Reset password?', h('div', null, 'Set the password of ' + u.display_name + ' (' + u.username + ') back to the standard starting password (1111)? Their current password stops working immediately and they must choose a new one at their next login.'), [
       { label: 'Cancel', onclick: function (m) { m.close(); } },
       { label: 'Reset', kind: 'danger', onclick: function (m, btn) { run(btn, function () { return api('api_resetPassword', u.user_id).then(function (r) { m.close(); refresh(); showTemp(u.display_name, r.username, r.temp_password); }); }); } }]);
   }
