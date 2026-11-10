@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e3a29">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Foliar Spray">
+<title>Foliar Spray Experiment</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="config.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ================= Design tokens ================= */
+:root {
+  --bg: #f3f6f4; --surface: #ffffff; --surface-2: #f7f9f8; --hover: #edf2ef;
+  --ink: #13221a; --ink-2: #34473b; --muted: #65776b; --line: #e1e8e3; --line-strong: #cbd6cf;
+  --primary: #1d6b47; --primary-600: #165637; --primary-ink: #ffffff; --primary-soft: #e3f1e9; --ring: rgba(29,107,71,.25);
+  --drone: #1a6aa6; --drone-soft: #e2effa; --drone-solid: #1a6aa6;
+  --manual: #b2601a; --manual-soft: #fbecdb; --manual-solid: #b4611a;
+  --good: #1d7a45; --good-soft: #e0f3e8; --warn: #8f5b00; --warn-soft: #fff0d0; --bad: #b3261e; --bad-soft: #fde6e4;
+  --tile: #e9edeb; --tile-hover: #dfe5e2; --tile-ink: #3d4f44;
+  --side-bg: #0e3a29; --side-ink: #ffffff; --side-ink-2: rgba(255,255,255,.78); --side-muted: rgba(255,255,255,.5); --side-hover: rgba(255,255,255,.08); --side-active: rgba(255,255,255,.16);
+  --shadow-sm: 0 1px 2px rgba(19,34,26,.05), 0 1px 3px rgba(19,34,26,.06);
+  --shadow-md: 0 6px 18px rgba(19,34,26,.09), 0 2px 4px rgba(19,34,26,.04);
+  --shadow-lg: 0 24px 60px rgba(8,22,15,.32);
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1511; --surface: #16201a; --surface-2: #1a261f; --hover: #202d25;
+    --ink: #e8f0ea; --ink-2: #c5d4cb; --muted: #94a89b; --line: #28362d; --line-strong: #394b3f;
+    --primary: #5fbb8a; --primary-600: #7ccaa0; --primary-ink: #08150d; --primary-soft: #1d3326; --ring: rgba(95,187,138,.32);
+    --drone: #6db4ec; --drone-soft: #172a3a; --drone-solid: #2a78b4; --manual: #f0a35e; --manual-soft: #3a2a17; --manual-solid: #b86a24;
+    --good: #7dd9a2; --good-soft: #183323; --warn: #f2c66d; --warn-soft: #3a2f14; --bad: #ff9d96; --bad-soft: #3a1c1b;
+    --tile: #212e26; --tile-hover: #293930; --tile-ink: #b9cabf;
+    --side-bg: #0a1f16; --shadow-sm: none; --shadow-md: none; --shadow-lg: 0 24px 60px rgba(0,0,0,.6);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; -webkit-tap-highlight-color: transparent; }
+body.nav-open { overflow: hidden; }
+h1 { font-size: 26px; line-height: 1.2; letter-spacing: -.02em; margin: 0 0 4px; font-weight: 700; }
+h2 { font-size: 17px; line-height: 1.3; letter-spacing: -.01em; margin: 0 0 12px; font-weight: 650; }
+h3 { font-size: 15px; margin: 14px 0 6px; }
+p { margin: 0 0 12px; } a { color: var(--primary); }
+.muted { color: var(--muted); } .small { font-size: 13px; } .right { text-align: right; } .nowrap { white-space: nowrap; }
+svg.ico { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+::selection { background: var(--primary-soft); }
+
+/* ================= App shell: dark sidebar (drawer on phones) ================= */
+.app { min-height: 100vh; }
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 264px; flex: none; background: var(--side-bg); color: var(--side-ink); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 70; }
+.side-brand { display: flex; align-items: center; gap: 12px; padding: 22px 20px 16px; }
+.brand-mark { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #2e9a66, #55c48d); color: #fff; display: grid; place-items: center; flex: none; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.brand-mark svg.ico { width: 22px; height: 22px; stroke-width: 2; }
+.brand-text { font-weight: 700; letter-spacing: -.01em; line-height: 1.2; font-size: 16px; min-width: 0; }
+.brand-text small { display: block; font-weight: 500; font-size: 12px; color: var(--side-muted); letter-spacing: 0; margin-top: 2px; }
+nav.tabs { flex: 1; overflow-y: auto; padding: 4px 12px 16px; }
+.navgroup { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--side-muted); padding: 18px 12px 6px; }
+.navgroup:first-child { padding-top: 6px; }
+nav.tabs button { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; margin: 2px 0; border: 0; background: none; color: var(--side-ink-2); border-radius: 11px; font: inherit; font-size: 14.5px; font-weight: 500; cursor: pointer; text-align: left; transition: background .12s, color .12s; }
+nav.tabs button:hover { background: var(--side-hover); color: #fff; }
+nav.tabs button.on { background: var(--side-active); color: #fff; font-weight: 600; }
+nav.tabs button.on::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: #6fd9a4; }
+nav.tabs button svg.ico { opacity: .9; }
+.sidefoot { padding: 14px 14px 16px; border-top: 1px solid rgba(255,255,255,.1); }
+.side-user { display: flex; align-items: center; gap: 12px; padding: 4px 6px 12px; min-width: 0; }
+.side-user .who { min-width: 0; line-height: 1.25; } .side-user b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .side-user span { font-size: 12px; color: var(--side-muted); }
+.sidefoot .row2 { display: flex; gap: 8px; }
+.sidefoot button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; background: rgba(255,255,255,.08); border: 0; color: #fff; font: inherit; font-size: 13px; font-weight: 500; padding: 9px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+.sidefoot button:hover { background: rgba(255,255,255,.16); }
+.sidefoot button svg.ico { width: 16px; height: 16px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 13px; display: grid; place-items: center; flex: none; }
+.side-user .avatar { background: rgba(255,255,255,.16); color: #fff; width: 40px; height: 40px; }
+.maincol { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+header.top { display: none; }
+main.content { flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 32px 36px 110px; }
+.scrim { display: none; }
+
+/* ================= Page head, cards ================= */
+.pagehead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.pagehead p { margin: 4px 0 0; max-width: 680px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+.card.flush { padding: 0; overflow: hidden; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.between { justify-content: space-between; align-items: center; }
+.stack > * + * { margin-top: 14px; }
+.grow { flex: 1 1 170px; min-width: 0; } .w120 { width: 120px; } .w90 { width: 90px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.divhead { margin: 18px 0 8px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+/* ================= Forms & buttons ================= */
+label.f { display: block; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+label.f > span.hint { display: block; font-size: 12px; font-weight: 400; margin-top: 4px; color: var(--muted); }
+input, select, textarea { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 12px; width: 100%; min-height: 44px; margin-top: 6px; transition: border-color .12s, box-shadow .12s; }
+input::placeholder { color: var(--muted); opacity: .8; }
+input:hover, select:hover, textarea:hover { border-color: var(--muted); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+input[type=checkbox], input[type=radio] { width: 18px; height: 18px; min-height: 0; margin: 0; accent-color: var(--primary); }
+input[disabled], select[disabled] { background: var(--surface-2); color: var(--muted); }
+textarea { min-height: 120px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+input[type=search] { padding-left: 38px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2366786d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E") 12px center no-repeat; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; font-size: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 9px 16px; min-height: 40px; cursor: pointer; transition: background .12s, border-color .12s, box-shadow .12s, transform .04s; white-space: nowrap; }
+.btn:hover { background: var(--hover); border-color: var(--muted); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, nav.tabs button:focus-visible, .ftile:focus-visible, .sidefoot button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); box-shadow: var(--shadow-sm); }
+.btn.primary:hover { background: var(--primary-600); border-color: var(--primary-600); }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--line-strong)); }
+.btn.danger:hover { background: var(--bad-soft); border-color: var(--bad); }
+.btn.small { padding: 5px 11px; min-height: 32px; font-size: 13px; border-radius: 8px; }
+.btn.big { padding: 13px 26px; font-size: 16px; min-height: 52px; border-radius: 13px; }
+.btn.ghost { border-color: transparent; background: transparent; } .btn.ghost:hover { background: var(--hover); border-color: transparent; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; box-shadow: none; } .btn[disabled]:hover { background: var(--surface); border-color: var(--line-strong); }
+.btn.primary[disabled]:hover { background: var(--primary); border-color: var(--primary); }
+.iconbtn { width: 40px; height: 40px; padding: 0; min-height: 0; border-radius: 11px; }
+
+/* ================= Badges, messages ================= */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--primary-soft); color: var(--primary); white-space: nowrap; line-height: 1.6; }
+.badge.warn { background: var(--warn-soft); color: var(--warn); } .badge.bad { background: var(--bad-soft); color: var(--bad); } .badge.good { background: var(--good-soft); color: var(--good); }
+.badge.drone { background: var(--drone-soft); color: var(--drone); } .badge.manual { background: var(--manual-soft); color: var(--manual); }
+.badge.drone::before, .badge.manual::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; } .dot.drone { background: var(--drone-solid); } .dot.manual { background: var(--manual-solid); }
+.msg { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); margin: 12px 0; font-size: 14px; }
+.msg.ok { background: var(--good-soft); color: var(--good); } .msg.warn { background: var(--warn-soft); color: var(--warn); } .msg.err { background: var(--bad-soft); color: var(--bad); }
+
+/* ================= Tables ================= */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); white-space: nowrap; }
+tbody tr:hover td { background: var(--surface-2); } tr:last-child td { border-bottom: 0; }
+tr.void td { color: var(--muted); text-decoration: line-through; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.empty { text-align: center; padding: 34px 16px; color: var(--muted); } .empty svg.ico { width: 34px; height: 34px; margin-bottom: 8px; opacity: .55; }
+
+/* ================= Entry: toolbar + field cards ================= */
+.entry-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.datepick { display: inline-flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 4px; box-shadow: var(--shadow-sm); }
+.datepick .btn { border: 0; background: none; box-shadow: none; } .datepick .btn:hover { background: var(--hover); }
+.datepick input { border: 0; background: none; margin: 0; min-height: 40px; width: 150px; font-weight: 600; padding: 6px 8px; text-align: center; }
+.datepick input:focus { box-shadow: none; }
+.datepick .today { font-size: 13px; padding: 6px 12px; min-height: 34px; background: var(--primary-soft); color: var(--primary); border-radius: 9px; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 11px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 9px 14px; cursor: pointer; } .seg button + button { border-left: 1px solid var(--line-strong); }
+.seg button.on { background: var(--primary); color: var(--primary-ink); }
+.entry-sum { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 16px; margin-bottom: 8px; }
+.entry-sum .progress { flex: 1; } .entry-sum b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); } .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.divhead.fdiv { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 10px; } .divhead.fdiv span:last-child { font-weight: 500; letter-spacing: 0; text-transform: none; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 12px; }
+.ftile { position: relative; text-align: left; border: 2px solid transparent; border-radius: 18px; padding: 14px 14px 13px; min-height: 124px; background: var(--tile); color: var(--tile-ink); cursor: pointer; display: flex; flex-direction: column; gap: 3px; font: inherit; transition: transform .1s, background .15s, box-shadow .15s, color .15s; }
+.ftile:hover { background: var(--tile-hover); } .ftile:active { transform: scale(.975); }
+.ftile .t-code { font-size: 22px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; padding-right: 30px; }
+.ftile .t-name { font-size: 12.5px; opacity: .8; min-height: 0; }
+.ftile .t-meta { display: flex; align-items: center; gap: 7px; font-size: 12.5px; margin-top: 2px; opacity: .9; }
+.ftile .t-state { margin-top: auto; font-size: 12.5px; font-weight: 600; line-height: 1.35; padding-top: 8px; }
+.ftile .t-mark { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; display: none; place-items: center; background: rgba(255,255,255,.26); color: #fff; }
+.ftile .t-mark svg.ico { width: 15px; height: 15px; stroke-width: 3; }
+.ftile .t-bar { height: 5px; border-radius: 99px; background: rgba(0,0,0,.1); overflow: hidden; margin-top: 8px; } .ftile .t-bar i { display: block; height: 100%; background: currentColor; opacity: .55; border-radius: 99px; }
+.ftile.on { color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,.18); } .ftile.on:hover { filter: brightness(1.06); }
+.ftile.on.drone { background: var(--drone-solid); } .ftile.on.manual { background: var(--manual-solid); }
+.ftile.on .dot { background: #fff; } .ftile.on .t-mark { display: grid; } .ftile.on .t-bar { background: rgba(255,255,255,.28); } .ftile.on .t-bar i { opacity: .9; }
+.ftile.editing { border-color: var(--primary); box-shadow: 0 0 0 4px var(--ring); }
+.ftile.done { background: var(--good-soft); color: var(--good); border: 1.5px solid color-mix(in srgb, var(--good) 35%, transparent); }
+.ftile.done .t-mark { display: grid; background: var(--good); }
+.ftile.dim { opacity: .45; }
+.subbar { position: sticky; bottom: 16px; z-index: 30; display: flex; align-items: center; gap: 16px; justify-content: space-between; background: var(--ink); color: #fff; border-radius: 18px; padding: 12px 14px 12px 22px; box-shadow: var(--shadow-lg); margin-top: 22px; }
+.subbar .count { font-weight: 650; line-height: 1.25; } .subbar .count span { display: block; font-weight: 400; font-size: 13px; opacity: .7; }
+.subbar .btn.primary { background: #46bd82; border-color: #46bd82; color: #04180d; } .subbar .btn.primary[disabled] { background: rgba(255,255,255,.18); border-color: transparent; color: rgba(255,255,255,.6); opacity: 1; }
+@media (prefers-color-scheme: dark) { .subbar { background: #0a120e; border: 1px solid var(--line-strong); } }
+
+/* ================= Popup form content ================= */
+.pop-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pop-head .code { font-size: 22px; font-weight: 700; letter-spacing: -.02em; } .pop-head .sub { color: var(--muted); font-size: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.slider { padding: 4px 0 2px; } .sl-head { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 2px; }
+.sl-val { font-size: 34px; font-weight: 700; letter-spacing: -.02em; color: var(--primary); font-variant-numeric: tabular-nums; }
+.sl-tag { min-height: 26px; margin-bottom: 2px; } .sl-tag .badge svg.ico { width: 14px; height: 14px; stroke-width: 3; }
+.rtrack { position: relative; height: 46px; margin: 2px 0; --p: 0; --q: 0; }
+.rt-bg, .rt-fill, .rt-frozen { position: absolute; left: 0; top: 50%; height: 14px; margin-top: -7px; border-radius: 99px; pointer-events: none; }
+.rt-bg { right: 0; background: var(--line-strong); }
+.rt-fill { background: var(--primary); width: calc(17px + (100% - 34px) * var(--q)); }
+.rt-frozen { display: none; width: calc(17px + (100% - 34px) * var(--p)); background: repeating-linear-gradient(135deg, rgba(0,0,0,.34) 0 5px, rgba(0,0,0,.12) 5px 10px); }
+.rtrack.has-frozen .rt-frozen { display: block; }
+.rtrack input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; background: transparent; border: 0; box-shadow: none; }
+.rtrack input[type=range]::-webkit-slider-runnable-track { background: transparent; height: 46px; }
+.rtrack input[type=range]::-moz-range-track { background: transparent; height: 46px; }
+.rtrack input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; border-radius: 50%; background: var(--surface); border: 5px solid var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.4); margin-top: 6px; cursor: grab; }
+.rtrack input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 5px solid var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.4); cursor: grab; }
+.sl-note { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-top: 0; } .sl-note svg.ico { width: 14px; height: 14px; }
+.sl-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+.btn.pct { font-weight: 700; color: var(--primary); border-color: var(--primary); min-width: 92px; } .btn.pct:hover { background: var(--primary-soft); }
+.stepper { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+.stepper input { text-align: center; font-size: 26px; font-weight: 700; width: 96px; margin: 0; min-height: 56px; -moz-appearance: textfield; appearance: textfield; }
+.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper .btn { font-size: 26px; width: 56px; height: 56px; padding: 0; border-radius: 15px; }
+.bignum { font-size: 32px; font-weight: 700; padding: 12px 14px; min-height: 62px; font-variant-numeric: tabular-nums; }
+.live { font-size: 14px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; padding: 10px 13px; }
+.callout { background: var(--primary-soft); color: var(--primary); border-radius: 11px; padding: 11px 13px; font-size: 13.5px; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; margin: 0; } .facts dt { color: var(--muted); font-size: 13px; } .facts dd { margin: 0; font-weight: 600; }
+
+/* ================= Modal (popup) ================= */
+.overlay { position: fixed; inset: 0; background: rgba(8,20,14,.52); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 20px 12px; overflow-y: auto; z-index: 90; animation: fade .18s ease-out; }
+.modal { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; width: 100%; max-width: 580px; padding: 22px; box-shadow: var(--shadow-lg); max-height: calc(100vh - 40px); overflow-y: auto; }
+.modal.pop { animation: pop .2s ease-out; }
+.modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; } .modal-head h2 { margin: 0; font-size: 19px; }
+.modal .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; position: sticky; bottom: -22px; background: var(--surface); padding: 14px 0 2px; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } } @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; background: #14231b; color: #fff; padding: 12px 18px; border-radius: 13px; z-index: 120; max-width: 92vw; font-size: 14px; box-shadow: var(--shadow-lg); animation: pop .18s ease-out; }
+.toast.err { background: #a8231b; }
+
+/* ================= Login ================= */
+.auth { min-height: 100vh; display: grid; grid-template-columns: 1.15fr 1fr; }
+.auth-hero { background: radial-gradient(1200px 500px at 0% 0%, #2f9e6a55, transparent), linear-gradient(160deg, #0b3b27 0%, #1d6b47 55%, #2a8a5c 100%); color: #fff; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.auth-hero::after { content: ''; position: absolute; right: -120px; bottom: -120px; width: 420px; height: 420px; border-radius: 50%; background: rgba(255,255,255,.06); }
+.auth-hero .brand { display: flex; align-items: center; gap: 12px; } .auth-hero .brand-mark { width: 48px; height: 48px; border-radius: 14px; background: rgba(255,255,255,.16); box-shadow: none; }
+.auth-hero h2 { font-size: 34px; line-height: 1.15; letter-spacing: -.02em; color: #fff; margin: 0 0 12px; max-width: 420px; } .auth-hero p { color: rgba(255,255,255,.82); max-width: 420px; font-size: 16px; }
+.auth-hero ul { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; } .auth-hero li { display: flex; gap: 10px; align-items: center; color: rgba(255,255,255,.92); } .auth-hero li svg.ico { width: 18px; height: 18px; }
+.auth-pane { display: flex; align-items: center; justify-content: center; padding: 32px 20px; background: var(--bg); }
+.login { width: 100%; max-width: 400px; }
+.login form, form.forced { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 30px; box-shadow: var(--shadow-md); }
+.login h1 { font-size: 24px; } .auth-brand-m { display: none; }
+
+/* ================= Home, KPI, chart ================= */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); flex-wrap: wrap; }
+.steps li a { cursor: pointer; font-weight: 600; text-decoration: none; color: var(--ink); } .steps li a:hover { color: var(--primary); text-decoration: underline; }
+.progress { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; } .progress > i { display: block; height: 100%; background: var(--primary); border-radius: 99px; transition: width .3s; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.kpi .k-label { font-size: 12.5px; font-weight: 500; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.kpi .k-val { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
+.kpi .k-sub { font-size: 12.5px; color: var(--muted); }
+.kpi.drone { border-top: 3px solid var(--drone-solid); } .kpi.manual { border-top: 3px solid var(--manual-solid); } .kpi.neutral { border-top: 3px solid var(--primary); }
+.chartbox { overflow-x: auto; } .chartbox svg { display: block; width: 100%; height: auto; min-width: 560px; }
+
+/* ================= Admin helpers ================= */
+.pw { font: 700 22px ui-monospace, Consolas, monospace; letter-spacing: .08em; padding: 14px; background: var(--surface-2); border: 1.5px dashed var(--primary); border-radius: 12px; text-align: center; user-select: all; }
+.taskgroup { margin-bottom: 12px; } .taskrow { display: flex; gap: 10px; padding: 6px 0; align-items: flex-start; } .taskrow label { cursor: pointer; }
+table.grid-edit td, table.grid-edit th { padding: 6px 8px; } table.grid-edit input, table.grid-edit select { margin: 0; padding: 7px 9px; min-height: 38px; min-width: 70px; border-radius: 8px; } table.grid-edit input[type=date] { min-width: 150px; } table.grid-edit input[type=checkbox] { min-width: 0; }
+table.grid-edit tr.incomplete td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.fillbar { align-items: center; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); margin: 10px 0; } .fillbar > * { width: auto; } .fillbar input, .fillbar select { margin: 0; min-height: 38px; padding: 6px 9px; }
+.checkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 4px 14px; margin-top: 6px; }
+.checkitem { display: flex; gap: 8px; align-items: center; padding: 6px 4px; cursor: pointer; border-radius: 8px; } .checkitem:hover { background: var(--surface-2); } .checkitem.incomplete { opacity: .7; }
+.skel { border-radius: 10px; background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 37%, var(--line) 63%); background-size: 400% 100%; animation: sk 1.3s ease infinite; } @keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* ---- polish ---- */
+nav.tabs { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+nav.tabs::-webkit-scrollbar { width: 6px; } nav.tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 6px; } nav.tabs::-webkit-scrollbar-track { background: transparent; }
+@media (max-height: 760px) { .side-brand { padding: 16px 18px 10px; } nav.tabs button { padding: 9px 12px; margin: 1px 0; } .navgroup { padding: 12px 12px 4px; } .side-user { padding-bottom: 8px; } }
+.card.flush .tablewrap { border: 0; border-radius: 0; }
+.kpis.four { grid-template-columns: repeat(4, 1fr); }
+.divgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; } .divgrid .card { margin-bottom: 0; }
+.mini { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13.5px; }
+.divcard .row label.f { font-size: 12px; }
+td.nowrap, th.nowrap { white-space: nowrap; }
+
+/* ---- offline / upload queue ---- */
+.ftile .t-tag { align-self: flex-start; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: rgba(255,255,255,.24); margin-top: 7px; }
+.ftile.ro { cursor: default; } .ftile.ro:not(.done):hover { background: var(--tile); }
+.syncpill { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: rgba(255,255,255,.08); color: #fff; font: inherit; font-size: 12.5px; font-weight: 600; padding: 9px 11px; border-radius: 10px; cursor: pointer; margin-bottom: 10px; text-align: left; }
+.syncpill:hover { background: rgba(255,255,255,.16); }
+.syncpill .sdot { width: 9px; height: 9px; border-radius: 50%; background: #6fd9a4; flex: none; }
+.syncpill.offline .sdot { background: #f2c66d; } .syncpill.wait .sdot, .syncpill.busy .sdot { background: #7cc4ff; animation: pulse 1s ease-in-out infinite; } .syncpill.problem .sdot { background: #ff8a80; }
+@keyframes pulse { 50% { opacity: .35; } }
+.syncpill.compact { width: auto; margin: 0; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); padding: 5px 10px; border-radius: 99px; font-size: 12px; }
+.syncpill.compact .stext { max-width: 118px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qitem { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.qitem.failed { border-color: var(--bad); background: var(--bad-soft); }
+.msg .btn { margin-left: 8px; }
+
+/* ================= Phones: top bar + slide-out sidebar ================= */
+@media (max-width: 880px) {
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(304px, 86vw); transform: translateX(-104%); transition: transform .26s cubic-bezier(.3,.8,.3,1); box-shadow: none; }
+  body.nav-open .sidebar { transform: none; box-shadow: 0 0 60px rgba(0,0,0,.45); }
+  .scrim { display: block; position: fixed; inset: 0; background: rgba(6,16,11,.5); backdrop-filter: blur(2px); z-index: 65; opacity: 0; pointer-events: none; transition: opacity .22s; }
+  body.nav-open .scrim { opacity: 1; pointer-events: auto; }
+  header.top { display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 40; height: 58px; padding: 0 10px 0 8px; background: var(--surface); border-bottom: 1px solid var(--line); }
+  header.top .title { font-weight: 700; font-size: 17px; letter-spacing: -.01em; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header.top .estate { font-size: 12px; color: var(--muted); font-weight: 500; display: block; line-height: 1.1; }
+  main.content { padding: 16px 14px 110px; } main.content > .pagehead h1 { display: none; } .pagehead { margin-bottom: 14px; } .pagehead p { margin: 0; }
+  h1 { font-size: 22px; } .card { padding: 16px; border-radius: 14px; }
+  .hide-sm { display: none; } th, td { padding: 10px 11px; }
+  /* tables become one card per row on phones (wide data tables keep sideways scrolling via .scroll) */
+  .card.flush { background: transparent; border: 0; box-shadow: none; overflow: visible; } .card.flush > .row { padding: 0 0 12px !important; }
+  .tablewrap:not(.scroll) { border: 0; background: none; overflow: visible; }
+  .tablewrap:not(.scroll) table, .tablewrap:not(.scroll) tbody, .tablewrap:not(.scroll) tr, .tablewrap:not(.scroll) td { display: block; width: 100%; }
+  .tablewrap:not(.scroll) thead { display: none; }
+  .tablewrap:not(.scroll) tr { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+  .tablewrap:not(.scroll) tbody tr:hover td { background: none; }
+  .tablewrap:not(.scroll) td { border: 0; padding: 6px 0; display: flex; justify-content: space-between; align-items: center; gap: 14px; text-align: right; white-space: normal; }
+  .tablewrap:not(.scroll) td::before { content: attr(data-label); color: var(--muted); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; text-align: left; flex: none; }
+  .tablewrap:not(.scroll) td[data-label=""] { justify-content: flex-start; flex-wrap: wrap; padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--line); } .tablewrap:not(.scroll) td[data-label=""]::before { display: none; }
+  .tablewrap:not(.scroll) td:empty { display: none; } .tablewrap:not(.scroll) td.hide-sm { display: none; } .tablewrap:not(.scroll) td .empty { width: 100%; }
+
+  .auth { grid-template-columns: 1fr; } .auth-hero { display: none; } .auth-pane { align-items: flex-start; padding-top: 8vh; }
+  .auth-brand-m { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 22px; font-weight: 700; font-size: 17px; } .auth-brand-m .brand-mark { width: 36px; height: 36px; }
+  .overlay { align-items: flex-end; padding: 0; } .modal { border-radius: 24px 24px 0 0; max-width: none; max-height: 94vh; padding: 18px 16px; } .modal .actions { bottom: -18px; }
+  .tiles { grid-template-columns: repeat(2, 1fr); gap: 10px; } .ftile { min-height: 118px; padding: 13px 12px 12px; border-radius: 16px; } .ftile .t-code { font-size: 20px; }
+  .kpis, .kpis.four { grid-template-columns: 1fr 1fr; gap: 10px; } .divgrid { grid-template-columns: 1fr; } .kpi { padding: 14px; } .kpi .k-val { font-size: 24px; }
+  .entry-bar { gap: 10px; } .datepick { width: 100%; justify-content: space-between; } .datepick input { flex: 1; width: auto; }
+  .subbar { bottom: calc(10px + env(safe-area-inset-bottom)); padding: 10px 10px 10px 16px; border-radius: 16px; }
+  .toast { bottom: 90px; }
+}
+</style>
+
+</head>
+<body>
+<div id="app"><p class="muted" style="padding:24px">Loading...</p></div>
+<script>
+'use strict';
+/* ===== Core: DOM helpers, icons, server calls, login, app shell ===== */
+const S = { token: null, me: null, today: '', tab: null };
+const VIEWS = {};      // task id -> function(root)
+
+// ---------- DOM helpers. All user/sheet data is inserted with textContent (never innerHTML) so nothing typed by a user can run as script.
+function h(tag, props) {
+  const e = document.createElement(tag);
+  if (props) {
+    for (const k in props) {
+      const v = props[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k.indexOf('on') === 0 && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else if (k === 'value' || k === 'checked' || k === 'disabled' || k === 'selected' || k === 'readOnly') e[k] = v;
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+  }
+  for (let i = 2; i < arguments.length; i++) add(e, arguments[i]);
+  return e;
+}
+function add(e, kid) {
+  if (kid === null || kid === undefined || kid === false) return;
+  if (Array.isArray(kid)) { kid.forEach(function (k) { add(e, k); }); return; }
+  e.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+}
+function clear(e) { while (e.firstChild) e.removeChild(e.firstChild); return e; }
+function num(v, d) { if (v === '' || v === null || v === undefined || isNaN(Number(v))) return ''; return Number(v).toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 2 : d }); }
+function store(k, v) { try { if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { /* storage blocked: stay in memory */ } }
+function load(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+function initials(name) { const p = String(name || '?').replace(/\(.*?\)/g, '').trim().split(/\s+/); return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); }
+
+// ---------- icons (inline SVG, stroke = currentColor)
+const ICONS = {
+  leaf: ['M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z', 'M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12'],
+  droplet: ['M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z'],
+  basket: ['M5 11l4-7', 'M19 11l-4-7', 'M2 11h20', 'M4 11l1.2 8.2A2 2 0 0 0 7.2 21h9.6a2 2 0 0 0 2-1.8L20 11', 'M10 15v2', 'M14 15v2'],
+  dashboard: ['M3 3h7v9H3z', 'M14 3h7v5h-7z', 'M14 12h7v9h-7z', 'M3 16h7v5H3z'],
+  list: ['M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2', 'M9 3h6v4H9z', 'M9 12h6', 'M9 16h6'],
+  map: ['M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z', 'M9 3v15', 'M15 6v15'],
+  sliders: ['M4 21v-7', 'M4 10V3', 'M12 21v-9', 'M12 8V3', 'M20 21v-5', 'M20 12V3', 'M1 14h6', 'M9 8h6', 'M17 16h6'],
+  users: ['M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2', 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M23 21v-2a4 4 0 0 0-3-3.87', 'M16 3.13a4 4 0 0 1 0 7.75'],
+  shield: ['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 'M9 12l2 2 4-4'],
+  clock: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M12 6v6l4 2'],
+  home: ['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'M9 22V12h6v10'],
+  check: ['M20 6L9 17l-5-5'], x: ['M18 6L6 18', 'M6 6l12 12'],
+  left: ['M15 18l-6-6 6-6'], right: ['M9 18l6-6-6-6'], plus: ['M12 5v14', 'M5 12h14'],
+  alert: ['M12 9v4', 'M12 17h.01', 'M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'],
+  logout: ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
+  key: ['M21 2l-2 2', 'M15.5 7.5l3 3L22 7l-3-3', 'M10.5 12.5l5-5', 'M7.5 21a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z'],
+  inbox: ['M22 12h-6l-2 3h-4l-2-3H2', 'M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'],
+  wind: ['M9.59 4.59A2 2 0 1 1 11 8H2', 'M12.59 19.41A2 2 0 1 0 14 16H2', 'M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2'],
+  tractor: ['M3 4h9l1 7', 'M3 11h14', 'M18 5l2 6', 'M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
+  trend: ['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6'],
+  menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
+  lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
+  upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12']
+};
+function icon(name, cls) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const s = document.createElementNS(NS, 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('class', 'ico' + (cls ? ' ' + cls : '')); s.setAttribute('aria-hidden', 'true');
+  (ICONS[name] || []).forEach(function (d) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.appendChild(p); });
+  return s;
+}
+const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'dashboard.view': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
+  'params.manage': 'sliders', 'users.manage': 'users', 'roles.manage': 'shield', 'audit.view': 'clock' };
+const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'dashboard.view': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
+  'params.manage': 'Administration', 'users.manage': 'Administration', 'roles.manage': 'Administration', 'audit.view': 'Administration' };
+
+// ---------- feedback widgets
+function toast(msg, isErr) {
+  const t = h('div', { class: 'toast' + (isErr ? ' err' : ''), role: 'status' }, icon(isErr ? 'alert' : 'check'), msg);
+  document.body.appendChild(t);
+  setTimeout(function () { t.remove(); }, isErr ? 6000 : 3000);
+}
+function msgBox(kind, text) { return h('div', { class: 'msg ' + kind, role: kind === 'err' ? 'alert' : 'status' }, icon(kind === 'ok' ? 'check' : 'alert'), h('div', null, text)); }
+function emptyState(text, ic) { return h('div', { class: 'empty' }, icon(ic || 'inbox'), h('div', null, text)); }
+function skeleton(lines) { const d = h('div', { class: 'stack', 'aria-busy': 'true', 'aria-label': 'Loading' }); for (let i = 0; i < (lines || 3); i++) d.appendChild(h('div', { class: 'skel', style: 'height:16px;width:' + (100 - i * 17) + '%' })); return d; }
+
+/** Popup. opts.from = an element the popup should grow out of (animates from that element to its place). */
+function modal(title, body, buttons, opts) {
+  opts = opts || {};
+  const overlay = h('div', { class: 'overlay' });
+  const api = { close: function () { overlay.remove(); document.removeEventListener('keydown', onKey); if (opts.onClose) opts.onClose(); } };
+  const box = h('div', { class: 'modal' + (opts.from ? '' : ' pop'), role: 'dialog', 'aria-modal': 'true', 'aria-label': typeof title === 'string' ? title : 'Details' },
+    h('div', { class: 'modal-head' }, typeof title === 'string' ? h('h2', null, title) : title, h('button', { type: 'button', class: 'btn ghost iconbtn', 'aria-label': 'Close', onclick: api.close }, icon('x'))), body);
+  api.box = box;
+  const actions = h('div', { class: 'actions' });
+  (buttons || []).forEach(function (b) {
+    actions.appendChild(h('button', { type: 'button', class: 'btn ' + (b.kind || ''), style: b.left ? 'margin-right:auto' : null, onclick: function (ev) { b.onclick(api, ev.currentTarget); } }, b.label));
+  });
+  if (buttons && buttons.length) box.appendChild(actions);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  if (opts.from && box.animate && opts.from.getBoundingClientRect) {   // grow out of the tapped card
+    const a = opts.from.getBoundingClientRect(), r = box.getBoundingClientRect();
+    if (r.width && a.width) {
+      const dx = (a.left + a.width / 2) - (r.left + r.width / 2), dy = (a.top + a.height / 2) - (r.top + r.height / 2);
+      box.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + Math.max(.1, a.width / r.width) + ',' + Math.max(.1, a.height / r.height) + ')', opacity: .2 },
+        { transform: 'none', opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.2,.85,.25,1)' });
+    }
+  }
+  function onKey(e) { if (e.key === 'Escape') api.close(); }
+  document.addEventListener('keydown', onKey);
+  const wide = !(window.matchMedia && window.matchMedia('(max-width: 880px)').matches);   // do not pop the phone keyboard open
+  const first = wide && box.querySelector('input:not([type=range]):not([type=time]):not([type=date]),select,textarea');
+  if (first) first.focus();
+  return api;
+}
+
+// ---------- server calls
+/** Inside the Apps Script page the call goes through google.script.run. In the installed phone app (static files) it is a POST to the same functions. */
+function transport(name, args, ok, fail) {
+  if (typeof google !== 'undefined' && google.script && google.script.run) { google.script.run.withSuccessHandler(ok).withFailureHandler(fail)[name].apply(null, args); return; }
+  const url = window.APP_ENDPOINT;
+  if (!url || /PASTE/.test(url)) { fail(new Error('The server address is not set (config.js).')); return; }
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: name, args: args }), redirect: 'follow' })
+    .then(function (r) { return r.json(); }).then(ok).catch(fail);
+}
+function callServer(name, args) {
+  return new Promise(function (resolve, reject) {
+    function netFail(msg) { const e = new Error(msg); e.network = true; if (typeof Sync !== 'undefined') Sync.noteOnline(false); reject(e); }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) { netFail('No signal. Anything you enter is saved on this phone.'); return; }
+    let finished = false;
+    const timer = setTimeout(function () { if (finished) return; finished = true; netFail('The connection is too slow. Anything you enter is saved on this phone.'); }, 45000);
+    function onOk(r) {
+      if (finished) return; finished = true; clearTimeout(timer);
+      if (typeof Sync !== 'undefined') Sync.noteOnline(true);
+      if (r && r.ok) return resolve(r.data);
+      const err = new Error((r && r.error) || 'Request failed');
+      err.code = r && r.code;
+      if (err.code === 'SESSION_EXPIRED' || err.code === 'NO_SESSION') sessionEnded(err.message);
+      else if (err.code === 'PASSWORD_CHANGE_REQUIRED') showForcedChange();
+      reject(err);
+    }
+    function onFail() { if (finished) return; finished = true; clearTimeout(timer); netFail('Could not reach the server. Anything you enter is saved on this phone.'); }
+    transport(name, args, onOk, onFail);
+  });
+}
+function api(name) { return callServer(name, [S.token].concat([].slice.call(arguments, 1))); }
+function apiPublic(name) { return callServer(name, [].slice.call(arguments, 1)); }
+/** Run an async action on a button: disables it, shows errors as toasts. */
+function run(btn, fn) {
+  if (btn) btn.disabled = true;
+  return Promise.resolve().then(fn).catch(function (e) { toast(e.message, true); }).then(function () { if (btn) btn.disabled = false; });
+}
+
+// ---------- form + table helpers
+function field(label, input, hint) { return h('label', { class: 'f' }, label, input, hint ? h('span', { class: 'hint' }, hint) : null); }
+function select(options, value, props) {
+  const s = h('select', props);
+  options.forEach(function (o) { s.appendChild(h('option', { value: o.value }, o.label)); });
+  s.value = value === undefined || value === null ? '' : value;
+  return s;
+}
+function table(cols, rows, rowClass, opts) {
+  const head = h('tr', null, cols.map(function (c) { return h('th', { class: c.cls }, c.label); }));
+  const body = h('tbody');
+  if (!rows.length) body.appendChild(h('tr', null, h('td', { colspan: cols.length }, emptyState('Nothing to show.'))));
+  rows.forEach(function (r) {
+    body.appendChild(h('tr', { class: rowClass ? rowClass(r) : '' }, cols.map(function (c) {
+      return h('td', { class: c.cls, 'data-label': c.label }, c.render ? c.render(r) : (r[c.key] === undefined || r[c.key] === null ? '' : r[c.key]));
+    })));
+  });
+  return h('div', { class: 'tablewrap' + (opts && opts.scroll ? ' scroll' : '') }, h('table', null, h('thead', null, head), body));
+}
+function badge(text, kind) { return h('span', { class: 'badge ' + (kind || '') }, text); }
+function methodBadge(m) { return m ? h('span', { class: 'badge ' + (m === 'Drone' ? 'drone' : 'manual') }, m) : badge('Unassigned', 'bad'); }
+function pageHead(title, sub, actions) { return h('div', { class: 'pagehead' }, h('div', null, h('h1', null, title), sub ? h('p', { class: 'muted' }, sub) : null), actions || null); }
+
+// ---------- login / password screens
+function app() { return clear(document.getElementById('app')); }
+function authScreen(inner) {
+  const hero = h('div', { class: 'auth-hero' },
+    h('div', { class: 'brand' }, h('div', { class: 'brand-mark' }, icon('leaf')), h('div', { class: 'brand-text', style: 'color:#fff' }, 'Foliar Spray Experiment')),
+    h('div', null, h('h2', null, 'Drone vs manual foliar spraying, measured field by field.'),
+      h('p', null, 'Record spraying and plucking from the field and follow the results in one place.'),
+      h('ul', null, h('li', null, icon('droplet'), 'Foliar spray records for every field'), h('li', null, icon('basket'), 'Daily green leaf plucking records'), h('li', null, icon('dashboard'), 'Drone vs manual comparison dashboard'))),
+    h('div', { class: 'small', style: 'color:rgba(255,255,255,.7)' }, 'Authorised users only. Your activity is recorded.'));
+  app().appendChild(h('div', { class: 'auth' }, hero, h('div', { class: 'auth-pane' }, h('div', { class: 'login' },
+    h('div', { class: 'auth-brand-m' }, h('div', { class: 'brand-mark' }, icon('leaf')), 'Foliar Spray Experiment'), inner))));
+}
+
+function showLogin(message) {
+  document.body.classList.remove('nav-open');
+  S.token = null; S.me = null; Local.del('fsx:session');
+  const user = h('input', { type: 'text', autocomplete: 'username', autocapitalize: 'none', spellcheck: 'false', maxlength: '50', placeholder: 'e.g. middle_afo_1' });
+  const pw = h('input', { type: 'password', autocomplete: 'current-password', maxlength: '100', placeholder: 'Password or PIN' });
+  const box = h('div');
+  const btn = h('button', { class: 'btn primary big', style: 'width:100%;margin-top:6px', type: 'submit' }, 'Log in');
+  const form = h('form', { class: 'stack', onsubmit: function (ev) {
+    ev.preventDefault();
+    clear(box);
+    run(btn, function () {
+      return apiPublic('api_login', user.value, pw.value).then(function (d) {
+        S.token = d.token; S.me = d.me;
+        pw.value = '';
+        return enterApp();
+      }).catch(function (e) { box.appendChild(msgBox('err', e.message)); });
+    });
+  } },
+    h('div', null, h('h1', null, 'Welcome back'), h('div', { class: 'muted' }, 'Sign in to record and review field data.')),
+    message ? msgBox('warn', message) : null,
+    field('Username', user), field('Password or PIN', pw), box, btn);
+  authScreen(form);
+  user.focus();
+}
+function sessionEnded(message) {
+  if (document.getElementById('app').querySelector('.login')) return; // already on the login screen
+  showLogin(message || 'Your session has ended. Please log in again.');
+}
+
+function showForcedChange() {
+  if (document.querySelector('.forced')) return;
+  const old = h('input', { type: 'password', autocomplete: 'current-password' });
+  const n1 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const n2 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const box = h('div');
+  const min = S.me && S.me.is_admin ? 10 : 6;
+  const btn = h('button', { class: 'btn primary big', style: 'width:100%', type: 'submit' }, 'Save new password');
+  const form = h('form', { class: 'stack forced', onsubmit: function (ev) {
+    ev.preventDefault(); clear(box);
+    if (n1.value !== n2.value) { box.appendChild(msgBox('err', 'The two new passwords do not match.')); return; }
+    run(btn, function () {
+      return api('api_changePassword', old.value, n1.value).then(function (me) { S.me = me; return enterApp(); })
+        .catch(function (e) { box.appendChild(msgBox('err', e.message)); });
+    });
+  } },
+    h('div', null, h('h1', null, 'Choose a new password'), h('div', { class: 'muted' }, 'You are using a temporary password. Choose your own (at least ' + min + ' characters) to continue.')),
+    field('Temporary password', old), field('New password', n1), field('Repeat new password', n2), box, btn);
+  authScreen(form);
+  old.focus();
+}
+
+function openChangePassword() {
+  const old = h('input', { type: 'password', autocomplete: 'current-password' });
+  const n1 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const n2 = h('input', { type: 'password', autocomplete: 'new-password' });
+  const box = h('div');
+  const min = S.me.is_admin ? 10 : 6;
+  modal('Change password', h('div', { class: 'stack' }, field('Current password', old), field('New password', n1, 'At least ' + min + ' characters'), field('Repeat new password', n2), box), [
+    { label: 'Cancel', onclick: function (m) { m.close(); } },
+    { label: 'Save', kind: 'primary', onclick: function (m, btn) {
+      clear(box);
+      if (n1.value !== n2.value) { box.appendChild(msgBox('err', 'The two new passwords do not match.')); return; }
+      run(btn, function () { return api('api_changePassword', old.value, n1.value).then(function () { m.close(); toast('Password changed'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
+    } }
+  ]);
+}
+
+// ---------- app shell: top bar, side navigation (bottom bar on phones), content
+const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'dashboard.view', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
+
+function enterApp() {
+  if (S.me.must_change) { showForcedChange(); return Promise.resolve(); }
+  S.today = Local.today();   // the phone's own date: entry is for today only
+  saveSession();             // remembered on the phone so the app opens even without signal
+  renderShell();
+  Sync.start();
+  return Promise.resolve();
+}
+
+function renderShell() {
+  const me = S.me;
+  document.body.classList.remove('nav-open');
+  const labels = { home: 'Home' };
+  me.tasks.forEach(function (t) { labels[t.id] = t.label; });
+  const tabs = TAB_ORDER.filter(function (id) { return (id === 'home' && me.is_admin) || (id !== 'home' && labels[id] && VIEWS[id]); });
+  const nav = h('nav', { class: 'tabs', 'aria-label': 'Main' });
+  const main = h('main', { class: 'content' });
+  const title = h('div', { class: 'title' });
+  const closeNav = function () { document.body.classList.remove('nav-open'); };
+  function go(id) {
+    S.tab = id; store('tab', id);
+    Array.prototype.forEach.call(nav.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-id') === id); });
+    clear(title); add(title, [h('span', { class: 'estate' }, me.estate || 'Foliar spray'), labels[id]]);
+    closeNav();
+    clear(main);
+    try { VIEWS[id](main); } catch (e) { main.appendChild(msgBox('err', 'This screen could not be shown: ' + e.message)); }
+    window.scrollTo(0, 0);
+  }
+  S.go = go;
+  let lastGroup = null;
+  tabs.forEach(function (id) {
+    const g = TASK_GROUP[id] || null;
+    if (g && g !== lastGroup && tabs.length > 3) nav.appendChild(h('div', { class: 'navgroup' }, g));
+    lastGroup = g;
+    nav.appendChild(h('button', { type: 'button', 'data-id': id, onclick: function () { go(id); } }, icon(TASK_ICON[id]), h('span', null, labels[id])));
+  });
+  const sidebar = h('aside', { class: 'sidebar', 'aria-label': 'Navigation' },
+    h('div', { class: 'side-brand' }, h('div', { class: 'brand-mark' }, icon('leaf')), h('div', { class: 'brand-text' }, me.estate || 'Foliar Spray', h('small', null, 'Foliar spray experiment'))),
+    nav,
+    h('div', { class: 'sidefoot' },
+      syncPill(),
+      h('div', { class: 'side-user' }, h('div', { class: 'avatar' }, initials(me.display_name)), h('div', { class: 'who' }, h('b', null, me.display_name), h('span', null, me.role_name))),
+      h('div', { class: 'row2' },
+        h('button', { type: 'button', onclick: function () { closeNav(); openChangePassword(); } }, icon('key'), 'Change password'),
+        h('button', { type: 'button', onclick: function () { api('api_logout').catch(function () {}).then(function () { showLogin('You have been logged out.'); }); } }, icon('logout'), 'Log out'))));
+  const top = h('header', { class: 'top' },
+    h('button', { type: 'button', class: 'btn ghost iconbtn', 'aria-label': 'Open menu', onclick: function () { document.body.classList.add('nav-open'); } }, icon('menu')),
+    title, syncPill('compact'), h('div', { class: 'avatar' }, initials(me.display_name)));
+  app().appendChild(h('div', { class: 'app' }, h('div', { class: 'shell' }, sidebar, h('div', { class: 'scrim', onclick: closeNav }), h('div', { class: 'maincol' }, top, main))));
+  const saved = load('tab');
+  go(saved && tabs.indexOf(saved) >= 0 ? saved : tabs[0]);
+}
+
+function boot() {
+  const sess = Local.get('fsx:session', null);
+  if (!sess || !sess.token || !sess.me) { showLogin(); return; }
+  S.token = sess.token; S.me = sess.me; S.today = Local.today();
+  renderShell(); Sync.start();                       // opens straight away from what the phone remembers, even offline
+  api('api_me').then(function (me) { S.me = me; saveSession(); })   // when there is signal, check the login is still valid
+    .catch(function () { /* offline: stay in the app. An expired login is handled by callServer (back to the login screen). */ });
+}
+</script>
+
+<script>
+'use strict';
+/* ===== On-phone storage and upload queue =====
+ *  Local  : safe wrapper around localStorage (falls back to memory if the browser blocks storage)
+ *  Draft  : entries typed but not yet submitted. They stay on the phone until submitted, even if the app is closed.
+ *  Cache  : the last field list / day records, so the screens still show something without signal
+ *  Sync   : the outbox. Submitted entries wait here and are uploaded automatically as soon as there is signal.
+ *           An upload is idempotent on the server (one record per field per day, a resend replaces it), so retries are safe.
+ */
+const Local = {
+  _ok: null, _mem: {},
+  ok: function () { if (this._ok === null) { try { localStorage.setItem('fsx:t', '1'); localStorage.removeItem('fsx:t'); this._ok = true; } catch (e) { this._ok = false; } } return this._ok; },
+  get: function (k, def) { try { const raw = this.ok() ? localStorage.getItem(k) : this._mem[k]; return raw ? JSON.parse(raw) : def; } catch (e) { return def; } },
+  set: function (k, v) { const raw = JSON.stringify(v); this._mem[k] = raw; try { if (this.ok()) localStorage.setItem(k, raw); } catch (e) { /* storage full: kept in memory */ } },
+  del: function (k) { delete this._mem[k]; try { if (this.ok()) localStorage.removeItem(k); } catch (e) { /* ignore */ } },
+  user: function () { return S.me ? S.me.username : ''; },
+  key: function (name) { return 'fsx:' + this.user() + ':' + name; },
+  today: function () { const d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+};
+function saveSession() { if (S.token && S.me && !S.me.must_change) Local.set('fsx:session', { token: S.token, me: S.me, saved: new Date().toISOString() }); }
+
+const Draft = {
+  all: function (type) { return Local.get(Local.key('draft:' + type), {}); },
+  get: function (type, date) { return this.all(type)[date] || {}; },
+  set: function (type, date, obj) { const a = this.all(type); if (obj && Object.keys(obj).length) a[date] = obj; else delete a[date]; Local.set(Local.key('draft:' + type), a); },
+  dates: function (type) { return Object.keys(this.all(type)).sort(); }
+};
+const Cache = {
+  get: function (name) { return Local.get(Local.key('cache:' + name), null); },
+  set: function (name, v) { Local.set(Local.key('cache:' + name), v); }
+};
+
+const TYPE_LABEL = { spray: 'Foliar spray', pluck: 'Plucking' };
+
+const Sync = {
+  listeners: [], busy: false, offline: false, started: false, lastOk: '', uploaded: 0,
+  items: function () { return Local.get(Local.key('outbox'), []); },
+  save: function (list) { Local.set(Local.key('outbox'), list); this.emit(); },
+  onChange: function (fn) { this.listeners.push(fn); },
+  emit: function () { this.listeners = this.listeners.filter(function (fn) { try { return fn() !== false; } catch (e) { return true; } }); },
+  noteOnline: function (yes) { if (this.offline === !yes) return; this.offline = !yes; this.emit(); },
+
+  /** Put submitted entries in the outbox. A newer submission for the same field and day replaces an older waiting one. */
+  queue: function (type, date, lines, names) {
+    const ids = {}; lines.forEach(function (l) { ids[l.field_id] = true; });
+    let list = this.items();
+    list.forEach(function (it) { if (it.type === type && it.date === date && !it.failed) it.lines = it.lines.filter(function (l) { return !ids[l.field_id]; }); });
+    list = list.filter(function (it) { return it.lines.length; });
+    list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), type: type, date: date, lines: lines, names: names || {}, created: new Date().toISOString(), error: '', failed: false });
+    this.save(list);
+    return this.run();
+  },
+  remove: function (id) { this.save(this.items().filter(function (i) { return i.id !== id; })); },
+  waitingFor: function (type, date) {
+    const m = {};
+    this.items().forEach(function (it) { if (it.type === type && it.date === date && !it.failed) it.lines.forEach(function (l) { m[l.field_id] = l; }); });
+    return m;
+  },
+  status: function () {
+    const items = this.items(), failed = items.filter(function (i) { return i.failed; }).length;
+    const waiting = items.filter(function (i) { return !i.failed; }).reduce(function (n, i) { return n + i.lines.length; }, 0);   // fields waiting, not submissions
+    const off = (typeof navigator !== 'undefined' && navigator.onLine === false) || this.offline;
+    if (failed) return { kind: 'problem', n: failed, text: failed + ' need' + (failed === 1 ? 's' : '') + ' attention' };
+    if (this.busy) return { kind: 'busy', text: 'Uploading...' };
+    if (waiting) return { kind: off ? 'offline' : 'wait', n: waiting, text: (off ? 'Offline: ' : '') + waiting + ' waiting to upload' };
+    return { kind: off ? 'offline' : 'ok', text: off ? 'Offline' : 'Synced' };
+  },
+
+  /** Upload everything waiting, oldest first. Network trouble stops and keeps the items; a real rejection flags just that item. */
+  run: function () {
+    const self = this;
+    if (self.busy || !S.token) return Promise.resolve();
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) { self.emit(); return Promise.resolve(); }   // no signal: do not even try, just wait
+    const todo = self.items().filter(function (i) { return !i.failed; });
+    if (!todo.length) return Promise.resolve();
+    self.busy = true; self.emit();
+    let count = 0;
+    function next(i) {
+      if (i >= todo.length) return Promise.resolve();
+      const it = todo[i];
+      return callServer(it.type === 'spray' ? 'api_saveSpray' : 'api_savePluck', [S.token, { date: it.date, lines: it.lines }]).then(function (r) {
+        count += r.saved; self.lastOk = new Date().toISOString();
+        self.save(self.items().filter(function (x) { return x.id !== it.id; }));
+        return next(i + 1);
+      }, function (e) {
+        if (e.network || e.code === 'SESSION_EXPIRED' || e.code === 'NO_SESSION' || e.code === 'PASSWORD_CHANGE_REQUIRED') throw e;   // keep everything, try again later
+        self.save(self.items().map(function (x) { if (x.id === it.id) { x.failed = true; x.error = e.message; } return x; }));
+        return next(i + 1);
+      });
+    }
+    return next(0).catch(function () { /* stopped on purpose: items stay in the outbox */ }).then(function () {
+      self.busy = false; self.emit();
+      if (count) toast('Uploaded ' + count + ' entr' + (count === 1 ? 'y' : 'ies'));
+    });
+  },
+  retry: function (id) { this.save(this.items().map(function (x) { if (x.id === id) { x.failed = false; x.error = ''; } return x; })); return this.run(); },
+
+  start: function () {
+    const self = this;
+    if (!self.started) {
+      self.started = true;
+      window.addEventListener('online', function () { self.noteOnline(true); self.run(); });
+      window.addEventListener('offline', function () { self.noteOnline(false); });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) self.run(); });
+      setInterval(function () { if (self.items().some(function (i) { return !i.failed; })) self.run(); }, 15000);
+    }
+    self.run();
+  }
+};
+
+// ---------- sync status pill + panel
+function syncPill(extra) {
+  const el = h('button', { type: 'button', class: 'syncpill', onclick: openSyncPanel, 'aria-label': 'Upload status' });
+  function paint() {
+    const s = Sync.status();
+    el.className = 'syncpill ' + s.kind + (extra ? ' ' + extra : '');
+    clear(el); add(el, [h('span', { class: 'sdot' }), h('span', { class: 'stext' }, s.text)]);
+  }
+  paint();
+  Sync.onChange(function () { if (!el.isConnected) return false; paint(); });
+  return el;
+}
+
+function openSyncPanel() {
+  const body = h('div', { class: 'stack' });
+  let panel = null;
+  function paint() {
+    clear(body);
+    const s = Sync.status(), items = Sync.items();
+    body.appendChild(h('div', { class: 'msg ' + (s.kind === 'ok' ? 'ok' : (s.kind === 'problem' ? 'err' : 'warn')), style: 'margin:0' }, icon(s.kind === 'ok' ? 'check' : 'alert'),
+      h('div', null, s.kind === 'ok' ? 'Everything is uploaded.' : s.text + '.', Sync.lastOk ? h('div', { class: 'small' }, 'Last upload: ' + Sync.lastOk.replace('T', ' ').slice(0, 16)) : null)));
+    if (!items.length) { body.appendChild(h('p', { class: 'muted' }, 'Nothing is waiting. Entries you submit are saved on this phone first and uploaded as soon as there is signal.')); return; }
+    items.forEach(function (it) {
+      const codes = it.lines.map(function (l) { return (it.names && it.names[l.field_id]) || '?'; });
+      body.appendChild(h('div', { class: 'qitem' + (it.failed ? ' failed' : '') },
+        h('div', null, h('strong', null, TYPE_LABEL[it.type] + '  |  ' + shortDate(it.date)), h('div', { class: 'small muted' }, it.lines.length + ' field' + (it.lines.length === 1 ? '' : 's') + ': ' + codes.join(', ')),
+          it.failed ? h('div', { class: 'small', style: 'color:var(--bad);margin-top:4px' }, it.error) : h('div', { class: 'small muted' }, 'Waiting for signal')),
+        h('div', { class: 'row', style: 'flex-wrap:nowrap' },
+          it.failed ? h('button', { class: 'btn small', onclick: function () { Sync.retry(it.id); } }, 'Retry') : null,
+          it.date === S.today ? h('button', { class: 'btn small', onclick: function () { editAgain(it); } }, 'Edit again') : null,
+          h('button', { class: 'btn small danger', onclick: function () { Sync.remove(it.id); } }, 'Discard'))));
+    });
+  }
+  /** Move a waiting submission back into drafts so it can be changed and submitted again. */
+  function editAgain(it) {
+    const d = Draft.get(it.type, it.date);
+    it.lines.forEach(function (l) { d[l.field_id] = l; });
+    Draft.set(it.type, it.date, d); Sync.remove(it.id);
+    if (panel) panel.close();
+    toast('Moved back to your entries. Change it and submit again.');
+    if (S.go && S.tab) S.go(S.tab);
+  }
+  paint();
+  Sync.onChange(function () { if (!body.isConnected) return false; paint(); });
+  panel = modal('Upload status', body, [{ label: 'Close', onclick: function (m) { m.close(); } }, { label: 'Try now', kind: 'primary', onclick: function () { Sync.run(); } }]);
+}
+</script>
+
+<script>
+'use strict';
+/* ===== Data collection: Foliar spray and Plucking (one grid of field cards, popup from the card), and the admin Records screen =====
+ *  Rules: data is entered for TODAY only (past days are view only). Typed entries are kept on the phone as drafts until submitted.
+ *  Submitted entries go to the upload queue and reach the sheet as soon as there is signal. Entering a field again replaces its record.
+ *  The area slider shows the running total for the field's current ROUND: earlier days are frozen, you can only move forward,
+ *  and the 100% button marks the round complete. */
+
+function numInput(value, props) {
+  return h('input', Object.assign({ type: 'number', inputmode: 'decimal', step: 'any', min: '0', value: value === undefined || value === null ? '' : value }, props || {}));
+}
+function groupBy(list, keyFn) {
+  const m = {}, order = [];
+  list.forEach(function (x) { const k = keyFn(x); if (!(k in m)) { m[k] = []; order.push(k); } m[k].push(x); });
+  return order.map(function (k) { return { key: k, items: m[k] }; });
+}
+function hoursBetween(start, end) {
+  if (!/^\d\d:\d\d$/.test(start || '') || !/^\d\d:\d\d$/.test(end || '')) return null;
+  const d = (parseInt(end.slice(0, 2), 10) * 60 + parseInt(end.slice(3), 10)) - (parseInt(start.slice(0, 2), 10) * 60 + parseInt(start.slice(3), 10));
+  return d > 0 ? d / 60 : null;
+}
+function r2(v) { return Math.round(v * 100) / 100; }
+function shortDate(s) { if (!s) return ''; const d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]; }
+
+/** Slider = running total for the round. Earlier days (doneHa) are frozen; today's work is what you add. 100% completes the round. */
+function roundSlider(maxHa, doneHa, startToday) {
+  const step = 0.05;
+  const snap = function (v) { v = Math.round(v / step) * step; if (maxHa - v < step / 2 + 1e-9) v = maxHa; if (v < doneHa) v = doneHa; return Math.min(maxHa, Math.round(v * 1000) / 1000); };
+  let pos = Math.min(maxHa, Math.max(doneHa, Math.round((doneHa + (startToday || 0)) * 1000) / 1000));
+  const range = h('input', { type: 'range', min: '0', max: String(maxHa), step: '0.01', value: String(pos), 'aria-label': 'How much of the field is done, in hectares' });
+  const track = h('div', { class: 'rtrack' + (doneHa > 0 ? ' has-frozen' : '') }, h('div', { class: 'rt-bg' }), h('div', { class: 'rt-fill' }), h('div', { class: 'rt-frozen' }), range);
+  const today = h('div', { class: 'sl-val' }), total = h('span', { class: 'muted' }), tag = h('span');
+  const listeners = [];
+  const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos - 0.1); } }, '- 0.1');
+  const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos + 0.1); } }, '+ 0.1');
+  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(maxHa); } }, '100%');
+  function show() {
+    track.style.setProperty('--q', String(maxHa ? pos / maxHa : 0)); track.style.setProperty('--p', String(maxHa ? doneHa / maxHa : 0));
+    today.textContent = (pos - doneHa > 0.0001 ? '+' : '') + r2(pos - doneHa).toFixed(2) + ' ha today';
+    total.textContent = 'round total ' + r2(pos).toFixed(2) + ' of ' + r2(maxHa).toFixed(2) + ' ha (' + Math.round(pos / maxHa * 100) + '%)';
+    clear(tag); if (pos >= maxHa - 0.0049) tag.appendChild(h('span', { class: 'badge good' }, icon('check'), 'Round complete'));
+    minus.disabled = pos <= doneHa + 1e-9; plus.disabled = pos >= maxHa - 1e-9;
+    listeners.forEach(function (f) { f(); });
+  }
+  function set(v) { pos = snap(v); range.value = String(pos); show(); }
+  range.addEventListener('input', function () { pos = snap(parseFloat(range.value)); range.value = String(pos); show(); });
+  show();
+  const node = h('div', { class: 'slider' }, h('div', { class: 'sl-head' }, today, total), h('div', { class: 'sl-tag' }, tag), track,
+    doneHa > 0 ? h('div', { class: 'sl-note' }, icon('lock'), 'Earlier days: ' + r2(doneHa) + ' ha (locked, you can only move forward)') : null,
+    h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full));
+  return { node: node, get: function () { return { area: Math.max(0, r2(pos - doneHa)), pos: pos, complete: pos >= maxHa - 0.0049 }; }, onChange: function (f) { listeners.push(f); } };
+}
+
+/** - [ n ] + counter for whole numbers (drones / men). */
+function stepper(initial, max) {
+  const inp = h('input', { type: 'number', inputmode: 'numeric', min: '1', max: String(max || 500), step: '1', value: String(initial || 1), 'aria-label': 'Count' });
+  const bump = function (d) { inp.value = String(Math.min(max || 500, Math.max(1, (parseInt(inp.value, 10) || 0) + d))); };
+  return { node: h('div', { class: 'stepper' }, h('button', { type: 'button', class: 'btn', onclick: function () { bump(-1); } }, '-'), inp,
+    h('button', { type: 'button', class: 'btn', onclick: function () { bump(1); } }, '+')), get: function () { return inp.value; } };
+}
+
+function askVoid(type, r, done) {
+  const why = h('input', { type: 'text', maxlength: '200', placeholder: 'e.g. wrong field, entered twice' });
+  modal('Void this record?', h('div', { class: 'stack' },
+    h('div', null, r.date + '  ' + (r.division ? r.division + ' ' : '') + r.field_code),
+    h('div', { class: 'muted small' }, 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
+    { label: 'Cancel', onclick: function (m) { m.close(); } },
+    { label: 'Void record', kind: 'danger', onclick: function (m, btn) {
+      run(btn, function () { return api('api_voidRecord', type, r.record_id, why.value).then(function () { m.close(); toast('Record voided'); done(); }); });
+    } }
+  ]);
+}
+
+function popTitle(f) {
+  return h('div', { class: 'pop-head' }, h('span', { class: 'code' }, (f.division ? f.division + ' ' : '') + f.code), methodBadge(f.method), h('span', { class: 'sub' }, (f.name ? f.name + '  |  ' : '') + r2(f.area_ha) + ' ha'));
+}
+function roundNote(p, f, what) {
+  return 'Round ' + p.round + (p.started ? ', started ' + shortDate(p.started) + ' (day ' + p.day_no + ')' : ', first day') + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha ' + what + ' on earlier days, ' + p.remaining_ha + ' ha to go.';
+}
+
+// ----------------------------------------------------------------------------------------------
+// One screen for both entry tabs: a single grid of field cards.
+//   gray card   = nothing entered. Tap it: the popup grows out of the card.
+//   coloured    = entered on this phone (blue = drone, orange = manual). Not yet uploaded until you press Submit.
+//   green       = already recorded in the sheet today. Tap it to change it and submit again (it is replaced).
+// cfg: {type, title, intro, idle(f), bar(f), summary(f,data), recorded(rec), facts(rec), toData(rec), line(f,data), popup(f, existing, ctl)}
+function entryScreen(root, cfg) {
+  const type = cfg.type;
+  const dateIn = h('input', { type: 'date', value: S.today, max: S.today, 'aria-label': 'Date' });
+  const tilesBox = h('div'), sumBox = h('div'), noteBox = h('div'), bannerBox = h('div');
+  const search = h('input', { type: 'search', placeholder: 'Find a field', 'aria-label': 'Find a field' });
+  const count = h('div', { class: 'count' });
+  const submit = h('button', { class: 'btn primary big', onclick: send }, 'Submit');
+  const subbar = h('div', { class: 'subbar' }, count, submit);
+  const filterBtns = {};
+  let sel = {}, fields = [], recs = {}, filter = 'all', offlineInfo = '', hadQueue = false;   // sel: field_id -> {field, data} typed on this phone, not yet submitted
+
+  const readOnly = function () { return dateIn.value < S.today; };
+  function persist() { if (readOnly()) return; const o = {}; Object.keys(sel).forEach(function (k) { o[k] = sel[k].data; }); Draft.set(type, dateIn.value, o); }
+  function shiftDay(n) {
+    const d = new Date(dateIn.value + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n);
+    const v = d.toISOString().slice(0, 10);
+    if (v > S.today) return;
+    dateIn.value = v; dateChanged();
+  }
+  function dateChanged() { sel = {}; loadAll(); }
+
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Show' });
+  [['all', 'All'], ['todo', 'To do'], ['entered', 'Entered']].forEach(function (x) {
+    filterBtns[x[0]] = h('button', { type: 'button', class: x[0] === 'all' ? 'on' : '', onclick: function () { filter = x[0]; Object.keys(filterBtns).forEach(function (k) { filterBtns[k].classList.toggle('on', k === filter); }); renderTiles(); } }, x[1]);
+    seg.appendChild(filterBtns[x[0]]);
+  });
+  const bar = h('div', { class: 'entry-bar' },
+    h('div', { class: 'datepick' },
+      h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Previous day', onclick: function () { shiftDay(-1); } }, icon('left')), dateIn,
+      h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Next day', onclick: function () { shiftDay(1); } }, icon('right')),
+      h('button', { type: 'button', class: 'btn today', onclick: function () { dateIn.value = S.today; dateChanged(); } }, 'Today')),
+    h('div', { class: 'row', style: 'align-items:center' }, seg, h('div', { style: 'min-width:190px' }, search)));
+
+  root.appendChild(pageHead(cfg.title, cfg.intro));
+  root.appendChild(bar); root.appendChild(bannerBox); root.appendChild(sumBox); root.appendChild(tilesBox); root.appendChild(noteBox); root.appendChild(subbar);
+  dateIn.addEventListener('change', dateChanged);
+  search.addEventListener('input', renderTiles);
+  Sync.onChange(function () {   // uploads finished or changed: refresh the cards (and reload once the queue for this day empties)
+    if (!root.isConnected) return false;
+    const waiting = Object.keys(Sync.waitingFor(type, dateIn.value)).length;
+    if (hadQueue && !waiting) { hadQueue = false; loadAll(); } else { if (waiting) hadQueue = true; renderAll(); }
+  });
+  loadAll();
+
+  function loadAll() {
+    clear(tilesBox).appendChild(skeleton(3));
+    const date = dateIn.value;
+    return Promise.all([api('api_entryFields', type, date), api('api_dayRecords', type, date)]).then(function (res) {
+      fields = res[0].fields; recs = {}; res[1].forEach(function (r) { recs[r.field_id] = r; });
+      offlineInfo = ''; Cache.set('fields:' + type, { fields: fields, saved: new Date().toISOString() }); Cache.set('day:' + type + ':' + date, res[1]);
+      afterLoad();
+    }).catch(function (e) {
+      if (!e.network) { clear(tilesBox).appendChild(msgBox('err', e.message)); return; }
+      const cf = Cache.get('fields:' + type);   // no signal: show what this phone last saw
+      if (!cf) { clear(tilesBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
+      fields = cf.fields; recs = {}; (Cache.get('day:' + type + ':' + date) || []).forEach(function (r) { recs[r.field_id] = r; });
+      offlineInfo = 'No signal. Showing the list saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Everything you enter is kept on this phone and uploads when you have signal.';
+      afterLoad();
+    });
+  }
+  function afterLoad() {
+    sel = {};
+    if (!readOnly()) { const saved = Draft.get(type, dateIn.value); Object.keys(saved).forEach(function (fid) { const f = fields.filter(function (x) { return x.field_id === fid; })[0]; if (f) sel[fid] = { field: f, data: saved[fid] }; }); }
+    hadQueue = Object.keys(Sync.waitingFor(type, dateIn.value)).length > 0;
+    search.parentNode.style.display = fields.length > 12 ? '' : 'none';
+    renderAll();
+  }
+  const queued = function () { return Sync.waitingFor(type, dateIn.value); };
+  const isReady = function (f) { return !!sel[f.field_id] || !!queued()[f.field_id]; };
+  function renderAll() { renderBanners(); renderTiles(); renderSummary(); }
+
+  function renderBanners() {
+    clear(bannerBox);
+    if (offlineInfo) bannerBox.appendChild(msgBox('warn', offlineInfo));
+    if (readOnly()) bannerBox.appendChild(h('div', { class: 'msg warn' }, icon('lock'), h('div', null, 'Viewing ' + shortDate(dateIn.value) + '. Past days are view only: data can only be entered or changed for today.')));
+    else {
+      Draft.dates(type).filter(function (d) { return d < S.today; }).forEach(function (d) {
+        const n = Object.keys(Draft.get(type, d)).length;
+        bannerBox.appendChild(h('div', { class: 'msg warn' }, icon('alert'), h('div', { style: 'flex:1' }, 'Unsent entries from ' + shortDate(d) + ' (' + n + ' field' + (n === 1 ? '' : 's') + ') are still on this phone.'),
+          h('button', { type: 'button', class: 'btn small', onclick: function () { const dd = Draft.get(type, d), names = {}; fields.forEach(function (f) { names[f.field_id] = f.code; }); Draft.set(type, d, {}); Sync.queue(type, d, Object.keys(dd).map(function (k) { return dd[k]; }), names); renderBanners(); } }, 'Submit them'),
+          h('button', { type: 'button', class: 'btn small danger', onclick: function () { Draft.set(type, d, {}); renderBanners(); } }, 'Discard')));
+      });
+    }
+    const failed = Sync.items().filter(function (i) { return i.failed && i.type === type; });
+    if (failed.length) bannerBox.appendChild(h('div', { class: 'msg err' }, icon('alert'), h('div', { style: 'flex:1' }, failed.length + ' submission' + (failed.length === 1 ? ' was' : 's were') + ' rejected: ' + failed[0].error),
+      h('button', { type: 'button', class: 'btn small', onclick: openSyncPanel }, 'Review')));
+  }
+
+  function renderSummary() {
+    const ro = readOnly();
+    const total = fields.length, ready = fields.filter(isReady).length, rec = fields.filter(function (f) { return recs[f.field_id] && !isReady(f); }).length;
+    clear(sumBox);
+    if (total) sumBox.appendChild(h('div', { class: 'entry-sum' }, h('b', null, (ready + rec) + ' of ' + total + ' entered'),
+      h('div', { class: 'progress' }, h('i', { style: 'width:' + Math.round((ready + rec) / total * 100) + '%' })),
+      h('div', { class: 'legend hide-sm' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone'), h('span', null, h('i', { class: 'dot manual' }), 'Manual'), h('span', null, icon('check'), 'Recorded'))));
+    subbar.style.display = ro ? 'none' : '';
+    const toSend = fields.filter(function (f) { return !!sel[f.field_id]; }).length, waiting = fields.filter(function (f) { return !sel[f.field_id] && queued()[f.field_id]; }).length;
+    submit.textContent = toSend ? 'Submit ' + toSend + ' field' + (toSend === 1 ? '' : 's') : 'Submit';
+    submit.disabled = !toSend;
+    clear(count); add(count, [toSend ? toSend + ' ready to submit' : (waiting ? waiting + ' waiting to upload' : 'Nothing to submit yet'),
+      h('span', null, toSend ? 'Saved on this phone. Tap a card to change it' : (waiting ? 'They upload as soon as there is signal' : 'Tap a field card to begin'))]);
+  }
+
+  function renderTiles() {
+    clear(tilesBox);
+    if (!fields.length) { tilesBox.appendChild(h('div', { class: 'card' }, msgBox('warn', S.me.field_scope === 'assigned' ? 'No fields are ready for you yet. Either none are assigned to you, or their area and last prune date are not filled in. Ask the Admin.' : 'No fields are ready yet. Their area and last prune date must be filled in under Estate setup.'))); return; }
+    const q = search.value.trim().toLowerCase();
+    const shown = fields.filter(function (f) {
+      const entered = isReady(f) || !!recs[f.field_id];
+      return (filter === 'all' || (filter === 'todo' ? !entered : entered)) && (!q || (f.code + ' ' + f.name + ' ' + f.division).toLowerCase().indexOf(q) >= 0);
+    });
+    if (!shown.length) { tilesBox.appendChild(emptyState(filter === 'todo' ? 'Every field is entered. Well done.' : 'No fields match.', 'check')); return; }
+    groupBy(shown, function (f) { return f.division || ''; }).forEach(function (g) {
+      const all = fields.filter(function (f) { return (f.division || '') === g.key; });
+      const done = all.filter(function (f) { return isReady(f) || recs[f.field_id]; }).length;
+      if (g.key) tilesBox.appendChild(h('div', { class: 'divhead fdiv' }, h('span', null, g.key), h('span', null, done + ' of ' + all.length + ' entered')));
+      const grid = h('div', { class: 'tiles' });
+      g.items.forEach(function (f) { grid.appendChild(tile(f)); });
+      tilesBox.appendChild(grid);
+    });
+  }
+
+  function tile(f) {
+    const id = f.field_id, draft = sel[id], q = queued()[id], rec = recs[id], ro = readOnly();
+    const kind = draft ? 'draft' : (q ? 'queued' : (rec ? 'done' : 'idle'));
+    const data = draft ? draft.data : q;
+    const pct = kind === 'idle' && cfg.bar ? cfg.bar(f) : null;
+    let state;
+    if (kind === 'done') state = 'Recorded: ' + cfg.recorded(rec) + (rec.round ? '  |  round ' + rec.round.no + ', day ' + rec.round.day + (rec.round.complete ? ' (complete)' : '') : '');
+    else if (kind === 'idle') state = cfg.idle(f);
+    else state = cfg.summary(f, data) + (data.complete ? '  |  round complete' : '');
+    const t = h('button', { type: 'button', 'data-code': f.code, 'data-kind': kind, class: 'ftile ' + f.method.toLowerCase() + (kind === 'done' ? ' done' : (kind === 'idle' ? '' : ' on')) + (ro && kind === 'idle' ? ' ro' : ''),
+      'aria-label': f.code + ' ' + kind,
+      onclick: function () {
+        if (ro) { if (rec) openRecorded(f, rec, t, true); return; }
+        if (kind === 'done') openEdit(f, rec, t); else openEntry(f, t);
+      } },
+      h('span', { class: 't-mark' }, icon(kind === 'queued' ? 'upload' : 'check')),
+      h('span', { class: 't-code' }, f.code),
+      f.name ? h('span', { class: 't-name' }, f.name) : null,
+      h('span', { class: 't-meta' }, h('span', { class: 'dot ' + f.method.toLowerCase() }), f.method + '  |  ' + r2(f.area_ha) + ' ha'),
+      pct !== null ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + pct + '%' })) : null,
+      h('span', { class: 't-state' }, state),
+      kind === 'draft' ? h('span', { class: 't-tag' }, 'Not submitted yet') : (kind === 'queued' ? h('span', { class: 't-tag' }, 'Waiting to upload') : null));
+    return t;
+  }
+
+  function openEntry(f, from) {
+    from.classList.add('editing');
+    const id = f.field_id, existing = (sel[id] && sel[id].data) || queued()[id] || null;
+    cfg.popup(f, existing, {
+      from: from, canRemove: !!sel[id],
+      done: function (data) { sel[id] = { field: f, data: data }; persist(); renderAll(); },
+      remove: function () { delete sel[id]; persist(); renderAll(); },
+      closed: function () { from.classList.remove('editing'); }
+    });
+  }
+  function openEdit(f, rec, from) {   // change something already recorded today: it is replaced when you submit again
+    from.classList.add('editing');
+    cfg.popup(f, cfg.toData(rec), {
+      from: from, canRemove: false, editing: true,
+      voidRec: rec.can_void ? function () { askVoid(type, rec, loadAll); } : null,
+      done: function (data) { sel[f.field_id] = { field: f, data: data }; persist(); renderAll(); },
+      closed: function () { from.classList.remove('editing'); }
+    });
+  }
+  function openRecorded(f, r, from) {
+    const facts = h('dl', { class: 'facts' });
+    const extra = r.round ? [['Round', 'Round ' + r.round.no + ', day ' + r.round.day + (r.round.complete ? ' (round completed)' : '') + ', started ' + shortDate(r.round.start)]] : [];
+    cfg.facts(r).concat(extra, [['Entered by', r.entered_by], ['Entered', String(r.entered_at).replace('T', ' ').slice(0, 16)]]).forEach(function (x) { facts.appendChild(h('dt', null, x[0])); facts.appendChild(h('dd', null, x[1])); });
+    modal(popTitle(f), h('div', { class: 'stack' }, h('div', { class: 'msg ok', style: 'margin:0' }, icon('check'), h('div', null, 'Recorded for ' + dateIn.value + '. Past days are view only.')), facts, r.flags ? msgBox('warn', 'Check: ' + r.flags) : null),
+      [{ label: 'Close', onclick: function (m) { m.close(); } }], { from: from });
+  }
+
+  function send() {
+    const ids = Object.keys(sel);
+    if (!ids.length) return;
+    const lines = ids.map(function (id) { return cfg.line(sel[id].field, sel[id].data); }), names = {};
+    ids.forEach(function (id) { names[id] = sel[id].field.code; });
+    const date = dateIn.value;
+    sel = {}; persist();                       // the entries leave the draft and wait in the upload queue (saved on the phone)
+    hadQueue = true;
+    clear(noteBox);
+    renderAll();
+    toast((navigator.onLine === false || Sync.offline) ? 'Saved on this phone. It uploads when you have signal.' : 'Submitting...');
+    Sync.queue(type, date, lines, names);
+  }
+}
+
+// ---------------------------------------------------------------- Foliar spray
+VIEWS['spray.entry'] = function (root) {
+  entryScreen(root, {
+    type: 'spray', title: 'Foliar spray',
+    intro: 'Tap a field card to enter its start and end time, the drones or men used, and how much of the field you covered.',
+    idle: function (f) { const p = f.progress; return p.done_ha > 0 ? 'Round ' + p.round + ', day ' + p.day_no + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha done' : (f.last_date ? 'Last sprayed ' + shortDate(f.last_date) : 'Not sprayed yet'); },
+    bar: function (f) { const p = f.progress; return p.done_ha > 0 ? Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) : null; },
+    summary: function (f, d) { return d.start_time + ' to ' + d.end_time + '  |  ' + d.units + (f.method === 'Drone' ? (d.units > 1 ? ' drones' : ' drone') : ' men') + '  |  ' + r2(d.area_ha) + ' ha'; },
+    recorded: function (r) { return r.start_time + '-' + r.end_time + ', ' + r.units + (r.method === 'Drone' ? ' drone(s)' : ' men') + ', ' + r2(r.area_ha) + ' ha'; },
+    facts: function (r) { return [['Time', r.start_time + ' to ' + r.end_time + ' (' + r2(r.hours) + ' h)'], [r.method === 'Drone' ? 'Drones' : 'Men', String(r.units)], ['Area covered that day', r2(r.area_ha) + ' ha']]; },
+    toData: function (r) { return { start_time: r.start_time, end_time: r.end_time, units: r.units, area_ha: r.area_ha, complete: !!(r.round && r.round.complete) }; },
+    line: function (f, d) { return { field_id: f.field_id, start_time: d.start_time, end_time: d.end_time, units: d.units, area_ha: d.area_ha, complete: !!d.complete }; },
+    popup: function (f, existing, ctl) {
+      const drone = f.method === 'Drone', p = f.progress;
+      const start = h('input', { type: 'time', value: existing ? existing.start_time : '' }), end = h('input', { type: 'time', value: existing ? existing.end_time : '' });
+      const count = stepper(existing ? existing.units : 1, 500);
+      const sl = roundSlider(f.area_ha, p.done_ha, existing ? existing.area_ha : 0);
+      const live = h('div', { class: 'live' }), err = h('div');
+      function upd() { const hr = hoursBetween(start.value, end.value), a = sl.get().area; live.textContent = hr ? 'Time taken: ' + r2(hr) + ' h   |   ' + (a > 0 ? r2(a / hr) + ' ha per hour' : 'move the slider to set the area') : 'Enter the start and end time to see the time taken.'; }
+      [start, end].forEach(function (i) { i.addEventListener('input', upd); }); sl.onChange(upd); upd();
+      const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
+      modal(popTitle(f), h('div', { class: 'stack' },
+        p.done_ha > 0 ? h('div', { class: 'callout' }, roundNote(p, f, 'sprayed')) : null,
+        h('div', { class: 'pair' }, field('Start time', start), field('End time', end)),
+        field(drone ? 'Number of drones used' : 'Number of men used', count.node),
+        field('Area covered (running total for this round)', sl.node), live, err), left.concat([
+        { label: 'Cancel', onclick: function (m) { m.close(); } },
+        { label: 'Save details', kind: 'primary', onclick: function (m) {
+          clear(err);
+          if (!start.value || !end.value) { err.appendChild(msgBox('err', 'Enter the start and end time.')); return; }
+          if (!hoursBetween(start.value, end.value)) { err.appendChild(msgBox('err', 'End time must be after start time.')); return; }
+          if (!(parseInt(count.get(), 10) >= 1)) { err.appendChild(msgBox('err', 'Enter how many ' + (drone ? 'drones' : 'men') + ' were used.')); return; }
+          const g = sl.get();
+          if (g.area < 0.05) { err.appendChild(msgBox('err', 'Move the slider forward to show how much more of the field you covered today.')); return; }
+          const data = { start_time: start.value, end_time: end.value, units: parseInt(count.get(), 10), area_ha: g.area, complete: g.complete };
+          m.close(); ctl.done(data);
+        } }]), { from: ctl.from, onClose: ctl.closed });
+    }
+  });
+};
+
+// ---------------------------------------------------------------- Plucking
+VIEWS['pluck.entry'] = function (root) {
+  entryScreen(root, {
+    type: 'pluck', title: 'Plucking',
+    intro: 'Tap a field card to enter the green leaf weight and how much of the field was plucked. Press 100% when the round is finished.',
+    idle: function (f) { const p = f.progress; return 'Round ' + p.round + (p.done_ha > 0 ? ', day ' + p.day_no + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha done' : ': not started'); },
+    bar: function (f) { const p = f.progress; return p.done_ha > 0 ? Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) : null; },
+    summary: function (f, d) { return d.kg + ' kg  |  ' + r2(d.area_ha) + ' ha  |  ' + r2(d.kg / d.area_ha) + ' kg/ha'; },
+    recorded: function (r) { return r.kg + ' kg from ' + r2(r.area_ha) + ' ha (' + r.kg_per_ha + ' kg/ha)'; },
+    facts: function (r) { return [['Green leaf', r.kg + ' kg'], ['Area plucked that day', r2(r.area_ha) + ' ha'], ['Per plucked ha', r.kg_per_ha + ' kg/ha']]; },
+    toData: function (r) { return { kg: r.kg, area_ha: r.area_ha, complete: !!(r.round && r.round.complete) }; },
+    line: function (f, d) { return { field_id: f.field_id, kg: d.kg, area_ha: d.area_ha, complete: !!d.complete }; },
+    popup: function (f, existing, ctl) {
+      const p = f.progress;
+      const kg = numInput(existing ? existing.kg : '', { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Green leaf kg' });
+      const sl = roundSlider(f.area_ha, p.done_ha, existing ? existing.area_ha : 0);
+      const live = h('div', { class: 'live' }), err = h('div');
+      function upd() { const v = Number(kg.value), a = sl.get().area; live.textContent = v > 0 && a > 0 ? r2(v / a) + ' kg per plucked ha' : 'Enter the weight and move the slider to see kg per ha.'; }
+      kg.addEventListener('input', upd); sl.onChange(upd); upd();
+      const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
+      modal(popTitle(f), h('div', { class: 'stack' },
+        h('div', { class: 'callout' }, roundNote(p, f, 'plucked'), h('div', { class: 'progress', style: 'margin-top:8px' }, h('i', { style: 'width:' + Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) + '%' }))),
+        field('Green leaf plucked today (kg)', kg),
+        field('Plucked area (running total for this round)', sl.node), live, err), left.concat([
+        { label: 'Cancel', onclick: function (m) { m.close(); } },
+        { label: 'Save details', kind: 'primary', onclick: function (m) {
+          clear(err);
+          if (!(Number(kg.value) > 0)) { err.appendChild(msgBox('err', 'Enter the green leaf weight in kg.')); return; }
+          const g = sl.get();
+          if (g.area < 0.05) { err.appendChild(msgBox('err', 'Move the slider forward to show how much more of the field you plucked today.')); return; }
+          const data = { kg: Number(kg.value), area_ha: g.area, complete: g.complete };
+          m.close(); ctl.done(data);
+        } }]), { from: ctl.from, onClose: ctl.closed });
+    }
+  });
+};
+
+// ---------------------------------------------------------------- Records (admin: view, edit, void)
+VIEWS['records.manage'] = function (root) {
+  const type = select([{ value: 'spray', label: 'Foliar spray records' }, { value: 'pluck', label: 'Plucking records' }], 'spray');
+  const from = h('input', { type: 'date' }), to = h('input', { type: 'date' });
+  const meth = select([{ value: '', label: 'Any method' }, { value: 'Drone', label: 'Drone' }, { value: 'Manual', label: 'Manual' }], '');
+  const stat = select([{ value: 'Active', label: 'Active only' }, { value: '', label: 'Active and voided' }, { value: 'Voided', label: 'Voided only' }], 'Active');
+  const find = h('input', { type: 'search', placeholder: 'Division or field' });
+  const out = h('div');
+  let last = null;
+  root.appendChild(pageHead('Records', 'Every spray and plucking record. Edit a measurement or void a record (the history is kept).'));
+  root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' },
+    h('div', { class: 'grow' }, field('Type', type)), h('div', { class: 'grow' }, field('From', from)), h('div', { class: 'grow' }, field('To', to)),
+    h('div', { class: 'grow' }, field('Method', meth)), h('div', { class: 'grow' }, field('Status', stat)), h('div', { class: 'grow' }, field('Field', find)),
+    h('button', { class: 'btn primary', onclick: function (ev) { run(ev.currentTarget, search); } }, 'Show'))));
+  root.appendChild(out);
+  find.addEventListener('input', render);
+  search();
+
+  function search() {
+    clear(out).appendChild(h('p', { class: 'muted' }, 'Loading...'));
+    return api('api_listRecords', { type: type.value, from: from.value, to: to.value, method: meth.value, status: stat.value }).then(function (d) { last = { type: type.value, d: d }; render(); })
+      .catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+  function render() {
+    if (!last) return;
+    const spray = last.type === 'spray', q = find.value.trim().toLowerCase();
+    const rows = last.d.rows.filter(function (r) { return !q || (r.division + ' ' + r.field_code).toLowerCase().indexOf(q) >= 0; });
+    const cols = [{ label: 'Date', key: 'date', cls: 'nowrap' }, { label: 'Field', render: function (r) { return (r.division ? r.division + ' ' : '') + r.field_code + (r.field_name ? ' ' + r.field_name : ''); } }, { label: 'Method', render: function (r) { return methodBadge(r.method); } }];
+    if (spray) {
+      cols.push({ label: 'Time', cls: 'nowrap', render: function (r) { return r.start_time + '-' + r.end_time; } }, { label: 'Hours', cls: 'num', render: function (r) { return num(r.hours, 2); } },
+        { label: 'Drones/men', cls: 'num', key: 'units' }, { label: 'ha', cls: 'num', render: function (r) { return num(r.area_ha, 2); } });
+    } else {
+      cols.push({ label: 'kg', cls: 'num', render: function (r) { return num(r.kg, 1); } }, { label: 'ha', cls: 'num', render: function (r) { return num(r.area_ha, 2); } }, { label: 'kg/ha', cls: 'num', render: function (r) { return num(r.kg_per_ha, 1); } });
+    }
+    cols.push({ label: 'Entered by', render: function (r) { return r.entered_by + ' ' + String(r.entered_at).slice(0, 10); } },
+      { label: 'Status', render: function (r) { return r.status === 'Voided' ? badge('Voided: ' + r.void_reason, 'bad') : (r.flags ? badge(r.flags, 'warn') : badge('OK', 'good')); } },
+      { label: '', cls: 'nowrap', render: function (r) { return [r.can_edit ? h('button', { class: 'btn small', onclick: function () { edit(last.type, r); } }, 'Edit') : null, ' ',
+        r.can_void ? h('button', { class: 'btn small danger', onclick: function () { askVoid(last.type, r, search); } }, 'Void') : null]; } });
+    clear(out);
+    out.appendChild(h('p', { class: 'muted small' }, last.d.total + ' record' + (last.d.total === 1 ? '' : 's') + (last.d.total > last.d.rows.length ? ' (showing the newest ' + last.d.rows.length + ')' : '')));
+    out.appendChild(table(cols, rows, function (r) { return r.status === 'Voided' ? 'void' : ''; }, { scroll: true }));
+  }
+  function edit(t, r) {
+    const f = {};
+    let body;
+    if (t === 'spray') {
+      f.start_time = h('input', { type: 'time', value: r.start_time }); f.end_time = h('input', { type: 'time', value: r.end_time });
+      f.units = numInput(r.units, { step: '1' }); f.area_ha = numInput(r.area_ha, { step: '0.01' });
+      body = h('div', { class: 'grid' }, field('Start', f.start_time), field('End', f.end_time), field(r.method === 'Drone' ? 'Drones' : 'Men', f.units), field('Area covered (ha)', f.area_ha));
+    } else {
+      f.kg = numInput(r.kg, { step: '0.1' }); f.area_ha = numInput(r.area_ha, { step: '0.01' });
+      body = h('div', { class: 'grid' }, field('Green leaf (kg)', f.kg), field('Area plucked (ha)', f.area_ha));
+    }
+    const err = h('div');
+    modal('Edit record: ' + r.date + ' / ' + r.division + ' ' + r.field_code, h('div', { class: 'stack' }, h('div', { class: 'muted small' }, 'Date and field cannot be changed. Void the record and enter it again for that. The change is logged.'), body, err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Save changes', kind: 'primary', onclick: function (m, btn) {
+        const patch = {}; Object.keys(f).forEach(function (k) { patch[k] = f[k].value; }); clear(err);
+        run(btn, function () { return api('api_editRecord', t, r.record_id, patch).then(function () { m.close(); toast('Record updated'); search(); }).catch(function (e) { err.appendChild(msgBox('err', e.message)); }); });
+      } }]);
+  }
+};
+</script>
+
+<script>
+'use strict';
+/* ===== Administration: Home checklist, Estate setup, Users, Job roles, Parameters, Audit log ===== */
+
+const SCOPE_TEXT = { assigned: 'Only the fields assigned to the person', drone: 'All Drone fields', all: 'All fields' };
+
+// ---------------------------------------------------------------- Home (admin)
+VIEWS['home'] = function (root) {
+  root.appendChild(pageHead('Welcome, ' + S.me.display_name, 'Your estate at a glance, and what is left to set up.'));
+  const box = h('div'); root.appendChild(box);
+  box.appendChild(skeleton(4));
+  api('api_setupStatus').then(function (s) {
+    clear(box);
+    if (!s.admin) return;
+    const st = s.stats;
+    box.appendChild(h('div', { class: 'kpis four' },
+      kpi('neutral', 'Fields', st.fields, st.complete + ' filled in, ' + num(st.ha, 1) + ' ha', 'map'),
+      kpi('drone', 'Drone fields', st.drone, num(st.drone_ha, 1) + ' ha', 'wind'),
+      kpi('manual', 'Manual fields', st.manual, num(st.manual_ha, 1) + ' ha', 'tractor'),
+      kpi('neutral', 'Entered today', st.spray_today + ' sprays', st.pluck_today + ' plucking records, ' + num(st.kg_today, 0) + ' kg', 'droplet')));
+    const done = s.steps.filter(function (x) { return x.done; }).length;
+    const list = h('ul', { class: 'steps' });
+    s.steps.forEach(function (x) {
+      list.appendChild(h('li', null, x.done ? badge('Done', 'good') : badge('To do', 'warn'), ' ', h('a', { onclick: function () { S.go(x.task); } }, x.label),
+        x.detail ? h('span', { class: 'muted small' }, '  ' + x.detail) : null));
+    });
+    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:10px' }, h('h2', { style: 'margin:0' }, 'Setup checklist'),
+      h('span', { class: 'muted small' }, done + ' of ' + s.steps.length + ' done')),
+      h('div', { class: 'progress', style: 'margin-bottom:14px' }, h('i', { style: 'width:' + Math.round(done / s.steps.length * 100) + '%' })), list));
+  }).catch(function (e) { clear(box).appendChild(msgBox('err', e.message)); });
+};
+
+// ---------------------------------------------------------------- Estate setup
+VIEWS['estate.manage'] = function (root) {
+  const out = h('div');
+  let data = null, openDiv = null;
+  const headActions = h('div', { class: 'row' });
+  root.appendChild(pageHead('Estate setup', 'Create the estate, then its divisions and fields. Every field needs its area, last prune date, tea type and spray method before it can be used.', headActions));
+  root.appendChild(out);
+  refresh();
+
+  function refresh() {
+    return api('api_getEstate').then(function (d) { data = d; render(); }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+  function render() {
+    clear(out);
+    if (!data.estate) return createEstateCard();
+    if (openDiv) { const dv = data.divisions.filter(function (x) { return x.division_id === openDiv; })[0]; if (dv) return gridView(dv); openDiv = null; }
+    overview();
+  }
+
+  function createEstateCard() {
+    const name = h('input', { type: 'text', maxlength: '80', placeholder: 'e.g. Pedro Estate' });
+    const n = numInput('', { step: '1', min: '1', max: '30', placeholder: 'e.g. 5' });
+    const msg = h('div');
+    out.appendChild(h('div', { class: 'card stack' }, h('h2', null, 'Create the estate'),
+      h('div', { class: 'muted' }, 'Enter the estate name and how many divisions it has. The divisions are created for you; you then add the fields to each.'),
+      h('div', { class: 'row' }, h('div', { class: 'grow' }, field('Estate name', name)), h('div', { class: 'grow' }, field('Number of divisions', n))), msg,
+      h('div', null, h('button', { class: 'btn primary', onclick: function (ev) {
+        run(ev.currentTarget, function () { return api('api_createEstate', { name: name.value, division_count: n.value }).then(function () { toast('Estate created'); return refresh(); }).catch(function (e) { clear(msg).appendChild(msgBox('err', e.message)); }); });
+      } }, 'Create estate'))));
+  }
+
+  function overview() {
+    const act = data.fields.filter(function (f) { return f.active; });
+    const haOf = function (l) { return l.reduce(function (t, f) { return t + (f.area_ha || 0); }, 0); };
+    const dr = act.filter(function (f) { return f.method === 'Drone'; }), ma = act.filter(function (f) { return f.method === 'Manual'; });
+    const complete = act.filter(function (f) { return f.complete; }).length;
+    clear(headActions);
+    headActions.appendChild(h('button', { class: 'btn', onclick: renameEstate }, 'Rename estate'));
+    headActions.appendChild(h('button', { class: 'btn', onclick: addDivisionsDialog }, icon('plus'), 'Add divisions'));
+    out.appendChild(h('div', { class: 'kpis four' },
+      kpi('neutral', 'Estate', data.estate.name, data.divisions.length + ' divisions', 'leaf'),
+      kpi('neutral', 'Fields', act.length, complete + ' filled in', 'map'),
+      kpi('drone', 'Drone fields', dr.length, num(haOf(dr), 1) + ' ha', 'wind'),
+      kpi('manual', 'Manual fields', ma.length, num(haOf(ma), 1) + ' ha', 'tractor')));
+    const grid = h('div', { class: 'divgrid' });
+    data.divisions.forEach(function (d) {
+      const mine = data.fields.filter(function (f) { return f.division_id === d.division_id && f.active; });
+      const drn = mine.filter(function (f) { return f.method === 'Drone'; }).length, man = mine.filter(function (f) { return f.method === 'Manual'; }).length;
+      const cnt = numInput('', { step: '1', min: '1', max: '300', placeholder: 'How many?', class: 'w120' });
+      grid.appendChild(h('div', { class: 'card divcard' },
+        h('div', { class: 'row between', style: 'margin-bottom:8px' }, h('h2', { style: 'margin:0' }, d.name, d.active ? '' : ' (inactive)'), h('button', { class: 'btn small ghost', onclick: function () { renameDivision(d); } }, 'Rename')),
+        h('div', { class: 'mini' }, h('span', { class: 'muted' }, num(haOf(mine), 1) + ' ha'), drn ? badge(drn + ' Drone', 'drone') : null, man ? badge(man + ' Manual', 'manual') : null),
+        h('div', { class: 'muted', style: 'margin:12px 0 6px' }, d.field_count + ' fields: ' + d.complete_count + ' complete, ' + d.assigned_count + ' with an AFO'),
+        h('div', { class: 'progress', style: 'margin-bottom:16px' }, h('i', { style: 'width:' + (d.field_count ? Math.round(d.complete_count / d.field_count * 100) : 0) + '%' })),
+        d.field_count ? h('button', { class: 'btn primary', style: 'width:100%;margin-bottom:14px', onclick: function () { openDiv = d.division_id; render(); } }, 'Fill in the fields') : null,
+        h('div', { class: 'row', style: 'align-items:flex-end;padding-top:14px;border-top:1px solid var(--line)' },
+          h('div', { class: 'grow' }, field('Add fields to this division', cnt)),
+          h('button', { class: 'btn', onclick: function (ev) { run(ev.currentTarget, function () { return api('api_addFields', d.division_id, cnt.value).then(function (n) { toast(n + ' fields added'); openDiv = d.division_id; return refresh(); }); }); } }, 'Create fields'))));
+    });
+    out.appendChild(grid);
+  }
+  function addDivisionsDialog() {
+    const more = numInput('', { step: '1', min: '1', max: '30', placeholder: 'e.g. 2' }), err = h('div');
+    modal('Add divisions', h('div', { class: 'stack' }, field('How many divisions to add?', more), err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Add', kind: 'primary', onclick: function (m, btn) { run(btn, function () { return api('api_addDivisions', more.value).then(function (n) { m.close(); toast(n + ' divisions added'); return refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); }); } }]);
+  }
+
+  function renameEstate() {
+    const name = h('input', { type: 'text', value: data.estate.name, maxlength: '80' }), err = h('div');
+    modal('Rename estate', h('div', { class: 'stack' }, field('Estate name', name), err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Save', kind: 'primary', onclick: function (m, b) { run(b, function () { return api('api_renameEstate', name.value).then(function () { m.close(); return refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); }); } }]);
+  }
+  function renameDivision(d) {
+    const name = h('input', { type: 'text', value: d.name, maxlength: '60' });
+    const act = select([{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }], String(d.active)), err = h('div');
+    modal('Division', h('div', { class: 'stack' }, field('Division name', name), field('Status', act), err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Save', kind: 'primary', onclick: function (m, b) { run(b, function () { return api('api_saveDivision', { division_id: d.division_id, name: name.value, active: act.value === 'true' }).then(function () { m.close(); return refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); }); } }]);
+  }
+
+  // The grid: one row per field; fill in area, last prune date, VP/SD and spray method.
+  function gridView(dv) {
+    const rows = data.fields.filter(function (f) { return f.division_id === dv.division_id; }).map(function (f) {
+      return { f: f,
+        code: h('input', { type: 'text', value: f.code, maxlength: '20', class: 'w90' }), name: h('input', { type: 'text', value: f.name, maxlength: '80', placeholder: 'optional' }),
+        area: numInput(f.area_ha, { step: '0.01', class: 'w90' }), prune: h('input', { type: 'date', value: f.last_prune_date || '', max: S.today }),
+        tea: select([{ value: '', label: '-' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], f.tea_type),
+        method: select([{ value: '', label: '-' }, { value: 'Drone', label: 'Drone' }, { value: 'Manual', label: 'Manual' }], f.method),
+        active: h('input', { type: 'checkbox', checked: f.active }) };
+    });
+    const msg = h('div');
+    const fillTea = select([{ value: '', label: 'Tea type...' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], '');
+    const fillMeth = select([{ value: '', label: 'Method...' }, { value: 'Drone', label: 'Drone' }, { value: 'Manual', label: 'Manual' }], '');
+    const fillPrune = h('input', { type: 'date', max: S.today }), fillArea = numInput('', { step: '0.01', placeholder: 'ha', class: 'w90' });
+    function save(btn) {
+      clear(msg);
+      const payload = rows.map(function (r) { return { field_id: r.f.field_id, code: r.code.value, name: r.name.value, area_ha: r.area.value, last_prune_date: r.prune.value, tea_type: r.tea.value, method: r.method.value, active: r.active.checked }; });
+      run(btn, function () { return api('api_saveFields', dv.division_id, payload).then(function (r) { toast(r.changed ? r.changed + ' fields saved' : 'Nothing had changed'); return api('api_getEstate').then(function (d) { data = d; msg.appendChild(msgBox('ok', r.changed ? 'Saved.' : 'Nothing had changed.')); }); }).catch(function (e) { msg.appendChild(msgBox('err', e.message)); }); });
+    }
+    const saveBtn = h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields');
+    out.appendChild(h('div', { class: 'card' },
+      h('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, h('h2', { style: 'margin:0' }, dv.name + ': fields'),
+        h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openDiv = null; refresh(); } }, 'Back to divisions'), saveBtn)),
+      h('div', { class: 'muted small', style: 'margin:6px 0' }, 'For every field enter the area, the last pruning date, the tea type and the spray method. The method is fixed per field: spray entry never asks for it. Fields that are not complete cannot be used for data entry.'),
+      h('div', { class: 'row fillbar' }, h('strong', { class: 'small' }, 'Fill empty cells in all rows:'), fillTea, fillMeth, fillPrune, fillArea,
+        h('button', { class: 'btn small', onclick: function () {
+          rows.forEach(function (r) {
+            if (fillTea.value && !r.tea.value) r.tea.value = fillTea.value; if (fillMeth.value && !r.method.value) r.method.value = fillMeth.value;
+            if (fillPrune.value && !r.prune.value) r.prune.value = fillPrune.value; if (fillArea.value && !r.area.value) r.area.value = fillArea.value;
+          });
+        } }, 'Apply')),
+      msg,
+      h('div', { class: 'tablewrap scroll' }, h('table', { class: 'grid-edit' }, h('thead', null, h('tr', null, ['Code', 'Name', 'Area (ha)', 'Last prune date', 'Tea type', 'Spray method', 'AFO', 'Active'].map(function (x) { return h('th', null, x); }))),
+        h('tbody', null, rows.map(function (r) {
+          return h('tr', { class: r.f.complete ? '' : 'incomplete' }, h('td', null, r.code), h('td', null, r.name), h('td', null, r.area), h('td', null, r.prune), h('td', null, r.tea), h('td', null, r.method),
+            h('td', { class: 'small' }, r.f.afo_name ? r.f.afo_name + (r.f.afo_active ? '' : ' (inactive)') : h('span', { class: 'muted' }, 'none')), h('td', null, r.active));
+        })))),
+      h('div', { style: 'margin-top:12px' }, h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields'))));
+  }
+};
+
+// ---------------------------------------------------------------- Users (and AFO field assignment)
+VIEWS['users.manage'] = function (root) {
+  const out = h('div');
+  const newUserBtn = h('button', { class: 'btn primary', disabled: true, onclick: function () { edit(null, state.roles, state.estate); } }, icon('plus'), 'New user');
+  root.appendChild(pageHead('Users', 'Create accounts, choose each person\'s job role, and give every AFO their own fields.',
+    newUserBtn));
+  root.appendChild(out);
+  refresh();
+
+  let state = null;
+  const search = h('input', { type: 'search', placeholder: 'Search name or username' });
+  const roleF = h('select');
+  const listBox = h('div');
+  search.addEventListener('input', renderList); roleF.addEventListener('change', renderList);
+
+  function refresh() {
+    Promise.all([api('api_listUsers'), api('api_listRoles'), api('api_getEstate')]).then(function (res) {
+      state = { users: res[0], roles: res[1].filter(function (r) { return r.active; }), estate: res[2] };
+      newUserBtn.disabled = false;
+      const keep = roleF.value;
+      clear(roleF); roleF.appendChild(h('option', { value: '' }, 'All roles'));
+      state.roles.forEach(function (r) { roleF.appendChild(h('option', { value: r.role_id }, r.role_name)); });
+      roleF.value = keep;
+      clear(out);
+      const active = state.estate.fields.filter(function (f) { return f.active; });
+      const unassigned = active.filter(function (f) { return !f.afo_user_id; }).length;
+      out.appendChild(h('div', { class: 'card flush' },
+        h('div', { class: 'row', style: 'padding:16px;align-items:center' }, h('div', { class: 'grow', style: 'flex-basis:260px' }, search), h('div', { class: 'grow', style: 'flex-basis:180px;max-width:240px' }, roleF),
+          state.estate.estate ? h('span', { class: 'muted small' }, unassigned + ' of ' + active.length + ' fields have no AFO yet') : null),
+        listBox));
+      renderList();
+    }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+  function renderList() {
+    const q = search.value.trim().toLowerCase();
+    const users = state.users.filter(function (u) { return (!q || (u.display_name + ' ' + u.username).toLowerCase().indexOf(q) >= 0) && (!roleF.value || u.role_id === roleF.value); });
+    clear(listBox).appendChild(table([
+      { label: 'Name', render: function (u) { return h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:10px' }, h('div', { class: 'avatar' }, initials(u.display_name)), h('span', null, u.display_name)); } },
+      { label: 'Username', key: 'username', cls: 'nowrap' }, { label: 'Job role', cls: 'nowrap', render: function (u) { return u.is_admin ? badge(u.role_name, 'warn') : u.role_name; } },
+      { label: 'Fields', cls: 'num nowrap', render: function (u) { return u.field_scope === 'assigned' && !u.is_admin ? u.field_count + ' (' + num(u.field_ha, 1) + ' ha)' : ''; } },
+      { label: 'Status', cls: 'nowrap', render: function (u) { return [u.active ? badge('Active', 'good') : badge('Inactive', 'bad'), ' ', u.locked ? badge('Locked', 'bad') : null, u.must_change && u.active ? badge('Temp password', 'warn') : null]; } },
+      { label: 'Last login', cls: 'hide-sm nowrap', render: function (u) { return u.last_login ? String(u.last_login).replace('T', ' ').slice(0, 16) : 'never'; } },
+      { label: '', cls: 'nowrap', render: function (u) { return [h('button', { class: 'btn small', onclick: function () { edit(u, state.roles, state.estate); } }, 'Edit'), ' ',
+        h('button', { class: 'btn small', onclick: function () { reset(u); } }, 'Reset password'), ' ',
+        u.locked ? h('button', { class: 'btn small', onclick: function () { api('api_unlockUser', u.user_id).then(function () { toast('Unlocked'); refresh(); }).catch(function (e) { toast(e.message, true); }); } }, 'Unlock') : null]; } }], users, function (u) { return u.active ? '' : 'void'; }));
+  }
+
+  function showTemp(name, username, pw) {
+    modal('Temporary password for ' + name, h('div', { class: 'stack' }, h('div', null, 'Username: ', h('strong', null, username)), h('div', { class: 'pw' }, pw),
+      msgBox('warn', 'Write this down or pass it on now. It is shown only once and is not stored. The user must choose their own password at first login.')), [{ label: 'Done', kind: 'primary', onclick: function (m) { m.close(); } }]);
+  }
+
+  function edit(u, roles, estate) {
+    const isNew = !u;
+    const name = h('input', { type: 'text', value: u ? u.display_name : '', maxlength: '60' });
+    const uname = h('input', { type: 'text', value: u ? u.username : '', maxlength: '30', disabled: !isNew, autocapitalize: 'none', spellcheck: 'false' });
+    const roleSel = select([{ value: '', label: 'Choose a job role...' }].concat(roles.map(function (r) { return { value: r.role_id, label: r.role_name }; })), u ? u.role_id : '');
+    const act = select([{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive (cannot log in)' }], String(u ? u.active : true));
+    const err = h('div'), fieldsBox = h('div');
+    const picked = {};   // field_id -> checkbox
+    (u ? u.field_ids : []).forEach(function (id) { picked[id] = true; });
+    const countLbl = h('span', { class: 'muted' });
+    const roleOf = function () { return roles.filter(function (r) { return r.role_id === roleSel.value; })[0]; };
+
+    function updCount() { countLbl.textContent = Object.keys(picked).filter(function (k) { return picked[k]; }).length + ' fields selected'; }
+    function renderFields() {
+      clear(fieldsBox);
+      const r = roleOf();
+      if (!r || r.is_admin || r.field_scope !== 'assigned') { if (r) fieldsBox.appendChild(h('div', { class: 'muted small' }, 'Field scope for this role: ' + (SCOPE_TEXT[r.field_scope] || '') + '. No fields need to be assigned.')); return; }
+      if (!estate.estate) { fieldsBox.appendChild(msgBox('warn', 'Create the estate and fields first, then assign them here.')); return; }
+      fieldsBox.appendChild(h('div', { class: 'row', style: 'justify-content:space-between' }, h('strong', null, 'Fields this person is responsible for'), countLbl));
+      groupBy(estate.fields.filter(function (f) { return f.active; }), function (f) { return f.division; }).forEach(function (g) {
+        const boxes = [];
+        const head = h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-top:8px' }, h('span', { class: 'divhead', style: 'margin:0' }, g.key),
+          h('span', null, h('button', { type: 'button', class: 'btn small', onclick: function () { boxes.forEach(function (b) { if (!b.owner || b.owner === (u && u.user_id)) { b.cb.checked = true; picked[b.id] = true; } }); updCount(); } }, 'Tick unassigned'), ' ',
+            h('button', { type: 'button', class: 'btn small', onclick: function () { boxes.forEach(function (b) { b.cb.checked = false; picked[b.id] = false; }); updCount(); } }, 'Clear')));
+        const list = h('div', { class: 'checkgrid' });
+        g.items.forEach(function (f) {
+          const cb = h('input', { type: 'checkbox', checked: !!picked[f.field_id], onchange: function () { picked[f.field_id] = cb.checked; updCount(); } });
+          boxes.push({ cb: cb, id: f.field_id, owner: f.afo_user_id });
+          const other = f.afo_user_id && (!u || f.afo_user_id !== u.user_id);
+          list.appendChild(h('label', { class: 'checkitem' + (f.complete ? '' : ' incomplete') }, cb, ' ' + f.code + ' ', h('span', { class: 'muted small' }, f.area_ha ? f.area_ha + ' ha' : 'not filled in'),
+            other ? h('span', { class: 'badge warn', title: 'Currently assigned to ' + f.afo_name }, f.afo_name) : null));
+        });
+        fieldsBox.appendChild(head); fieldsBox.appendChild(list);
+      });
+      updCount();
+    }
+    roleSel.addEventListener('change', renderFields); renderFields();
+    modal(isNew ? 'New user' : 'Edit ' + u.username, h('div', { class: 'stack' }, field('Full name', name), field('Username', uname, isNew ? 'Lowercase letters, digits, dot, dash, underscore. Cannot be changed later.' : ''),
+      field('Job role', roleSel), isNew ? null : field('Status', act), fieldsBox, err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: isNew ? 'Create user' : 'Save', kind: 'primary', onclick: function (m, btn) {
+        const p = { display_name: name.value, role_id: roleSel.value, field_ids: Object.keys(picked).filter(function (k) { return picked[k]; }) };
+        if (isNew) p.username = uname.value; else { p.user_id = u.user_id; p.active = act.value === 'true'; }
+        run(btn, function () { return api('api_saveUser', p).then(function (r) { m.close(); refresh(); if (r.temp_password) showTemp(name.value, r.username, r.temp_password); else toast('Saved'); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
+      } }]);
+  }
+  function reset(u) {
+    modal('Reset password?', h('div', null, 'Create a new temporary password for ' + u.display_name + ' (' + u.username + ')? Their current password stops working immediately.'), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Reset', kind: 'danger', onclick: function (m, btn) { run(btn, function () { return api('api_resetPassword', u.user_id).then(function (r) { m.close(); refresh(); showTemp(u.display_name, r.username, r.temp_password); }); }); } }]);
+  }
+};
+
+// ---------------------------------------------------------------- Job roles
+VIEWS['roles.manage'] = function (root) {
+  const out = h('div');
+  const newRoleBtn = h('button', { class: 'btn primary', disabled: true, onclick: function () { edit(null, tasksCache); } }, icon('plus'), 'New job role');
+  let tasksCache = null;
+  root.appendChild(pageHead('Job roles', 'A job role is a set of tasks plus the fields it can record on. Every user has one role and sees only the tabs for that role\'s tasks. Changes apply immediately, even to people already logged in.',
+    newRoleBtn));
+  root.appendChild(out);
+  refresh();
+
+  function refresh() {
+    Promise.all([api('api_listRoles'), api('api_listTasks')]).then(function (res) {
+      const roles = res[0], tasks = res[1];
+      const label = {}; tasks.forEach(function (t) { label[t.id] = t.label; });
+      clear(out);
+      tasksCache = tasks; newRoleBtn.disabled = false;
+      out.appendChild(h('div', { class: 'card flush' },
+        table([{ label: 'Role', render: function (r) { return [h('strong', null, r.role_name), r.description ? h('div', { class: 'muted small' }, r.description) : null]; } },
+          { label: 'Tasks (tabs)', render: function (r) { return r.is_admin ? badge('Everything', 'warn') : (r.tasks.length ? r.tasks.map(function (t) { return [badge(label[t] || t), ' ']; }) : h('span', { class: 'muted' }, 'None')); } },
+          { label: 'Can record on', cls: 'hide-sm', render: function (r) { return SCOPE_TEXT[r.field_scope]; } },
+          { label: 'Users', cls: 'num', key: 'user_count' }, { label: 'Status', render: function (r) { return r.active ? badge('Active', 'good') : badge('Inactive', 'bad'); } },
+          { label: '', render: function (r) { return r.is_admin ? h('span', { class: 'muted small' }, 'Fixed') : h('button', { class: 'btn small', onclick: function () { edit(r, tasks); } }, 'Edit'); } }], roles, function (r) { return r.active ? '' : 'void'; })));
+    }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+
+  function edit(r, tasks) {
+    const isNew = !r; r = r || { tasks: [], active: true, field_scope: 'assigned' };
+    const name = h('input', { type: 'text', value: r.role_name || '', maxlength: '50', placeholder: 'e.g. Assistant Field Officer' });
+    const desc = h('input', { type: 'text', value: r.description || '', maxlength: '200' });
+    const scope = select(['assigned', 'drone', 'all'].map(function (k) { return { value: k, label: SCOPE_TEXT[k] }; }), r.field_scope);
+    const act = select([{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }], String(r.active !== false));
+    const boxes = {}, groups = h('div');
+    groupBy(tasks, function (t) { return t.group; }).forEach(function (g) {
+      const gd = h('div', { class: 'taskgroup' }, h('div', { class: 'divhead', style: 'margin-top:4px' }, g.key));
+      g.items.forEach(function (t) {
+        const cb = h('input', { type: 'checkbox', id: 'tk-' + t.id, checked: r.tasks.indexOf(t.id) >= 0 });
+        boxes[t.id] = cb;
+        gd.appendChild(h('div', { class: 'taskrow' }, cb, h('label', { for: 'tk-' + t.id }, h('strong', null, t.label), ' ', t.sensitive ? badge('Admin-level', 'bad') : null, h('div', { class: 'muted small' }, t.desc))));
+      });
+      groups.appendChild(gd);
+    });
+    const err = h('div');
+    modal(isNew ? 'New job role' : 'Edit role: ' + r.role_name, h('div', { class: 'stack' }, field('Role name', name), field('Description', desc), isNew ? null : field('Status', act),
+      field('Which fields can this role record on?', scope, 'Applies to Foliar spray and Plucking'), h('div', null, h('strong', null, 'Tasks (tabs) this role can use'), groups),
+      msgBox('warn', 'Admin-level tasks let a person create accounts and change permissions. Give them only to trusted administrators.'), err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Save role', kind: 'primary', onclick: function (m, btn) {
+        const p = { role_name: name.value, description: desc.value, field_scope: scope.value, tasks: Object.keys(boxes).filter(function (k) { return boxes[k].checked; }) };
+        if (!isNew) { p.role_id = r.role_id; p.active = act.value === 'true'; }
+        run(btn, function () { return api('api_saveRole', p).then(function () { m.close(); toast('Role saved'); refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
+      } }]);
+  }
+};
+
+// ---------------------------------------------------------------- Parameters
+VIEWS['params.manage'] = function (root) {
+  const out = h('div');
+  root.appendChild(pageHead('Parameters and rates', 'Cost rates carry an effective-from date: a new rate applies from that date forward and earlier records keep the rate that applied then. Other settings use the latest value.'));
+  root.appendChild(out);
+  refresh();
+
+  function show(p) {
+    if (p.type === 'bool') return p.value ? 'Yes' : 'No';
+    if (p.value === '' || p.value === null) return '(not set)';
+    return p.type === 'number' ? num(p.value, 4) + (p.unit ? ' ' + p.unit : '') : String(p.value);
+  }
+  function refresh() {
+    api('api_listParams').then(function (list) {
+      clear(out);
+      groupBy(list, function (p) { return p.group; }).forEach(function (g) {
+        out.appendChild(h('div', { class: 'card' }, h('h2', null, g.key), table([
+          { label: 'Parameter', render: function (p) { return [h('div', null, p.label), p.help ? h('div', { class: 'muted small' }, p.help) : null]; } },
+          { label: 'Current value', render: function (p) { return [h('strong', null, show(p)), p.is_default ? h('span', { class: 'muted small' }, '  default') : null]; } },
+          { label: 'Since', cls: 'nowrap hide-sm', render: function (p) { return p.dated && p.effective_from ? p.effective_from : ''; } },
+          { label: '', cls: 'nowrap', render: function (p) { return [h('button', { class: 'btn small', onclick: function () { change(p); } }, 'Change'), ' ',
+            p.history_count ? h('button', { class: 'btn small', onclick: function () { history(p); } }, 'History') : null]; } }], g.items)));
+      });
+    }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+  function change(p) {
+    let input;
+    if (p.type === 'enum') input = select(p.options.map(function (o) { return { value: o, label: o }; }), String(p.value));
+    else if (p.type === 'bool') input = select([{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], String(!!p.value));
+    else if (p.type === 'date') input = h('input', { type: 'date', value: p.value || '' });
+    else if (p.type === 'number') input = numInput(p.value, { step: 'any' });
+    else input = h('input', { type: 'text', value: p.value || '', maxlength: '100' });
+    const eff = p.dated ? h('input', { type: 'date', value: S.today }) : null;
+    const note = h('input', { type: 'text', maxlength: '200', placeholder: 'Optional note, e.g. new wage agreement' }), err = h('div');
+    modal(p.label, h('div', { class: 'stack' }, field('New value' + (p.unit ? ' (' + p.unit + ')' : ''), input), eff ? field('Effective from', eff, 'Applies to work on or after this date') : null, field('Note', note), err), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Save', kind: 'primary', onclick: function (m, btn) {
+        run(btn, function () { return api('api_setParam', { key: p.key, value: input.value, effective_from: eff ? eff.value : '', note: note.value })
+          .then(function () { m.close(); toast('Saved'); refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
+      } }]);
+  }
+  function history(p) {
+    api('api_paramHistory', p.key).then(function (rows) {
+      modal('History: ' + p.label, table([{ label: 'Value', key: 'value' }, { label: 'From', key: 'effective_from', cls: 'nowrap' }, { label: 'Note', key: 'note' }, { label: 'Set by', key: 'set_by' },
+        { label: 'When', render: function (r) { return String(r.set_at).replace('T', ' '); }, cls: 'nowrap' }], rows), [{ label: 'Close', onclick: function (m) { m.close(); } }]);
+    }).catch(function (e) { toast(e.message, true); });
+  }
+};
+
+// ---------------------------------------------------------------- Audit log
+VIEWS['audit.view'] = function (root) {
+  const out = h('div');
+  const q = h('input', { type: 'search', placeholder: 'Filter by user, action or text' });
+  let rows = [];
+  root.appendChild(pageHead('Audit log', 'Who did what and when. Passwords are never recorded here.'));
+  root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' }, h('div', { class: 'grow' }, q), h('button', { class: 'btn', onclick: function (ev) { run(ev.currentTarget, load); } }, 'Refresh'))));
+  root.appendChild(out);
+  q.addEventListener('input', render);
+  load();
+  function load() { return api('api_listAudit', 300).then(function (r) { rows = r; render(); }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); }); }
+  function render() {
+    const t = q.value.trim().toLowerCase();
+    const list = rows.filter(function (r) { return !t || (r.user + ' ' + r.action + ' ' + r.entity + ' ' + r.details).toLowerCase().indexOf(t) >= 0; });
+    clear(out).appendChild(table([{ label: 'When', cls: 'nowrap', render: function (r) { return String(r.ts).replace('T', ' '); } }, { label: 'User', key: 'user' },
+      { label: 'Action', render: function (r) { return badge(r.action, /FAIL|BLOCK|VOID/.test(r.action) ? 'bad' : ''); } }, { label: 'Entity', key: 'entity', cls: 'hide-sm' },
+      { label: 'Details', render: function (r) { return h('span', { class: 'small' }, r.details); } }], list));
+  }
+};
+</script>
+
+<script>
+'use strict';
+/* ===== Dashboard: daily summary of plucking and spraying, Drone vs Manual, by years since last prune ===== */
+
+function svgEl(tag, attrs, text) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in (attrs || {})) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function niceStep(raw) { if (!(raw > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(raw))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+
+/** Two-series line chart (green leaf kg per plucked ha per day). Plain SVG, no library. */
+function lineChart(rows) {
+  const W = 900, H = 290, m = { l: 56, r: 18, t: 30, b: 36 };
+  const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Green leaf per plucked hectare by day, drone and manual' });
+  const series = [{ key: 'Drone', color: 'var(--drone)' }, { key: 'Manual', color: 'var(--manual)' }];
+  const dayMs = function (s) { return new Date(s + 'T00:00:00Z').getTime(); };
+  const pts = {};
+  let max = 0, min = Infinity, t0 = Infinity, t1 = -Infinity;
+  series.forEach(function (s) {
+    pts[s.key] = rows.filter(function (r) { return r[s.key].kg_per_ha !== ''; }).map(function (r) { const t = dayMs(r.date); max = Math.max(max, r[s.key].kg_per_ha); min = Math.min(min, r[s.key].kg_per_ha); t0 = Math.min(t0, t); t1 = Math.max(t1, t); return { t: t, v: r[s.key].kg_per_ha, d: r.date }; });
+  });
+  if (!isFinite(t0)) return null;
+  if (t1 === t0) t1 = t0 + 86400000;
+  // zoomed axis with round tick values (it does not start at zero, and the chart says so)
+  let lo = min * 0.9, hi = max * 1.05;
+  const step = niceStep((hi - lo) / 4);
+  lo = Math.max(0, Math.floor(lo / step) * step); hi = Math.ceil(hi / step) * step;
+  if (hi <= lo) hi = lo + step;
+  const x = function (t) { return m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r); }, y = function (v) { return H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b); };
+  for (let v = lo; v <= hi + step / 1000; v += step) {
+    svg.appendChild(svgEl('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), style: 'stroke:var(--line)', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end', style: 'fill:var(--muted);font-size:11px' }, num(v, 0)));
+  }
+  const nx = Math.min(6, Math.max(2, Math.round((t1 - t0) / 86400000) + 1));
+  for (let i = 0; i < nx; i++) {
+    const t = t0 + (t1 - t0) / (nx - 1) * i, d = new Date(t);
+    svg.appendChild(svgEl('text', { x: x(t), y: H - 12, 'text-anchor': i === 0 ? 'start' : (i === nx - 1 ? 'end' : 'middle'), style: 'fill:var(--muted);font-size:11px' }, d.toISOString().slice(5, 10)));
+  }
+  svg.appendChild(svgEl('text', { x: 4, y: 12, style: 'fill:var(--muted);font-size:11px' }, 'kg per plucked ha' + (lo > 0 ? '  (axis starts at ' + num(lo, 0) + ')' : '')));
+  series.forEach(function (s) {
+    const p = pts[s.key];
+    if (p.length > 1) svg.appendChild(svgEl('polyline', { points: p.map(function (q) { return x(q.t) + ',' + y(q.v); }).join(' '), fill: 'none', style: 'stroke:' + s.color, 'stroke-width': 2.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    p.forEach(function (q) { const c = svgEl('circle', { cx: x(q.t), cy: y(q.v), r: 3.6, style: 'fill:var(--surface);stroke:' + s.color, 'stroke-width': 2 }); c.appendChild(svgEl('title', {}, s.key + ' ' + q.d + ': ' + num(q.v, 1) + ' kg/ha')); svg.appendChild(c); });
+  });
+  return svg;
+}
+
+function kpi(kind, label, value, sub, ic) {
+  return h('div', { class: 'kpi ' + kind }, h('div', { class: 'k-label' }, icon(ic || 'leaf'), label), h('div', { class: 'k-val' }, value), h('div', { class: 'k-sub' }, sub || ''));
+}
+
+
+/** Rounds: how many days a field takes to finish a round, and the gap between the first days of consecutive rounds. */
+function roundsCard(r) {
+  let which = 'pluck';
+  const box = h('div'), seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Round type' });
+  const btns = {};
+  [['pluck', 'Plucking rounds'], ['spray', 'Foliar spray rounds']].forEach(function (x) {
+    btns[x[0]] = h('button', { type: 'button', class: x[0] === which ? 'on' : '', onclick: function () { which = x[0]; Object.keys(btns).forEach(function (k) { btns[k].classList.toggle('on', k === which); }); paint(); } }, x[1]);
+    seg.appendChild(btns[x[0]]);
+  });
+  const dash = function (v, u) { return v === '' || v === null || v === undefined ? '-' : num(v, 1) + (u || ''); };
+  function paint() {
+    const d = r[which];
+    clear(box);
+    box.appendChild(table([{ label: 'Method', render: function (x) { return methodBadge(x.m); } }, { label: 'Rounds started', cls: 'num', key: 'rounds' }, { label: 'Completed', cls: 'num', key: 'complete' },
+      { label: 'Avg days to complete a round', cls: 'num', render: function (x) { return dash(x.avg_days); } }, { label: 'Avg gap between rounds (days)', cls: 'num', render: function (x) { return dash(x.avg_gap); } }],
+      [Object.assign({ m: 'Drone' }, d.Drone), Object.assign({ m: 'Manual' }, d.Manual)], null, { scroll: true }));
+    box.appendChild(h('div', { class: 'divhead' }, 'Rounds by field (newest first)'));
+    box.appendChild(table([{ label: 'Field', key: 'field', cls: 'nowrap' }, { label: 'Method', render: function (x) { return methodBadge(x.method); } }, { label: 'Round', cls: 'num', key: 'no' },
+      { label: 'Started', key: 'start', cls: 'nowrap' }, { label: 'Finished', cls: 'nowrap', render: function (x) { return x.complete ? x.end : h('span', { class: 'muted' }, 'in progress'); } },
+      { label: 'Days', cls: 'num', key: 'days' }, { label: 'Gap (days)', cls: 'num', render: function (x) { return x.gap === '' ? '-' : x.gap; } },
+      { label: 'Done', cls: 'num', render: function (x) { return num(x.done_ha, 1) + ' / ' + num(x.area_ha, 1) + ' ha'; } }], d.list, null, { scroll: true }));
+  }
+  paint();
+  return h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Rounds'), seg),
+    h('p', { class: 'muted small', style: 'margin:0 0 12px' }, 'A round is finished when the whole field has been covered, which can take several days. Days to complete counts from the first day of the round to the day it was finished. The gap is the number of days between the first day of a round and the first day of the round before it.'), box);
+}
+
+VIEWS['dashboard.view'] = function (root) {
+  const to = h('input', { type: 'date', value: S.today, max: S.today });
+  const from = h('input', { type: 'date', value: addDaysStr(S.today, -29), max: S.today });
+  const out = h('div');
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Period' });
+  [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']].forEach(function (p) {
+    seg.appendChild(h('button', { type: 'button', 'data-days': String(p[0]), class: p[0] === 30 ? 'on' : '', onclick: function () {
+      from.value = addDaysStr(S.today, -(p[0] - 1)); to.value = S.today; load();
+    } }, p[1]));
+  });
+  root.appendChild(pageHead('Dashboard', 'Green leaf and foliar spray summary, drone fields vs manual fields.'));
+  root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' }, h('div', null, h('div', { class: 'small muted', style: 'margin-bottom:6px' }, 'Period'), seg),
+    h('div', { class: 'grow' }, field('From', from)), h('div', { class: 'grow' }, field('To', to)),
+    h('button', { class: 'btn primary', onclick: function (ev) { run(ev.currentTarget, load); } }, 'Show'))));
+  root.appendChild(out);
+  load();
+
+  function addDaysStr(s, n) { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function cell(v, d) { return v === '' || v === null || v === undefined ? '' : num(v, d === undefined ? 1 : d); }
+  function dash(v) { return v === '' || v === null || v === undefined ? '-' : v; }
+  function load() {
+    Array.prototype.forEach.call(seg.children, function (b) {   // highlight the preset that matches the chosen dates
+      b.classList.toggle('on', to.value === S.today && from.value === addDaysStr(S.today, -(parseInt(b.getAttribute('data-days'), 10) - 1)));
+    });
+    clear(out).appendChild(skeleton(4));
+    return api('api_dashboard', { from: from.value, to: to.value }).then(function (d) {
+      clear(out);
+      const T = d.totals, Sp = d.spray, E = d.estate;
+      const hrD = Sp.Drone.hours > 0 ? Sp.Drone.ha / Sp.Drone.hours : '', hrM = Sp.Manual.hours > 0 ? Sp.Manual.ha / Sp.Manual.hours : '';
+      const diff = T.Drone.kg_per_ha !== '' && T.Manual.kg_per_ha !== '' && T.Manual.kg_per_ha > 0 ? (T.Drone.kg_per_ha / T.Manual.kg_per_ha - 1) * 100 : '';
+      out.appendChild(h('div', { class: 'kpis' },
+        kpi('drone', 'Drone fields: green leaf', dash(cell(T.Drone.kg_per_ha)) + (T.Drone.kg_per_ha !== '' ? ' kg/ha' : ''), cell(T.Drone.kg, 0) + ' kg from ' + cell(T.Drone.ha, 1) + ' ha plucked', 'wind'),
+        kpi('manual', 'Manual fields: green leaf', dash(cell(T.Manual.kg_per_ha)) + (T.Manual.kg_per_ha !== '' ? ' kg/ha' : ''), cell(T.Manual.kg, 0) + ' kg from ' + cell(T.Manual.ha, 1) + ' ha plucked', 'tractor'),
+        kpi('neutral', 'Drone vs manual, kg per plucked ha', diff === '' ? '-' : (diff > 0 ? '+' : '') + num(diff, 1) + '%', 'Raw difference. Not yet compared with each field\'s own baseline.', 'trend'),
+        kpi('drone', 'Drone spraying', dash(cell(hrD, 2)) + (hrD !== '' ? ' ha/h' : ''), Sp.Drone.fields + ' field sprays, ' + cell(Sp.Drone.ha, 1) + ' ha, ' + cell(Sp.Drone.hours, 1) + ' h', 'droplet'),
+        kpi('manual', 'Manual spraying', dash(cell(hrM, 2)) + (hrM !== '' ? ' ha/h' : ''), Sp.Manual.fields + ' field sprays, ' + cell(Sp.Manual.ha, 1) + ' ha, ' + cell(Sp.Manual.hours, 1) + ' h', 'droplet'),
+        kpi('neutral', 'Fields in the trial', E.fields.Drone + ' + ' + E.fields.Manual, 'Drone + Manual (' + cell(E.ha.Drone, 1) + ' + ' + cell(E.ha.Manual, 1) + ' ha)' + (E.fields.incomplete ? '. ' + E.fields.incomplete + ' not filled in yet' : ''), 'map')));
+
+      const chart = lineChart(d.daily);
+      out.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Green leaf per plucked hectare, by day'),
+        h('div', { class: 'legend' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone fields'), h('span', null, h('i', { class: 'dot manual' }), 'Manual fields'))),
+        chart ? h('div', { class: 'chartbox' }, chart) : emptyState('No plucking records in this period.', 'basket')));
+
+      out.appendChild(h('div', { class: 'card' }, h('h2', null, 'Daily summary'),
+        table([{ label: 'Date', key: 'date', cls: 'nowrap' },
+          { label: 'Drone kg', cls: 'num', render: function (r) { return cell(r.Drone.kg, 0); } }, { label: 'Drone ha', cls: 'num', render: function (r) { return cell(r.Drone.ha, 1); } }, { label: 'Drone kg/ha', cls: 'num', render: function (r) { return cell(r.Drone.kg_per_ha); } },
+          { label: 'Manual kg', cls: 'num', render: function (r) { return cell(r.Manual.kg, 0); } }, { label: 'Manual ha', cls: 'num', render: function (r) { return cell(r.Manual.ha, 1); } }, { label: 'Manual kg/ha', cls: 'num', render: function (r) { return cell(r.Manual.kg_per_ha); } },
+          { label: 'Sprayed ha (D / M)', cls: 'num hide-sm', render: function (r) { return (r.spray.Drone.ha || r.spray.Manual.ha) ? num(r.spray.Drone.ha, 1) + ' / ' + num(r.spray.Manual.ha, 1) : ''; } }], d.daily.slice().reverse(), null, { scroll: true })));
+
+      out.appendChild(h('div', { class: 'card' }, h('h2', null, 'By years since last prune'),
+        h('div', { class: 'muted small', style: 'margin:-6px 0 10px' }, 'Age is measured from the field\'s last pruning date to the day of plucking.'),
+        table([{ label: 'Years since prune', render: function (r) { return h('strong', null, r.band); } },
+          { label: 'Drone kg', cls: 'num', render: function (r) { return cell(r.Drone.kg, 0); } }, { label: 'Drone ha', cls: 'num', render: function (r) { return cell(r.Drone.ha, 1); } }, { label: 'Drone kg/ha', cls: 'num', render: function (r) { return cell(r.Drone.kg_per_ha); } },
+          { label: 'Manual kg', cls: 'num', render: function (r) { return cell(r.Manual.kg, 0); } }, { label: 'Manual ha', cls: 'num', render: function (r) { return cell(r.Manual.ha, 1); } }, { label: 'Manual kg/ha', cls: 'num', render: function (r) { return cell(r.Manual.kg_per_ha); } }], d.byPrune, null, { scroll: true })));
+      out.appendChild(roundsCard(d.rounds));
+      out.appendChild(h('p', { class: 'muted small' }, 'This first dashboard shows that everything entered arrives in one place. The KPI and cost views are added once data collection is running.'));
+    }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+};
+</script>
+
+<script>boot();</script>
+<script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
+</body>
+</html>
