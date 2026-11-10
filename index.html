@@ -454,12 +454,25 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .drop[open] { display: block; flex-basis: 100%; } .drop-body { margin: 6px 0 4px; padding: 10px 12px; max-width: 62ch; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink-2); line-height: 1.45; text-align: left; }
 .sl-btns .drop[open] { flex-basis: 100%; }
 
-/* ---- round blocks of a field sprayed / plucked partly by drone and partly by hand: two parts side by side ---- */
-.item .rd.split { display: flex; gap: 2px; overflow: hidden; background: var(--surface); } .rd.split .sg { display: block; flex-grow: 0; flex-shrink: 0; min-width: 0; box-sizing: border-box; }
-.rd.split .sg.drone.done { background: var(--drone-solid); } .rd.split .sg.manual.done { background: var(--manual-solid); }
-.rd.split .sg.open { border: 2px solid; } .rd.split .sg.open.drone { border-color: var(--drone-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--drone-solid) 0 4px, transparent 4px 9px); }
-.rd.split .sg.open.manual { border-color: var(--manual-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--manual-solid) 0 4px, transparent 4px 9px); }
-.item .rd.expired { opacity: .55; } .swatch.open.faded { opacity: .55; }
+/* ---- round progress bars: one bar per part (drone blue, manual orange); filled = % covered; stripes moving = going on ---- */
+.lane.two { height: 116px; }
+.lane .item { position: absolute; top: 0; height: 100%; z-index: 3; cursor: default; }
+.item .kg { position: absolute; left: 0; top: 6px; }
+.item .took { position: absolute; left: 0; } .item .kg, .item .took { line-height: 14px; }
+.pb { position: absolute; height: 18px; box-sizing: border-box; border-radius: 6px; overflow: hidden; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); --c: var(--ink-2); }
+.pb.drone { --c: var(--drone-solid); } .pb.manual { --c: var(--manual-solid); }
+.pb .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); border-radius: 4px 0 0 4px; }
+.pb.done .fill { border-radius: 0; }
+.pb.ongoing { border-style: dashed; }
+.pb.ongoing .fill { background: repeating-linear-gradient(135deg, var(--c) 0 6px, color-mix(in srgb, var(--c) 45%, var(--surface)) 6px 12px); background-size: 17px 17px; animation: pbmove 1.1s linear infinite; }
+@keyframes pbmove { to { background-position: 17px 0; } }
+@media (prefers-reduced-motion: reduce) { .pb.ongoing .fill { animation: none; } }
+.pl { position: absolute; height: 18px; line-height: 18px; font-size: 11px; font-weight: 800; font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-2); } .pl.drone { color: var(--drone); } .pl.manual { color: var(--manual); }
+.lane .link { height: 0; border-top: 3px solid var(--ink-2); } .lane .link.drone { border-top-color: var(--drone-solid); } .lane .link.manual { border-top-color: var(--manual-solid); }
+.lane .link em { top: -9px; padding: 0 6px; height: 16px; line-height: 16px; border-radius: 8px; font-size: 11px; background: var(--surface); }
+.lane .link em.ok { color: var(--good); background: var(--good-soft); } .lane .link em.late { color: var(--bad); background: var(--bad-soft); }
+.stackdemo { display: inline-flex; flex-direction: column; gap: 3px; vertical-align: middle; } .stackdemo .pb { position: relative; display: block; height: 12px; width: 44px; }
+.mon-legend .pb { height: 12px; }
 </style>
 
 </head>
@@ -2409,8 +2422,12 @@ function legacyDashboard(root, noHead) {
 'use strict';
 /* ===== Monitoring: Operation monitoring (Plucking rounds, Foliar rounds) and Experiment monitoring =====
  *  The rounds are drawn as a timeline after GreenLens v3: one row per field on a shared date axis that scrolls sideways; each round a block
- *  over the days it took (kg above, days below); between two rounds a line with the days between their first days, green when it is within
- *  the target gap and red, with the days beyond it, when it is not; a round not finished is hatched; each month shows how many rounds started in it. */
+ *  as a small PROGRESS BAR that starts on the day the round started: the filled part is the % of the field covered in that round (full = finished). A field
+ *  sprayed or plucked partly by drone and partly by hand has TWO bars stacked, drone (blue) above manual (orange), each with its own % at its right end and its
+ *  own gap line. A round still going on has a striped moving fill; a round left unfinished (closed by the waiting limit) keeps its partly filled solid bar.
+ *  Between two rounds a line in the method's colour with a pill: the days between their first days, green when within the target gap and red, with the
+ *  days beyond it, when not. kg above and days below each round; each month shows how many rounds started in it. Nothing is drawn on top of anything else:
+ *  the bar, its % and the gap line are fitted into the room between one round and the next. */
 
 const MON_PX = { small: 12, normal: 22, large: 34 };
 const MON_DAY = 86400000;
@@ -2423,21 +2440,10 @@ function mixedBadge(f) {
   if (f.method === 'Mixed') b.setAttribute('title', r2(f.drone_ha) + ' ha by drone and ' + r2(f.area_ha - f.drone_ha) + ' ha by hand (' + f.drone_pct + '% drone)');
   return b;
 }
-/** The coloured block of one round. A field with one method: one block, blue (drone) or orange (manual), solid when the round is finished and hatched
- *  when it is not. A field sprayed partly by drone and partly by hand: the block is split into its drone part (blue, left) and its manual part (orange, right),
- *  each part solid when it is covered in this round and hatched when it is not, so a finished round shows both colours. */
-function roundBlock(f, r) {
-  const cls = r.expired ? ' expired' : '';
-  if (f.method !== 'Mixed') return h('span', { class: 'rd ' + f.method.toLowerCase() + (r.complete ? '' : ' open') + cls });
-  const dp = f.drone_pct, tol = 0.05, mp = f.area_ha - f.drone_ha;
-  const part = function (name, share, done) { return h('i', { class: 'sg ' + name + (done ? ' done' : ' open'), style: 'flex-basis:' + share + '%' }); };
-  return h('span', { class: 'rd split' + cls }, part('drone', dp, r.complete || r.drone_done >= f.drone_ha - tol), part('manual', 100 - dp, r.complete || r.manual_done >= mp - tol));
-}
 /** The timeline for one list of fields. d: {today, from, to, target_gap, fields:[{code, division, method, area_ha, avg_per_month, rounds:[...]}]}. what: words for the tooltips. */
 function roundsTimeline(d, zoom, what) {
   const px = MON_PX[zoom] || MON_PX.normal, first = monDay(d.from), last = monDay(d.to) + 3, total = last - first + 1, laneW = total * px;
-  const pos = function (iso) { return (Math.min(Math.max(monDay(iso), first), last + 1) - first) / total * 100; };
-  const wide = function (a, b) { return (Math.min(monDay(b), last) - Math.max(monDay(a), first) + 1) / total * 100; };
+  const X = function (iso) { return (monDay(iso) - first) * px; };                                         // where a day starts on the lane, in pixels
   const todayAt = (monDay(d.today) + 1 - first) / total * 100, labels = px >= 20;
 
   const months = [];                                                   // the calendar months inside the window
@@ -2457,26 +2463,54 @@ function roundsTimeline(d, zoom, what) {
   });
 
   function fieldRow(f) {
-    const rounds = f.rounds, lane = h('div', { class: 'lane', style: 'width:' + laneW + 'px;min-width:' + laneW + 'px' });
+    const rounds = f.rounds, rows = f.method === 'Mixed' ? ['Drone', 'Manual'] : [f.method], two = rows.length === 2;
+    const lane = h('div', { class: 'lane' + (two ? ' two' : ''), style: 'width:' + laneW + 'px;min-width:' + laneW + 'px' });
     months.forEach(function (m, i) {                                    // month bands, with how many rounds started in each
       const n = (f.months.filter(function (x) { return x.month === m.key; })[0] || { n: 0 }).n;
       lane.appendChild(h('i', { class: 'band' + (i % 2 ? ' odd' : ''), style: 'left:' + m.at + '%;width:' + m.width + '%', title: n + (n === 1 ? ' round started' : ' rounds started') + ' in ' + m.name },
         h('b', { class: n === 0 ? 'none' : '' }, labels ? n + (n === 1 ? ' round' : ' rounds') : String(n))));
     });
     lane.appendChild(h('i', { class: 'today', style: 'left:' + todayAt + '%', 'aria-hidden': 'true' }));
-    rounds.forEach(function (r, i) {                                    // the gap to the previous round
-      const prev = rounds[i - 1];
-      if (!prev || r.gap === '') return;
-      const a = pos(prev.end) + 100 / total, b = pos(r.start);
-      lane.appendChild(h('span', { class: 'link ' + (r.late > 0 ? 'late' : 'ok'), style: 'left:' + a + '%;width:' + Math.max(b - a, 0) + '%',
-        title: 'Gap of ' + daysWord(r.gap) + ' between the first days of round ' + prev.no + ' and round ' + r.no + '. Target gap: ' + daysWord(d.target_gap) + (r.late > 0 ? '. Late by ' + daysWord(r.late) + '.' : '. On time.') },
-        h('em', null, r.gap + 'd' + (r.late > 0 && labels ? ' +' + r.late : ''))));
+    const BAND = 24, TOP = two ? 26 : 28, MIN_ROOM = 56, BLOCK = 110, LABEL = 40;
+    // one list per row (drone, manual): where each round's bar starts and how much room it has before the next round's bar in the same row
+    const lines = rows.map(function (m) {
+      const its = rounds.map(function (r) { return { r: r, p: r.parts[m], x: X(r.parts[m].start) }; });
+      its.forEach(function (it, i) {
+        const next = its[i + 1], room = next ? next.x - it.x : Infinity;
+        it.total = next ? Math.min(BLOCK, Math.max(room - MIN_ROOM, 26)) : BLOCK;     // leave room for the gap line and its pill
+        it.showPct = it.total >= 76; it.bar = it.showPct ? it.total - LABEL : it.total;
+      });
+      return { m: m, its: its };
     });
-    rounds.forEach(function (r) {                                       // the rounds
-      const open = !r.complete, mixedNote = f.method === 'Mixed' ? ' Drone part: ' + r2(r.drone_done) + ' of ' + r2(f.drone_ha) + ' ha. Manual part: ' + r2(r.manual_done) + ' of ' + r2(f.area_ha - f.drone_ha) + ' ha.' : '';
+    lines.forEach(function (ln, ri) {                                  // the gap lines, one per row, in the colour of the method
+      const cy = TOP + ri * BAND + BAND / 2;
+      ln.its.forEach(function (it, i) {
+        const prev = ln.its[i - 1];
+        if (!prev || !prev.p.started || !it.p.started || it.p.gap === '') return;
+        const a = prev.x + prev.total + 3, b = it.x - 3, wd = b - a;
+        if (wd < 6) return;
+        const late = it.p.late > 0, name = ln.m.toLowerCase();
+        lane.appendChild(h('span', { class: 'link ' + name, style: 'left:' + a + 'px;width:' + wd + 'px;top:' + cy + 'px',
+          title: (two ? ln.m + ': ' : '') + 'Gap of ' + daysWord(it.p.gap) + ' between the first days of round ' + prev.r.no + ' and round ' + it.r.no + '. Target gap: ' + daysWord(d.target_gap) + (late ? '. Late by ' + daysWord(it.p.late) + '.' : '. On time.') },
+          wd >= 44 ? h('em', { class: late ? 'late' : 'ok' }, it.p.gap + 'd' + (late ? ' +' + it.p.late : '')) : null));
+      });
+    });
+    rounds.forEach(function (r, i) {                                   // the rounds: a label holder with the progress bar of each part inside
+      const open = !r.complete, nextR = rounds[i + 1], room = nextR ? X(nextR.start) - X(r.start) : Infinity;
+      const rx = X(r.start), width = Math.max.apply(null, lines.map(function (ln) { const it = ln.its[i]; return it.x - rx + it.total; }));
+      const mixedNote = two ? ' Drone part: ' + r2(r.drone_done) + ' of ' + r2(f.drone_ha) + ' ha. Manual part: ' + r2(r.manual_done) + ' of ' + r2(f.area_ha - f.drone_ha) + ' ha.' : '';
       const tip = what.noun + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of the field' + (open ? (r.expired ? ' (not finished: the next ' + what.noun.toLowerCase() + ' started a new round)' : ' so far (not finished)') : '') + '.' + mixedNote;
-      lane.appendChild(h('span', { class: 'item', style: 'left:' + pos(r.start) + '%;width:max(' + wide(r.start, r.end) + '%,8px)', title: tip, 'data-round': String(r.no), 'data-expired': r.expired ? 'true' : 'false' },
-        labels ? h('i', { class: 'kg' }, what.short(r)) : null, roundBlock(f, r), labels ? h('i', { class: 'took' }, open ? (r.expired ? r.percent + '% done' : r2(r.done_ha) + ' ha') : daysWord(r.days)) : null));
+      const item = h('span', { class: 'item', style: 'left:' + rx + 'px;width:' + width + 'px', title: tip, 'data-round': String(r.no), 'data-expired': r.expired ? 'true' : 'false' });
+      const showText = labels && room >= 60;                            // the kg and days text only when it fits before the next round
+      if (showText) item.appendChild(h('i', { class: 'kg' }, what.short(r)));
+      lines.forEach(function (ln, ri) {
+        const it = ln.its[i], p = it.p, state = p.percent >= 100 ? 'done' : (r.expired ? 'part' : 'ongoing'), top = TOP + ri * BAND + 3, left = it.x - rx;
+        const ptip = ln.m + (two ? ' part' : '') + ', round ' + r.no + ': ' + (p.started ? shortDate(p.start) + (p.end !== p.start ? ' to ' + shortDate(p.end) : '') + ', ' : 'not started, ') + r2(p.done_ha) + ' of ' + r2(p.ha) + ' ha (' + p.percent + '%)' + (state === 'ongoing' ? ', still going on' : (state === 'part' ? ', left unfinished' : ', finished')) + '.';
+        item.appendChild(h('span', { class: 'pb ' + ln.m.toLowerCase() + ' ' + state, style: 'left:' + left + 'px;top:' + top + 'px;width:' + it.bar + 'px', title: ptip, 'data-part': ln.m }, h('i', { class: 'fill', style: 'width:' + p.percent + '%' })));
+        if (it.showPct) item.appendChild(h('b', { class: 'pl ' + ln.m.toLowerCase(), style: 'left:' + (left + it.bar + 5) + 'px;top:' + top + 'px' }, p.percent + '%'));
+      });
+      if (showText) item.appendChild(h('i', { class: 'took', style: 'top:' + (TOP + rows.length * BAND + 2) + 'px' }, open ? (r.expired ? 'left unfinished' : 'going on') : daysWord(r.days)));
+      lane.appendChild(item);
     });
     if (!rounds.length) lane.appendChild(h('small', { class: 'mon-none' }, 'No round in this period'));
     return h('tr', { 'data-field': f.field_id }, h('th', { class: 'mon-field', scope: 'row' }, h('b', { class: 'code' }, f.code), h('span', { class: 'sub' }, r2(f.area_ha) + ' ha  ', mixedBadge(f)),
@@ -2529,8 +2563,12 @@ function roundsScreen(host, kind, load) {
     if (!data) return;
     clear(body);
     const shown = { today: data.today, from: data.from, to: data.to, target_gap: data.target_gap, reset_days: data.reset_days, fields: data.fields.filter(function (f) { return f.division === S.monDiv; }) };
+    const bar = function (cls, pct) { return h('span', { class: 'pb ' + cls, style: 'position:relative;display:inline-block;width:44px;vertical-align:middle' }, h('i', { class: 'fill', style: 'width:' + pct + '%' })); };
     const legend = h('ul', { class: 'legend mon-legend', 'aria-label': 'Legend' },
-      h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual: blue is the drone part, orange the manual part; a part not covered yet is hatched'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'), h('li', null, h('i', { class: 'swatch open faded' }), 'Left unfinished: the next round started after the waiting limit'),
+      h('li', null, bar('drone done', 100), 'Drone round, finished: the whole bar is filled'), h('li', null, bar('manual done', 100), 'Manual round, finished'),
+      h('li', null, bar('drone part', 60), 'Left unfinished: the bar shows how much (here 60%) was covered before a new round started'),
+      h('li', null, bar('manual ongoing', 40), 'Round still going on (moving stripes), with the % covered so far'),
+      h('li', null, h('span', { class: 'stackdemo' }, bar('drone done', 100), bar('manual part', 55)), 'Part drone, part manual: two bars, drone above manual, each with its own % and its own gap line'),
       h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
       h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month'));
     // how to read the timeline: the colours, the gap pills and the month counts, all behind one (i)
