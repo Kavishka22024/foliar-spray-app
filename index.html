@@ -453,6 +453,13 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .drop > summary svg { width: 18px; height: 18px; }
 .drop[open] { display: block; flex-basis: 100%; } .drop-body { margin: 6px 0 4px; padding: 10px 12px; max-width: 62ch; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink-2); line-height: 1.45; text-align: left; }
 .sl-btns .drop[open] { flex-basis: 100%; }
+
+/* ---- round blocks of a field sprayed / plucked partly by drone and partly by hand: two parts side by side ---- */
+.item .rd.split { display: flex; gap: 2px; overflow: hidden; background: var(--surface); } .rd.split .sg { display: block; flex-grow: 0; flex-shrink: 0; min-width: 0; box-sizing: border-box; }
+.rd.split .sg.drone.done { background: var(--drone-solid); } .rd.split .sg.manual.done { background: var(--manual-solid); }
+.rd.split .sg.open { border: 2px solid; } .rd.split .sg.open.drone { border-color: var(--drone-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--drone-solid) 0 4px, transparent 4px 9px); }
+.rd.split .sg.open.manual { border-color: var(--manual-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--manual-solid) 0 4px, transparent 4px 9px); }
+.item .rd.expired { opacity: .55; } .swatch.open.faded { opacity: .55; }
 </style>
 
 </head>
@@ -2410,13 +2417,23 @@ const MON_DAY = 86400000;
 const monDay = function (iso) { return Math.floor(new Date(iso + 'T00:00:00Z').getTime() / MON_DAY); };
 const daysWord = function (n) { return n + (n === 1 ? ' day' : ' days'); };
 
-/** The timeline for one list of fields. d: {today, from, to, target_gap, fields:[{code, division, method, area_ha, avg_per_month, rounds:[...]}]}. what: words for the tooltips. */
 /** The method badge of a field; a field sprayed partly by drone says how much. */
 function mixedBadge(f) {
   const b = methodBadge(f.method);
   if (f.method === 'Mixed') b.setAttribute('title', r2(f.drone_ha) + ' ha by drone and ' + r2(f.area_ha - f.drone_ha) + ' ha by hand (' + f.drone_pct + '% drone)');
   return b;
 }
+/** The coloured block of one round. A field with one method: one block, blue (drone) or orange (manual), solid when the round is finished and hatched
+ *  when it is not. A field sprayed partly by drone and partly by hand: the block is split into its drone part (blue, left) and its manual part (orange, right),
+ *  each part solid when it is covered in this round and hatched when it is not, so a finished round shows both colours. */
+function roundBlock(f, r) {
+  const cls = r.expired ? ' expired' : '';
+  if (f.method !== 'Mixed') return h('span', { class: 'rd ' + f.method.toLowerCase() + (r.complete ? '' : ' open') + cls });
+  const dp = f.drone_pct, tol = 0.05, mp = f.area_ha - f.drone_ha;
+  const part = function (name, share, done) { return h('i', { class: 'sg ' + name + (done ? ' done' : ' open'), style: 'flex-basis:' + share + '%' }); };
+  return h('span', { class: 'rd split' + cls }, part('drone', dp, r.complete || r.drone_done >= f.drone_ha - tol), part('manual', 100 - dp, r.complete || r.manual_done >= mp - tol));
+}
+/** The timeline for one list of fields. d: {today, from, to, target_gap, fields:[{code, division, method, area_ha, avg_per_month, rounds:[...]}]}. what: words for the tooltips. */
 function roundsTimeline(d, zoom, what) {
   const px = MON_PX[zoom] || MON_PX.normal, first = monDay(d.from), last = monDay(d.to) + 3, total = last - first + 1, laneW = total * px;
   const pos = function (iso) { return (Math.min(Math.max(monDay(iso), first), last + 1) - first) / total * 100; };
@@ -2456,9 +2473,10 @@ function roundsTimeline(d, zoom, what) {
         h('em', null, r.gap + 'd' + (r.late > 0 && labels ? ' +' + r.late : ''))));
     });
     rounds.forEach(function (r) {                                       // the rounds
-      const open = !r.complete, tip = what.noun + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of the field' + (open ? ' so far (not finished)' : '') + '.';
-      lane.appendChild(h('span', { class: 'item', style: 'left:' + pos(r.start) + '%;width:max(' + wide(r.start, r.end) + '%,8px)', title: tip, 'data-round': String(r.no) },
-        labels ? h('i', { class: 'kg' }, what.short(r)) : null, h('span', { class: 'rd ' + f.method.toLowerCase() + (open ? ' open' : ''), style: f.method === 'Mixed' ? '--dp:' + f.drone_pct + '%' : null }), labels ? h('i', { class: 'took' }, open ? r2(r.done_ha) + ' ha' : daysWord(r.days)) : null));
+      const open = !r.complete, mixedNote = f.method === 'Mixed' ? ' Drone part: ' + r2(r.drone_done) + ' of ' + r2(f.drone_ha) + ' ha. Manual part: ' + r2(r.manual_done) + ' of ' + r2(f.area_ha - f.drone_ha) + ' ha.' : '';
+      const tip = what.noun + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of the field' + (open ? (r.expired ? ' (not finished: the next ' + what.noun.toLowerCase() + ' started a new round)' : ' so far (not finished)') : '') + '.' + mixedNote;
+      lane.appendChild(h('span', { class: 'item', style: 'left:' + pos(r.start) + '%;width:max(' + wide(r.start, r.end) + '%,8px)', title: tip, 'data-round': String(r.no), 'data-expired': r.expired ? 'true' : 'false' },
+        labels ? h('i', { class: 'kg' }, what.short(r)) : null, roundBlock(f, r), labels ? h('i', { class: 'took' }, open ? (r.expired ? r.percent + '% done' : r2(r.done_ha) + ' ha') : daysWord(r.days)) : null));
     });
     if (!rounds.length) lane.appendChild(h('small', { class: 'mon-none' }, 'No round in this period'));
     return h('tr', { 'data-field': f.field_id }, h('th', { class: 'mon-field', scope: 'row' }, h('b', { class: 'code' }, f.code), h('span', { class: 'sub' }, r2(f.area_ha) + ' ha  ', mixedBadge(f)),
@@ -2474,6 +2492,9 @@ function roundsTimeline(d, zoom, what) {
 }
 
 const MON_WORDS = {
+  spray: { noun: 'Foliar', title: 'Foliar rounds of every field', avgWord: 'rounds a month', avgNone: 'average: not enough months yet',
+    amount: function (r) { return r2(r.kg) + ' kg of foliar on ' + r2(r.done_ha) + ' ha' + (r.kg_per_ha !== '' ? ' (' + r2(r.kg_per_ha) + ' kg/ha)' : '') + ' in ' + r.events + (r.events === 1 ? ' spray event, ' : ' spray events, '); },
+    short: function (r) { return r.kg ? r2(r.kg) + ' kg' : ''; } },
   pluck: { noun: 'Plucking', title: 'Plucking rounds of every field', avgWord: 'rounds a month', avgNone: 'average: not enough months yet',
     amount: function (r) { return r2(r.kg) + ' kg from ' + r2(r.done_ha) + ' ha' + (r.kg_per_ha !== '' ? ' (' + r2(r.kg_per_ha) + ' kg/ha)' : '') + ', '; },
     short: function (r) { return r.kg ? Math.round(r.kg).toLocaleString() + ' kg' : ''; } }
@@ -2507,14 +2528,14 @@ function roundsScreen(host, kind, load) {
   function draw() {
     if (!data) return;
     clear(body);
-    const shown = { today: data.today, from: data.from, to: data.to, target_gap: data.target_gap, fields: data.fields.filter(function (f) { return f.division === S.monDiv; }) };
+    const shown = { today: data.today, from: data.from, to: data.to, target_gap: data.target_gap, reset_days: data.reset_days, fields: data.fields.filter(function (f) { return f.division === S.monDiv; }) };
     const legend = h('ul', { class: 'legend mon-legend', 'aria-label': 'Legend' },
-      h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual (the blue share is the drone share)'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'),
+      h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual: blue is the drone part, orange the manual part; a part not covered yet is hatched'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'), h('li', null, h('i', { class: 'swatch open faded' }), 'Left unfinished: the next round started after the waiting limit'),
       h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
       h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month'));
     // how to read the timeline: the colours, the gap pills and the month counts, all behind one (i)
     body.appendChild(h('div', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + '  |  ' + shortDate(data.from) + ' to ' + shortDate(data.to) + ' ',
-      help(h('div', null, legend, h('div', { style: 'margin-top:8px' }, 'The target gap is the number of days between the first days of two rounds (the Admin sets it under Parameters). Hover a round or a gap for the details.')), 'How to read this')));
+      help(h('div', null, legend, h('div', { style: 'margin-top:8px' }, 'The target gap is the number of days between the first days of two rounds. A field left unfinished for more than ' + daysWord(data.reset_days) + ' starts a new round with its next ' + (kind === 'spray' ? 'spray event' : 'plucking') + '. The Admin sets both under Parameters. Hover a round or a gap for the details.')), 'How to read this')));
     if (!shown.fields.length) { body.appendChild(emptyState('No fields are set up yet.', 'map')); return; }
     tl = roundsTimeline(shown, zoom, MON_WORDS[kind]);
     body.appendChild(tl.node);
@@ -2542,7 +2563,7 @@ VIEWS['dashboard.view'] = function (root) {
     subBar.style.display = tab === 'operation' ? '' : 'none';
     clear(page);
     if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
-    if (tab === 'operation') { page.appendChild(h('div', { class: 'card' }, emptyState('Foliar rounds is the next piece we build together.', 'droplet'))); return; }
+    if (tab === 'operation') { roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); }); return; }
     page.appendChild(msgBox('warn', 'Experiment monitoring is still to be designed together. Until then, the earlier summary is shown here.'));
     legacyDashboard(page, true);
   }
