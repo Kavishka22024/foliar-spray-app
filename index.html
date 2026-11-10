@@ -455,9 +455,9 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .sl-btns .drop[open] { flex-basis: 100%; }
 
 /* ---- round progress bars: one bar per part (drone blue, manual orange); filled = % covered; stripes moving = going on ---- */
-.lane.two { height: 116px; }
-.lane .item { position: absolute; top: 0; height: 100%; z-index: 3; cursor: default; }
-.item .kg { position: absolute; left: 0; top: 6px; }
+.lane.two { height: 148px; }
+.lane .item { position: absolute; height: 52px; z-index: 3; cursor: default; }
+.item .kg { position: absolute; left: 0; top: 0; }
 .item .took { position: absolute; left: 0; } .item .kg, .item .took { line-height: 14px; }
 .pb { position: absolute; height: 18px; box-sizing: border-box; border-radius: 6px; overflow: hidden; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); --c: var(--ink-2); }
 .pb.drone { --c: var(--drone-solid); } .pb.manual { --c: var(--manual-solid); }
@@ -473,6 +473,20 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .lane .link em.ok { color: var(--good); background: var(--good-soft); } .lane .link em.late { color: var(--bad); background: var(--bad-soft); }
 .stackdemo { display: inline-flex; flex-direction: column; gap: 3px; vertical-align: middle; } .stackdemo .pb { position: relative; display: block; height: 12px; width: 44px; }
 .mon-legend .pb { height: 12px; }
+.lane .band b.chip2 { display: inline-flex; gap: 3px; } .chip2 .d { color: var(--drone); } .chip2 .m { color: var(--manual); } .chip2 .sep { color: var(--muted); font-weight: 600; }
+
+/* ---- Experiment monitoring: the big number and the bar charts ---- */
+.exp-head { border-radius: var(--r-lg); padding: 20px 24px; margin-bottom: 16px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+.exp-head .eh-big { font-size: 44px; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; } .exp-head .eh-sub { margin-top: 4px; font-size: 16px; color: var(--ink-2); }
+.exp-head.good { background: var(--good-soft); border-color: transparent; } .exp-head.good .eh-big { color: var(--good); }
+.exp-head.bad { background: var(--bad-soft); border-color: transparent; } .exp-head.bad .eh-big { color: var(--bad); }
+.exp-head.none .eh-big { font-size: 28px; color: var(--ink-2); }
+.exp-vals { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; } .exp-vals .ev { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--ink-2); } .exp-vals .ev b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.exp-chart .legend { margin: 0 0 6px; padding: 0; list-style: none; display: flex; gap: 18px; font-size: 13px; color: var(--ink-2); } .exp-chart .legend li { display: inline-flex; align-items: center; gap: 7px; }
+.exp-scroll { overflow-x: auto; padding-bottom: 4px; } .exp-scroll svg { display: block; max-width: none; margin: 0 auto; }
+.exp-bar.drone { fill: var(--drone-solid); } .exp-bar.manual { fill: var(--manual-solid); } .exp-bar:hover { opacity: .85; }
+.exp-val { fill: var(--ink); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; } .exp-val.big { font-size: 18px; font-weight: 800; }
+@media (max-width: 860px) { .exp-head { padding: 16px 18px; } .exp-head .eh-big { font-size: 34px; } .exp-head .eh-sub { font-size: 14px; } }
 </style>
 
 </head>
@@ -1442,12 +1456,12 @@ function openSprayEvent(o) {
       const grid = h('div', { class: 'picks' });
       g.items.forEach(function (f) {
         const id = f.field_id, sel = st.pct[id] !== undefined, part = sprayPart(f, st.method), mixed = f.method === 'Mixed', om = otherMethod(st.method), op = sprayPart(f, om);
-        const blocked = !isMember(id) && (f.done_today || part.done), before = beforeOf(id), why = f.done_today ? 'Fully sprayed today' : st.method + ' part done';
+        const blocked = !isMember(id) && (f.done_today || part.done), before = beforeOf(id), why = mixed ? st.method + ' part done today' : 'Fully sprayed today';
         grid.appendChild(h('button', { type: 'button', 'data-code': f.code, 'data-state': blocked ? 'done' : (sel ? 'on' : 'off'), class: 'pick ' + st.method.toLowerCase() + (mixed ? ' mixed' : '') + (sel ? ' on' : '') + (blocked ? ' dis' : ''), disabled: blocked,
           'aria-pressed': sel ? 'true' : 'false', 'aria-label': f.code + (blocked ? ', ' + why.toLowerCase() : (sel ? ', selected' : '')), onclick: function () { toggle(f); } },
           h('span', { class: 'pk-mark' }, icon('check')), h('span', { class: 'pk-code' }, f.code), h('span', { class: 'pk-ha' }, mixed ? r2(part.ha) + ' of ' + r2(f.area_ha) + ' ha' : r2(f.area_ha) + ' ha'),
           h('span', { class: 'pk-state' }, blocked ? why : (before > 0 ? Math.round(before) + '% done earlier' : 'Not sprayed')),
-          mixed ? h('span', { class: 'pk-other' }, om + ' part ' + r2(op.ha) + ' ha' + (op.done_pct >= 99.9 ? ' done' : (op.done_pct > 0 ? ', ' + Math.round(op.done_pct) + '%' : ''))) : null,
+          mixed ? h('span', { class: 'pk-other' }, om + ' part ' + r2(op.ha) + ' ha' + (op.done ? ' done today' : (op.done_pct > 0 ? ', ' + Math.round(op.done_pct) + '%' : ''))) : null,
           before > 0 && !blocked ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + Math.min(100, before) + '%' })) : null));
       });
       host.appendChild(grid);
@@ -1719,12 +1733,12 @@ function mixedPluckPopup(f, existing, ctl) {
     kg.addEventListener('input', upd); sl.onChange(upd); upd();
     panels[part] = { kg: kg, sl: sl };
     row.appendChild(h('div', { class: 'pluckpart ' + cls, 'data-part': part }, head,
-      h('div', { class: 'pp-note' }, pp.done_ha > 0 ? 'Earlier days of this round: ' + r2(pp.done_ha) + ' of ' + r2(pp.ha) + ' ha' : 'Round ' + f.progress.round + ': not started'),
+      h('div', { class: 'pp-note' }, pp.done_ha > 0 ? 'Earlier days of this round: ' + r2(pp.done_ha) + ' of ' + r2(pp.ha) + ' ha' : 'Round ' + pp.round + ': not started'),
       field('Green leaf (kg)', kg), field('Area plucked', sl.node), live));
   });
   const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
   modal(popTitle(f), h('div', { class: 'stack' },
-    h('div', { class: 'callout' }, roundNote(f.progress, f, 'plucked'), ' ', help('This field is sprayed partly by drone and partly by hand, so its green leaf is entered in two parts. Enter either part, or both.')),
+    h('div', { class: 'callout' }, plotParts(f).map(function (p) { return p + ' part: round ' + f.parts[p].round; }).join('  |  '), ' ', help('This field is sprayed partly by drone and partly by hand, so its green leaf is entered in two parts, and each part has its own rounds. Enter either part, or both.')),
     row, err), left.concat([
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Save details', kind: 'primary', onclick: function (m) {
@@ -2421,13 +2435,14 @@ function legacyDashboard(root, noHead) {
 <script>
 'use strict';
 /* ===== Monitoring: Operation monitoring (Plucking rounds, Foliar rounds) and Experiment monitoring =====
- *  The rounds are drawn as a timeline after GreenLens v3: one row per field on a shared date axis that scrolls sideways; each round a block
- *  as a small PROGRESS BAR that starts on the day the round started: the filled part is the % of the field covered in that round (full = finished). A field
- *  sprayed or plucked partly by drone and partly by hand has TWO bars stacked, drone (blue) above manual (orange), each with its own % at its right end and its
- *  own gap line. A round still going on has a striped moving fill; a round left unfinished (closed by the waiting limit) keeps its partly filled solid bar.
- *  Between two rounds a line in the method's colour with a pill: the days between their first days, green when within the target gap and red, with the
- *  days beyond it, when not. kg above and days below each round; each month shows how many rounds started in it. Nothing is drawn on top of anything else:
- *  the bar, its % and the gap line are fitted into the room between one round and the next. */
+ *  The rounds are drawn as a timeline after GreenLens v3: one row per field on a shared date axis that scrolls sideways. Each round is a small PROGRESS BAR that
+ *  starts on the day the round started: the filled part is the % covered in that round (full = finished). A field sprayed or plucked partly by drone and partly
+ *  by hand has TWO LINES, drone (blue) above manual (orange): the two parts have SEPARATE rounds (the drone part can be on its third round while the manual part
+ *  is on its second), each with its own bars, % at the right end of the bar, gaps and counts. A round still going on has a striped moving fill; a round left
+ *  unfinished (nothing more came within the waiting limit) keeps its partly filled solid bar. Between two rounds of a line: a line in the method's colour with a
+ *  pill, the days between their first days, green within the target gap, red with the days beyond it when later. kg above and days below each round; each
+ *  month shows how many rounds started in it. Nothing is drawn on top of anything else: the bar, its % and the gap line are fitted into the room between one
+ *  round and the next. */
 
 const MON_PX = { small: 12, normal: 22, large: 34 };
 const MON_DAY = 86400000;
@@ -2463,58 +2478,51 @@ function roundsTimeline(d, zoom, what) {
   });
 
   function fieldRow(f) {
-    const rounds = f.rounds, rows = f.method === 'Mixed' ? ['Drone', 'Manual'] : [f.method], two = rows.length === 2;
+    const rows = f.rows, two = rows.length === 2, ROWH = 52, TOP0 = 8, MIN_ROOM = 56, BLOCK = 110, LABEL = 40;
     const lane = h('div', { class: 'lane' + (two ? ' two' : ''), style: 'width:' + laneW + 'px;min-width:' + laneW + 'px' });
-    months.forEach(function (m, i) {                                    // month bands, with how many rounds started in each
-      const n = (f.months.filter(function (x) { return x.month === m.key; })[0] || { n: 0 }).n;
-      lane.appendChild(h('i', { class: 'band' + (i % 2 ? ' odd' : ''), style: 'left:' + m.at + '%;width:' + m.width + '%', title: n + (n === 1 ? ' round started' : ' rounds started') + ' in ' + m.name },
-        h('b', { class: n === 0 ? 'none' : '' }, labels ? n + (n === 1 ? ' round' : ' rounds') : String(n))));
+    months.forEach(function (m, i) {                                    // month bands, with how many rounds started in each (a field with two parts: drone | manual)
+      const ns = rows.map(function (r) { return (r.months.filter(function (x) { return x.month === m.key; })[0] || { n: 0 }).n; }), total = ns.reduce(function (a, n) { return a + n; }, 0);
+      const chip = two
+        ? h('b', { class: 'chip2' + (total === 0 ? ' none' : '') }, h('span', { class: 'd' }, String(ns[0])), h('span', { class: 'sep' }, '|'), h('span', { class: 'm' }, String(ns[1])), labels ? ' rounds' : null)
+        : h('b', { class: total === 0 ? 'none' : '' }, labels ? total + (total === 1 ? ' round' : ' rounds') : String(total));
+      lane.appendChild(h('i', { class: 'band' + (i % 2 ? ' odd' : ''), style: 'left:' + m.at + '%;width:' + m.width + '%',
+        title: (two ? 'Drone part: ' + ns[0] + ', manual part: ' + ns[1] + ' rounds started' : total + (total === 1 ? ' round started' : ' rounds started')) + ' in ' + m.name }, chip));
     });
     lane.appendChild(h('i', { class: 'today', style: 'left:' + todayAt + '%', 'aria-hidden': 'true' }));
-    const BAND = 24, TOP = two ? 26 : 28, MIN_ROOM = 56, BLOCK = 110, LABEL = 40;
-    // one list per row (drone, manual): where each round's bar starts and how much room it has before the next round's bar in the same row
-    const lines = rows.map(function (m) {
-      const its = rounds.map(function (r) { return { r: r, p: r.parts[m], x: X(r.parts[m].start) }; });
-      its.forEach(function (it, i) {
-        const next = its[i + 1], room = next ? next.x - it.x : Infinity;
-        it.total = next ? Math.min(BLOCK, Math.max(room - MIN_ROOM, 26)) : BLOCK;     // leave room for the gap line and its pill
+    // each part of the field (one row, or two for a drone part and a manual part) has ITS OWN rounds, laid out on its own line
+    rows.forEach(function (row, ri) {
+      const m = row.method, name = m.toLowerCase(), y0 = TOP0 + ri * ROWH, cy = y0 + 25;
+      const its = row.rounds.map(function (r) { return { r: r, x: X(r.start) }; });
+      its.forEach(function (it, i) {                                    // how much room each round has before the next one in this row
+        const next = its[i + 1]; it.room = next ? next.x - it.x : Infinity;
+        it.total = next ? Math.min(BLOCK, Math.max(it.room - MIN_ROOM, 26)) : BLOCK;     // leave room for the gap line and its pill
         it.showPct = it.total >= 76; it.bar = it.showPct ? it.total - LABEL : it.total;
       });
-      return { m: m, its: its };
-    });
-    lines.forEach(function (ln, ri) {                                  // the gap lines, one per row, in the colour of the method
-      const cy = TOP + ri * BAND + BAND / 2;
-      ln.its.forEach(function (it, i) {
-        const prev = ln.its[i - 1];
-        if (!prev || !prev.p.started || !it.p.started || it.p.gap === '') return;
-        const a = prev.x + prev.total + 3, b = it.x - 3, wd = b - a;
+      its.forEach(function (it, i) {                                    // the gap line to the previous round, in the colour of the method
+        const prev = its[i - 1];
+        if (!prev || it.r.gap === '') return;
+        const a = prev.x + prev.total + 3, b = it.x - 3, wd = b - a, late = it.r.late > 0;
         if (wd < 6) return;
-        const late = it.p.late > 0, name = ln.m.toLowerCase();
         lane.appendChild(h('span', { class: 'link ' + name, style: 'left:' + a + 'px;width:' + wd + 'px;top:' + cy + 'px',
-          title: (two ? ln.m + ': ' : '') + 'Gap of ' + daysWord(it.p.gap) + ' between the first days of round ' + prev.r.no + ' and round ' + it.r.no + '. Target gap: ' + daysWord(d.target_gap) + (late ? '. Late by ' + daysWord(it.p.late) + '.' : '. On time.') },
-          wd >= 44 ? h('em', { class: late ? 'late' : 'ok' }, it.p.gap + 'd' + (late ? ' +' + it.p.late : '')) : null));
+          title: (two ? m + ' part: ' : '') + 'Gap of ' + daysWord(it.r.gap) + ' between the first days of round ' + prev.r.no + ' and round ' + it.r.no + '. Target gap: ' + daysWord(d.target_gap) + (late ? '. Late by ' + daysWord(it.r.late) + '.' : '. On time.') },
+          wd >= 44 ? h('em', { class: late ? 'late' : 'ok' }, it.r.gap + 'd' + (late ? ' +' + it.r.late : '')) : null));
+      });
+      its.forEach(function (it) {                                       // the rounds: a label holder with the progress bar and its % inside
+        const r = it.r, state = r.complete ? 'done' : (r.expired ? 'part' : 'ongoing');
+        const tip = what.noun + (two ? ' (' + name + ' part)' : '') + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of ' + (two ? 'the ' + name + ' part' : 'the field')
+          + (state === 'ongoing' ? ' so far (still going on)' : (state === 'part' ? ' (not finished: no more ' + what.noun.toLowerCase() + ' came within ' + daysWord(d.reset_days) + ', so the next one starts a new round)' : '')) + '.';
+        const item = h('span', { class: 'item', style: 'left:' + it.x + 'px;width:' + it.total + 'px;top:' + y0 + 'px', title: tip, 'data-round': String(r.no), 'data-part': m, 'data-expired': r.expired ? 'true' : 'false' });
+        const text = labels && it.room >= 60;                           // the kg and days text only when it fits before the next round
+        if (text) item.appendChild(h('i', { class: 'kg' }, what.short(r)));
+        item.appendChild(h('span', { class: 'pb ' + name + ' ' + state, style: 'left:0;top:16px;width:' + it.bar + 'px' }, h('i', { class: 'fill', style: 'width:' + r.percent + '%' })));
+        if (it.showPct) item.appendChild(h('b', { class: 'pl ' + name, style: 'left:' + (it.bar + 5) + 'px;top:16px' }, r.percent + '%'));
+        if (text) item.appendChild(h('i', { class: 'took', style: 'top:36px' }, state === 'done' ? daysWord(r.days) : (state === 'part' ? 'left unfinished' : 'going on')));
+        lane.appendChild(item);
       });
     });
-    rounds.forEach(function (r, i) {                                   // the rounds: a label holder with the progress bar of each part inside
-      const open = !r.complete, nextR = rounds[i + 1], room = nextR ? X(nextR.start) - X(r.start) : Infinity;
-      const rx = X(r.start), width = Math.max.apply(null, lines.map(function (ln) { const it = ln.its[i]; return it.x - rx + it.total; }));
-      const mixedNote = two ? ' Drone part: ' + r2(r.drone_done) + ' of ' + r2(f.drone_ha) + ' ha. Manual part: ' + r2(r.manual_done) + ' of ' + r2(f.area_ha - f.drone_ha) + ' ha.' : '';
-      const tip = what.noun + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of the field' + (open ? (r.expired ? ' (not finished: the next ' + what.noun.toLowerCase() + ' started a new round)' : ' so far (not finished)') : '') + '.' + mixedNote;
-      const item = h('span', { class: 'item', style: 'left:' + rx + 'px;width:' + width + 'px', title: tip, 'data-round': String(r.no), 'data-expired': r.expired ? 'true' : 'false' });
-      const showText = labels && room >= 60;                            // the kg and days text only when it fits before the next round
-      if (showText) item.appendChild(h('i', { class: 'kg' }, what.short(r)));
-      lines.forEach(function (ln, ri) {
-        const it = ln.its[i], p = it.p, state = p.percent >= 100 ? 'done' : (r.expired ? 'part' : 'ongoing'), top = TOP + ri * BAND + 3, left = it.x - rx;
-        const ptip = ln.m + (two ? ' part' : '') + ', round ' + r.no + ': ' + (p.started ? shortDate(p.start) + (p.end !== p.start ? ' to ' + shortDate(p.end) : '') + ', ' : 'not started, ') + r2(p.done_ha) + ' of ' + r2(p.ha) + ' ha (' + p.percent + '%)' + (state === 'ongoing' ? ', still going on' : (state === 'part' ? ', left unfinished' : ', finished')) + '.';
-        item.appendChild(h('span', { class: 'pb ' + ln.m.toLowerCase() + ' ' + state, style: 'left:' + left + 'px;top:' + top + 'px;width:' + it.bar + 'px', title: ptip, 'data-part': ln.m }, h('i', { class: 'fill', style: 'width:' + p.percent + '%' })));
-        if (it.showPct) item.appendChild(h('b', { class: 'pl ' + ln.m.toLowerCase(), style: 'left:' + (left + it.bar + 5) + 'px;top:' + top + 'px' }, p.percent + '%'));
-      });
-      if (showText) item.appendChild(h('i', { class: 'took', style: 'top:' + (TOP + rows.length * BAND + 2) + 'px' }, open ? (r.expired ? 'left unfinished' : 'going on') : daysWord(r.days)));
-      lane.appendChild(item);
-    });
-    if (!rounds.length) lane.appendChild(h('small', { class: 'mon-none' }, 'No round in this period'));
-    return h('tr', { 'data-field': f.field_id }, h('th', { class: 'mon-field', scope: 'row' }, h('b', { class: 'code' }, f.code), h('span', { class: 'sub' }, r2(f.area_ha) + ' ha  ', mixedBadge(f)),
-      h('span', { class: 'avg' }, f.avg_per_month === '' ? what.avgNone : 'about ' + num(f.avg_per_month, 1) + ' ' + what.avgWord)), h('td', { class: 'mon-lane' }, lane));
+    if (!rows.some(function (r) { return r.rounds.length; })) lane.appendChild(h('small', { class: 'mon-none' }, 'No round in this period'));
+    const avg = rows.map(function (r) { return h('span', { class: 'avg' }, (two ? r.method + ': ' : '') + (r.avg_per_month === '' ? (two ? 'not enough months yet' : what.avgNone) : 'about ' + num(r.avg_per_month, 1) + ' ' + (two ? 'a month' : what.avgWord))); });
+    return h('tr', { 'data-field': f.field_id }, h('th', { class: 'mon-field', scope: 'row' }, h('b', { class: 'code' }, f.code), h('span', { class: 'sub' }, r2(f.area_ha) + ' ha  ', mixedBadge(f)), avg), h('td', { class: 'mon-lane' }, lane));
   }
   const table = h('table', { class: 'mon', 'aria-label': what.title }, h('thead', null, head), body);
   const box = h('div', { class: 'mon-scroll' }, table);
@@ -2568,16 +2576,141 @@ function roundsScreen(host, kind, load) {
       h('li', null, bar('drone done', 100), 'Drone round, finished: the whole bar is filled'), h('li', null, bar('manual done', 100), 'Manual round, finished'),
       h('li', null, bar('drone part', 60), 'Left unfinished: the bar shows how much (here 60%) was covered before a new round started'),
       h('li', null, bar('manual ongoing', 40), 'Round still going on (moving stripes), with the % covered so far'),
-      h('li', null, h('span', { class: 'stackdemo' }, bar('drone done', 100), bar('manual part', 55)), 'Part drone, part manual: two bars, drone above manual, each with its own % and its own gap line'),
+      h('li', null, h('span', { class: 'stackdemo' }, bar('drone done', 100), bar('manual part', 55)), 'Part drone, part manual: two lines, drone above manual. Each part has its OWN rounds, % and gap line'),
       h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
-      h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month'));
+      h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month (a field with two parts: drone | manual)'));
     // how to read the timeline: the colours, the gap pills and the month counts, all behind one (i)
     body.appendChild(h('div', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + '  |  ' + shortDate(data.from) + ' to ' + shortDate(data.to) + ' ',
-      help(h('div', null, legend, h('div', { style: 'margin-top:8px' }, 'The target gap is the number of days between the first days of two rounds. A field left unfinished for more than ' + daysWord(data.reset_days) + ' starts a new round with its next ' + (kind === 'spray' ? 'spray event' : 'plucking') + '. The Admin sets both under Parameters. Hover a round or a gap for the details.')), 'How to read this')));
+      help(h('div', null, legend, h('div', { style: 'margin-top:8px' }, 'The target gap is the number of days between the first days of two rounds. ' + (kind === 'spray' ? 'Spray events' : 'Pluckings') + ' on the same part of a field up to ' + daysWord(data.reset_days) + ' apart are one round; the next one starts a new round, and a round not finished by then stays unfinished. The Admin sets both under Parameters. Hover a round or a gap for the details.')), 'How to read this')));
     if (!shown.fields.length) { body.appendChild(emptyState('No fields are set up yet.', 'map')); return; }
     tl = roundsTimeline(shown, zoom, MON_WORDS[kind]);
     body.appendChild(tl.node);
     setTimeout(function () { tl.toToday(false); }, 0);
+  }
+}
+
+/* ===== Experiment monitoring: drone vs manual, two KPI modes =====
+ *  Coverage efficiency = kg of foliar per hectare (less is better); Speed = hectares per hour (more is better). Each bar is the TOTAL of its period divided
+ *  by the TOTAL of its period (kg / ha, or ha / hours) for one method; a day, month or year without events of a method has no bar for it. The big number
+ *  on top always uses ALL the data, whatever period is chosen below it. */
+const EXP_METHODS = ['Drone', 'Manual'];
+const EXP_MODES = {
+  eff: { label: 'Coverage efficiency', title: 'Foliar used per hectare', unit: 'kg/ha', lowerBetter: true,
+    value: function (c) { return c.ha > 0 ? c.kg / c.ha : null; },
+    words: function (pct) { return pct < 0 ? ['less', 'foliar per hectare with drones than with manual spraying'] : ['more', 'foliar per hectare with drones than with manual spraying']; },
+    tip: function (c) { return num(c.kg, 1) + ' kg on ' + num(c.ha, 2) + ' ha'; },
+    help: 'Each bar is the foliar applied (kg) divided by the area covered (ha) by that method in that day, month or year. A shorter bar means less foliar is used to cover the same area.' },
+  speed: { label: 'Speed', title: 'Area covered per hour', unit: 'ha/hour', lowerBetter: false,
+    value: function (c) { return c.hours > 0 && c.ha > 0 ? c.ha / c.hours : null; },
+    words: function (pct) { return pct > 0 ? ['faster', 'area covered per hour with drones than with manual spraying'] : ['slower', 'area covered per hour with drones than with manual spraying']; },
+    tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
+    help: 'Each bar is the area covered (ha) divided by the hours worked, for that method in that day, month or year. A taller bar means more area covered per hour.' }
+};
+const EXP_PERIODS = [['all', 'All time'], ['year', 'Year'], ['month', 'Month'], ['day', 'Day']];
+const EXP_DAYS = 14;
+
+function expSum(days, from, to, m) {
+  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0 };
+  days.forEach(function (d) { if (d.date >= from && d.date <= to && d[m].events) { c.kg += d[m].kg; c.ha += d[m].ha; c.hours += d[m].hours; c.events += d[m].events; c.days += 1; } });
+  return c;
+}
+function expAddDays(iso, n) { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+/** The periods to draw: one bucket for all time, one per year, one per month, or the 14 calendar days ending at `end`. */
+function expBuckets(data, period, end) {
+  const out = [], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], mon = function (iso) { return MON[Number(iso.slice(5, 7)) - 1]; };
+  if (period === 'all') return [{ label: 'All time', from: '0000-01-01', to: '9999-12-31' }];
+  if (period === 'day') {
+    for (let i = EXP_DAYS - 1; i >= 0; i--) { const d = expAddDays(end, -i); out.push({ label: String(Number(d.slice(8))) + ' ' + mon(d), from: d, to: d }); }
+    return out;
+  }
+  const start = data.first || data.today, ey = Number(data.today.slice(0, 4)), em = Number(data.today.slice(5, 7));
+  if (period === 'year') { for (let y = Number(start.slice(0, 4)); y <= ey; y++) out.push({ label: String(y), from: y + '-01-01', to: y + '-12-31' }); return out; }
+  let y = Number(start.slice(0, 4)), m = Number(start.slice(5, 7));
+  while (y < ey || (y === ey && m <= em)) {
+    const key = y + '-' + (m < 10 ? '0' : '') + m;
+    out.push({ label: mon(key + '-01') + ' ' + String(y).slice(2), from: key + '-01', to: key + '-31' });
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+function expFmt(v) { return Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
+
+/** Grouped bars, drone (blue) beside manual (orange), the value on top of each bar; a period without a method has no bar for it. */
+function expChart(data, mode, period, end) {
+  const buckets = expBuckets(data, period, end), M = EXP_MODES[mode];
+  const GW = { all: 560, year: 220, month: 120, day: 84 }[period], BW = { all: 150, year: 80, month: 46, day: 32 }[period];
+  const G0 = 48, TOP = 34, BOT = 36, H = 310, plotH = H - TOP - BOT, big = period === 'all';
+  const cols = buckets.map(function (b) {
+    const o = { b: b };
+    EXP_METHODS.forEach(function (m) { const c = expSum(data.days, b.from, b.to, m), v = M.value(c); o[m] = v === null ? null : { v: v, c: c }; });
+    return o;
+  });
+  let max = 0; cols.forEach(function (o) { EXP_METHODS.forEach(function (m) { if (o[m]) max = Math.max(max, o[m].v); }); });
+  const step = niceStep(Math.max(max, 0.0001) * 1.15 / 4), hi = step * 4, y = function (v) { return TOP + plotH - v / hi * plotH; };
+  const W = G0 + buckets.length * GW + 10;
+  const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': M.title + ', drone and manual' });
+  for (let i = 0; i <= 4; i++) {
+    svg.appendChild(svgEl('line', { x1: G0, x2: W - 10, y1: y(step * i), y2: y(step * i), style: 'stroke:var(--line)', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: G0 - 8, y: y(step * i) + 4, 'text-anchor': 'end', style: 'fill:var(--muted);font-size:11px' }, num(step * i, step < 1 ? 2 : (step < 10 ? 1 : 0))));
+  }
+  svg.appendChild(svgEl('text', { x: 4, y: 14, style: 'fill:var(--muted);font-size:11px;font-weight:700' }, M.unit));
+  cols.forEach(function (o, i) {
+    const cx = G0 + i * GW + GW / 2;
+    EXP_METHODS.forEach(function (m, k) {
+      if (!o[m]) return;
+      const x = k === 0 ? cx - BW - 2 : cx + 2, top = y(o[m].v), bar = svgEl('rect', { x: x, y: top, width: BW, height: Math.max(y(0) - top, 1), rx: big ? 8 : 5, 'class': 'exp-bar ' + m.toLowerCase() });
+      bar.appendChild(svgEl('title', {}, m + ', ' + o.b.label + ': ' + expFmt(o[m].v) + ' ' + M.unit + ' (' + M.tip(o[m].c) + ', ' + o[m].c.events + (o[m].c.events === 1 ? ' spray event' : ' spray events') + (o[m].c.days > 1 ? ' on ' + o[m].c.days + ' days' : '') + ')'));
+      svg.appendChild(bar);
+      svg.appendChild(svgEl('text', { x: x + BW / 2, y: top - 7, 'text-anchor': 'middle', 'class': 'exp-val' + (big ? ' big' : '') }, expFmt(o[m].v)));
+    });
+    svg.appendChild(svgEl('text', { x: cx, y: H - 12, 'text-anchor': 'middle', style: 'fill:var(--ink-2);font-size:' + (big ? 14 : 12) + 'px;font-weight:600' }, o.b.label));
+  });
+  svg.appendChild(svgEl('line', { x1: G0, x2: W - 10, y1: y(0), y2: y(0), style: 'stroke:var(--line-strong)', 'stroke-width': 1.5 }));
+  return svg;
+}
+
+/** The one number users read: all the data, drone against manual. */
+function expHeadline(data, mode) {
+  const M = EXP_MODES[mode], all = {};
+  EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); });
+  const dv = M.value(all.Drone), mv = M.value(all.Manual);
+  const dot = function (m) { return h('span', { class: 'ev ' + m.toLowerCase() }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', h('b', null, (m === 'Drone' ? dv : mv) === null ? 'no data yet' : expFmt(m === 'Drone' ? dv : mv) + ' ' + M.unit)); };
+  if (dv === null || mv === null || mv === 0) {
+    return h('div', { class: 'exp-head none' }, h('div', { class: 'eh-big' }, 'Not enough data yet'), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+  }
+  const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct);
+  const txt = same ? 'About the same' : (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '% ' + w[0];
+  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, h('div', { class: 'eh-big' }, txt), h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+}
+
+function experimentScreen(host) {
+  let mode = S.expMode || 'eff', period = S.expPeriod || 'all', data = null, end = S.expEnd || '';
+  const modeBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Measure' }), perBar = h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' }), dayNav = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' });
+  Object.keys(EXP_MODES).forEach(function (k) { modeBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-mode': k, onclick: function () { mode = k; S.expMode = k; draw(); } }, EXP_MODES[k].label)); });
+  EXP_PERIODS.forEach(function (p) { perBar.appendChild(h('button', { type: 'button', 'data-period': p[0], onclick: function () { period = p[0]; S.expPeriod = period; draw(); } }, p[1])); });
+  const prev = h('button', { type: 'button', onclick: function () { end = expAddDays(end, -EXP_DAYS); S.expEnd = end; draw(); } }, '‹ Earlier'), next = h('button', { type: 'button', onclick: function () { end = expAddDays(end, EXP_DAYS); if (end > data.today) end = data.today; S.expEnd = end; draw(); } }, 'Later ›');
+  dayNav.appendChild(prev); dayNav.appendChild(next);
+  const body = h('div');
+  host.appendChild(h('div', { class: 'mon-ctl' }, modeBar, perBar, dayNav)); host.appendChild(body);
+  clear(body).appendChild(skeleton(3));
+  api('api_expCharts', {}).then(function (d) { data = d; if (!end || end > d.today) end = d.today; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
+
+  function draw() {
+    if (!data) return;
+    Array.prototype.forEach.call(modeBar.children, function (b) { const on = b.getAttribute('data-mode') === mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    Array.prototype.forEach.call(perBar.children, function (b) { b.classList.toggle('on', b.getAttribute('data-period') === period); });
+    dayNav.style.display = period === 'day' ? '' : 'none'; next.disabled = end >= data.today;
+    clear(body);
+    if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
+    const M = EXP_MODES[mode];
+    body.appendChild(expHeadline(data, mode));
+    const first = period === 'day' ? expAddDays(end, -(EXP_DAYS - 1)) : '', scroll = h('div', { class: 'exp-scroll' }, expChart(data, mode, period, end));
+    body.appendChild(h('div', { class: 'card exp-chart' },
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big number at the top always uses all the data from the start, whatever period is chosen here. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
+      h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, period === 'day' ? shortDate(first) + ' to ' + shortDate(end) : (period === 'all' ? 'All time' : (period === 'year' ? 'Each year' : 'Each month'))),
+      h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
+      scroll));
+    if (period === 'day' || period === 'month') setTimeout(function () { scroll.scrollLeft = period === 'month' ? scroll.scrollWidth : 0; }, 0);
   }
 }
 
@@ -2602,7 +2735,8 @@ VIEWS['dashboard.view'] = function (root) {
     clear(page);
     if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
     if (tab === 'operation') { roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); }); return; }
-    page.appendChild(msgBox('warn', 'Experiment monitoring is still to be designed together. Until then, the earlier summary is shown here.'));
+    experimentScreen(page);
+    page.appendChild(h('div', { style: 'margin-top:28px' }));
     legacyDashboard(page, true);
   }
 };
