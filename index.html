@@ -23,6 +23,7 @@
   --primary: #1d6b47; --primary-600: #165637; --primary-ink: #ffffff; --primary-soft: #e3f1e9; --ring: rgba(29,107,71,.25);
   --drone: #1a6aa6; --drone-soft: #e2effa; --drone-solid: #1a6aa6;
   --manual: #b2601a; --manual-soft: #fbecdb; --manual-solid: #b4611a;
+  --mixed: #6b4fa3; --mixed-soft: #ece6f7; --mixed-solid: #6b4fa3;
   --good: #1d7a45; --good-soft: #e0f3e8; --warn: #8f5b00; --warn-soft: #fff0d0; --bad: #b3261e; --bad-soft: #fde6e4;
   --tile: #e9edeb; --tile-hover: #dfe5e2; --tile-ink: #3d4f44;
   --side-bg: #0e3a29; --side-ink: #ffffff; --side-ink-2: rgba(255,255,255,.78); --side-muted: rgba(255,255,255,.5); --side-hover: rgba(255,255,255,.08); --side-active: rgba(255,255,255,.16);
@@ -37,7 +38,7 @@
     --bg: #0e1511; --surface: #16201a; --surface-2: #1a261f; --hover: #202d25;
     --ink: #e8f0ea; --ink-2: #c5d4cb; --muted: #94a89b; --line: #28362d; --line-strong: #394b3f;
     --primary: #5fbb8a; --primary-600: #7ccaa0; --primary-ink: #08150d; --primary-soft: #1d3326; --ring: rgba(95,187,138,.32);
-    --drone: #6db4ec; --drone-soft: #172a3a; --drone-solid: #2a78b4; --manual: #f0a35e; --manual-soft: #3a2a17; --manual-solid: #b86a24;
+    --drone: #6db4ec; --drone-soft: #172a3a; --drone-solid: #2a78b4; --manual: #f0a35e; --manual-soft: #3a2a17; --manual-solid: #b86a24; --mixed: #b9a1ec; --mixed-soft: #272036; --mixed-solid: #7b5fc2;
     --good: #7dd9a2; --good-soft: #183323; --warn: #f2c66d; --warn-soft: #3a2f14; --bad: #ff9d96; --bad-soft: #3a1c1b;
     --tile: #212e26; --tile-hover: #293930; --tile-ink: #b9cabf;
     --side-bg: #0a1f16; --shadow-sm: none; --shadow-md: none; --shadow-lg: 0 24px 60px rgba(0,0,0,.6);
@@ -126,9 +127,9 @@ input[type=search] { padding-left: 38px; background: var(--surface) url("data:im
 /* ================= Badges, messages ================= */
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; background: var(--primary-soft); color: var(--primary); white-space: nowrap; line-height: 1.6; }
 .badge.warn { background: var(--warn-soft); color: var(--warn); } .badge.bad { background: var(--bad-soft); color: var(--bad); } .badge.good { background: var(--good-soft); color: var(--good); }
-.badge.drone { background: var(--drone-soft); color: var(--drone); } .badge.manual { background: var(--manual-soft); color: var(--manual); }
-.badge.drone::before, .badge.manual::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; } .dot.drone { background: var(--drone-solid); } .dot.manual { background: var(--manual-solid); }
+.badge.drone { background: var(--drone-soft); color: var(--drone); } .badge.manual { background: var(--manual-soft); color: var(--manual); } .badge.mixed { background: var(--mixed-soft); color: var(--mixed); }
+.badge.drone::before, .badge.manual::before, .badge.mixed::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; } .dot.drone { background: var(--drone-solid); } .dot.manual { background: var(--manual-solid); } .dot.mixed { background: var(--mixed-solid); }
 .msg { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); margin: 12px 0; font-size: 14px; }
 .msg.ok { background: var(--good-soft); color: var(--good); } .msg.warn { background: var(--warn-soft); color: var(--warn); } .msg.err { background: var(--bad-soft); color: var(--bad); }
 
@@ -167,7 +168,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .ftile .t-mark svg.ico { width: 15px; height: 15px; stroke-width: 3; }
 .ftile .t-bar { height: 5px; border-radius: 99px; background: rgba(0,0,0,.1); overflow: hidden; margin-top: 8px; } .ftile .t-bar i { display: block; height: 100%; background: currentColor; opacity: .55; border-radius: 99px; }
 .ftile.on { color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,.18); } .ftile.on:hover { filter: brightness(1.06); }
-.ftile.on.drone { background: var(--drone-solid); } .ftile.on.manual { background: var(--manual-solid); }
+.ftile.on.drone { background: var(--drone-solid); } .ftile.on.manual { background: var(--manual-solid); } .ftile.on.mixed { background: var(--mixed-solid); }
 .ftile.on .dot { background: #fff; } .ftile.on .t-mark { display: grid; } .ftile.on .t-bar { background: rgba(255,255,255,.28); } .ftile.on .t-bar i { opacity: .9; }
 .ftile.editing { border-color: var(--primary); box-shadow: 0 0 0 4px var(--ring); }
 .ftile.done { background: var(--good-soft); color: var(--good); border: 1.5px solid color-mix(in srgb, var(--good) 35%, transparent); }
@@ -240,7 +241,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .kpi .k-label { font-size: 12.5px; font-weight: 500; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 .kpi .k-val { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; margin: 6px 0 2px; font-variant-numeric: tabular-nums; }
 .kpi .k-sub { font-size: 12.5px; color: var(--muted); }
-.kpi.drone { border-top: 3px solid var(--drone-solid); } .kpi.manual { border-top: 3px solid var(--manual-solid); } .kpi.neutral { border-top: 3px solid var(--primary); }
+.kpi.mixed { border-top: 3px solid var(--mixed-solid); } .kpi.drone { border-top: 3px solid var(--drone-solid); } .kpi.manual { border-top: 3px solid var(--manual-solid); } .kpi.neutral { border-top: 3px solid var(--primary); }
 .chartbox { overflow-x: auto; } .chartbox svg { display: block; width: 100%; height: auto; min-width: 560px; }
 
 /* ================= Admin helpers ================= */
@@ -367,6 +368,52 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .mc.drone .mc-ic { background: var(--drone-soft); color: var(--drone); } .mc.manual .mc-ic { background: var(--manual-soft); color: var(--manual); }
 .mc-t { grid-area: t; font-size: 20px; font-weight: 700; letter-spacing: -.01em; } .mc-s { grid-area: s; font-size: 13px; color: var(--muted); }
 @media (max-width: 520px) { .mc-grid { grid-template-columns: 1fr; } }
+
+/* ---- monitoring: round timelines ---- */
+.montabs { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.mon-ctl { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; }
+.mon-legend { margin: 0; padding: 0; list-style: none; } .mon-legend li { display: inline-flex; align-items: center; gap: 7px; margin-right: 18px; font-size: 13px; color: var(--ink-2); }
+.swatch { display: inline-block; width: 22px; height: 12px; border-radius: 4px; } .swatch.drone { background: var(--drone-solid); } .swatch.manual { background: var(--manual-solid); }
+.swatch.open { border: 2px solid var(--ink-2); box-sizing: border-box; background-image: repeating-linear-gradient(135deg, var(--ink-2) 0 3px, transparent 3px 6px); }
+.pill { font-style: normal; font-weight: 800; font-size: 11px; padding: 1px 7px; border-radius: 8px; } .pill.ok { color: var(--good); background: var(--good-soft); } .pill.late { color: var(--bad); background: var(--bad-soft); }
+.chip { font-size: 11px; font-weight: 800; color: var(--primary-600); background: var(--primary-soft); border-radius: 8px; padding: 1px 8px; }
+.mon-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+table.mon { border-collapse: separate; border-spacing: 0; } .mon th, .mon td { padding: 0; border-bottom: 1px solid var(--line); text-align: left; font-weight: 400; }
+.mon .mon-field { position: sticky; left: 0; z-index: 5; background: var(--surface); width: 158px; min-width: 158px; max-width: 158px; padding: 8px 12px; border-right: 1px solid var(--line-strong); vertical-align: middle; }
+.mon-field .code { display: block; font-size: 15px; } .mon-field .sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-top: 1px; } .mon-field .avg { display: block; font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+thead .mon-field { height: 36px; } .mon-axis { position: relative; height: 36px; background: var(--surface-2); } .mon-axis span { position: absolute; top: 9px; padding-left: 6px; border-left: 1px solid var(--line-strong); font-size: 12px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.mon-div th { background: var(--surface-2); padding: 7px 0; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); } .mon-divtxt { position: sticky; left: 12px; display: inline-block; }
+.mon th { text-transform: none; letter-spacing: 0; } .mon .mon-field { white-space: normal; } .mon-field .avg { line-height: 1.25; }
+thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; vertical-align: middle; }
+.lane { position: relative; height: 96px; }
+.lane .band { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); } .lane .band.odd { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+.lane .band b { position: absolute; left: 6px; bottom: 4px; font-size: 11px; font-weight: 800; color: var(--primary-600); background: var(--primary-soft); border-radius: 8px; padding: 0 7px; white-space: nowrap; } .lane .band b.none { color: var(--muted); background: transparent; font-weight: 600; }
+.lane .today { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink-2); opacity: .5; z-index: 2; }
+.lane .item { position: absolute; top: 0; height: 96px; z-index: 3; cursor: default; }
+.item .rd { position: absolute; left: 0; right: 0; top: 28px; height: 22px; border-radius: 5px; box-shadow: 0 0 0 2px var(--surface); } .rd.drone { background: var(--drone-solid); } .rd.manual { background: var(--manual-solid); }
+.rd.open { box-sizing: border-box; border: 2px solid; } .rd.open.drone { border-color: var(--drone-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--drone-solid) 0 4px, transparent 4px 9px); } .rd.open.manual { border-color: var(--manual-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--manual-solid) 0 4px, transparent 4px 9px); }
+.item .kg { position: absolute; left: 0; top: 8px; font-style: normal; font-size: 11px; font-weight: 700; color: var(--ink-2); white-space: nowrap; } .item .took { position: absolute; left: 0; top: 54px; font-style: normal; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.lane .link { position: absolute; top: 38px; height: 0; z-index: 1; border-top: 3px solid var(--good); } .lane .link.late { border-top-color: var(--bad); }
+.link em { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); font-style: normal; font-size: 11px; font-weight: 800; color: var(--good); background: var(--surface); padding: 0 3px; white-space: nowrap; } .link.late em { color: var(--bad); }
+.mon-none { position: absolute; left: 14px; top: 34px; color: var(--muted); font-size: 12px; z-index: 3; }
+@media (max-width: 860px) { .mon .mon-field { width: 112px; min-width: 112px; max-width: 112px; padding: 7px 8px; } .mon-field .sub { flex-wrap: wrap; } }
+.mon-divsel { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); } .mon-divsel select { min-width: 140px; }
+
+/* ---- fields sprayed partly by drone and partly by hand ---- */
+.pk-other { font-size: 11px; color: var(--mixed); font-weight: 600; margin-top: 1px; } .pick.mixed:not(.on) { border-color: var(--line-strong); border-style: solid; }
+.fieldstrip { margin: 4px 0 12px; } .fs-bar { display: flex; gap: 3px; height: 54px; }
+.fs-seg { position: relative; min-width: 74px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; padding: 0 9px; }
+.fs-seg .fs-t { position: relative; z-index: 2; font-size: 11px; line-height: 1.25; color: var(--ink-2); display: flex; flex-direction: column; min-width: 0; } .fs-seg .fs-t b { font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fs-seg .fs-fill, .fs-seg .fs-frozen { position: absolute; left: 0; top: 0; bottom: 0; width: 0; display: block; transition: width .12s; }
+.fs-seg.this.drone { background: var(--drone-soft); border: 1.5px solid var(--drone-solid); } .fs-seg.this.drone .fs-fill { background: color-mix(in srgb, var(--drone-solid) 38%, transparent); } .fs-seg.this.drone .fs-frozen { background: color-mix(in srgb, var(--drone-solid) 18%, transparent); border-right: 2px solid var(--drone-solid); }
+.fs-seg.this.manual { background: var(--manual-soft); border: 1.5px solid var(--manual-solid); } .fs-seg.this.manual .fs-fill { background: color-mix(in srgb, var(--manual-solid) 38%, transparent); } .fs-seg.this.manual .fs-frozen { background: color-mix(in srgb, var(--manual-solid) 18%, transparent); border-right: 2px solid var(--manual-solid); }
+.fs-seg.other { border: 1.5px dashed var(--line-strong); background: var(--surface-2) repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--ink) 5%, transparent) 6px 12px); }
+.fs-seg.other.drone .fs-fill { background: color-mix(in srgb, var(--drone-solid) 22%, transparent); } .fs-seg.other.manual .fs-fill { background: color-mix(in srgb, var(--manual-solid) 22%, transparent); }
+.fs-seg .fs-lock { position: absolute; right: 7px; top: 6px; color: var(--muted); line-height: 0; } .fs-seg .fs-lock svg { width: 13px; height: 13px; }
+.fs-cap { margin-top: 6px; }
+.swatch.mixed { background: linear-gradient(90deg, var(--drone-solid) 0 55%, var(--manual-solid) 55% 100%); }
+.rd.mixed { background: linear-gradient(90deg, var(--drone-solid) 0 var(--dp, 50%), var(--manual-solid) var(--dp, 50%) 100%); }
+.rd.open.mixed { border-color: var(--mixed-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--mixed-solid) 0 4px, transparent 4px 9px); }
 </style>
 
 </head>
@@ -543,7 +590,7 @@ function table(cols, rows, rowClass, opts) {
   return h('div', { class: 'tablewrap' + (opts && opts.scroll ? ' scroll' : '') }, h('table', null, h('thead', null, head), body));
 }
 function badge(text, kind) { return h('span', { class: 'badge ' + (kind || '') }, text); }
-function methodBadge(m) { return m ? h('span', { class: 'badge ' + (m === 'Drone' ? 'drone' : 'manual') }, m) : badge('Unassigned', 'bad'); }
+function methodBadge(m) { return m ? h('span', { class: 'badge ' + (m === 'Drone' ? 'drone' : (m === 'Mixed' ? 'mixed' : 'manual')) }, m) : badge('Unassigned', 'bad'); }
 function pageHead(title, sub, actions) { return h('div', { class: 'pagehead' }, h('div', null, h('h1', null, title), sub ? h('p', { class: 'muted' }, sub) : null), actions || null); }
 
 // ---------- login / password screens
@@ -1055,7 +1102,7 @@ function entryScreen(root, cfg) {
     clear(sumBox);
     if (total) sumBox.appendChild(h('div', { class: 'entry-sum' }, h('b', null, (ready + rec) + ' of ' + total + ' entered'),
       h('div', { class: 'progress' }, h('i', { style: 'width:' + Math.round((ready + rec) / total * 100) + '%' })),
-      h('div', { class: 'legend hide-sm' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone'), h('span', null, h('i', { class: 'dot manual' }), 'Manual'), h('span', null, icon('check'), 'Recorded'))));
+      h('div', { class: 'legend hide-sm' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone'), h('span', null, h('i', { class: 'dot manual' }), 'Manual'), h('span', null, h('i', { class: 'dot mixed' }), 'Mixed'), h('span', null, icon('check'), 'Recorded'))));
     subbar.style.display = ro ? 'none' : '';
     const toSend = fields.filter(function (f) { return !!sel[f.field_id]; }).length, waiting = fields.filter(function (f) { return !sel[f.field_id] && queued()[f.field_id]; }).length;
     submit.textContent = toSend ? 'Submit ' + toSend + ' field' + (toSend === 1 ? '' : 's') : 'Submit';
@@ -1168,28 +1215,55 @@ function donut(pct, method, size) {
   return { node: svg, set: set };
 }
 
-/** Coverage slider for one field: 0 to 100%. What earlier events already covered (beforePct) is locked; you can only go above it. */
-function coverSlider(areaHa, beforePct, pct, onChange) {
+const SPRAY_METHODS = ['Drone', 'Manual'];
+function otherMethod(m) { return m === 'Drone' ? 'Manual' : 'Drone'; }
+/** The part of a field that one method sprays, and how much of it is done in the field's open round.
+ *  (A field list saved by an older version has no parts: then the whole field is one method.) */
+function sprayPart(f, m) {
+  if (f.parts && f.parts[m]) return f.parts[m];
+  const mine = f.method === m;
+  return { ha: mine ? f.area_ha : 0, done_ha: 0, remaining_ha: mine ? f.area_ha : 0, done_pct: mine && f.progress ? f.progress.done_pct : 0, done: false };
+}
+
+/** The whole field as one bar for a field that is sprayed partly by drone and partly by hand: this method's part (the slider below sets how much of it
+ *  this event covered) next to the other method's part, which is locked here because it is sprayed in a separate event. */
+function fieldStrip(ctx) {
+  const t = ctx.method, o = ctx.other;
+  const mineFrozen = h('i', { class: 'fs-frozen' }), mineFill = h('i', { class: 'fs-fill' });
+  const mine = h('div', { class: 'fs-seg this ' + t.toLowerCase(), style: 'flex:' + ctx.partHa + ' 1 0' }, mineFrozen, mineFill, h('span', { class: 'fs-t' }, h('b', null, r2(ctx.partHa) + ' ha'), t + ', this event'));
+  const other = h('div', { class: 'fs-seg other ' + o.method.toLowerCase(), style: 'flex:' + o.ha + ' 1 0' }, h('i', { class: 'fs-fill', style: 'width:' + Math.min(100, o.done_pct) + '%' }),
+    h('span', { class: 'fs-t' }, h('b', null, r2(o.ha) + ' ha'), o.method + (o.done_pct >= 99.9 ? ', done' : (o.done_pct > 0 ? ', ' + Math.round(o.done_pct) + '% done' : ', not done')), h('span', { class: 'fs-lock' }, icon('lock'))));
+  return { node: h('div', { class: 'fieldstrip', 'aria-label': 'The whole field: ' + r2(ctx.fieldHa) + ' ha, ' + r2(ctx.partHa) + ' ha ' + t.toLowerCase() + ' and ' + r2(o.ha) + ' ha ' + o.method.toLowerCase() },
+    h('div', { class: 'fs-bar' }, mine, other), h('div', { class: 'muted small fs-cap' }, 'Whole field ' + r2(ctx.fieldHa) + ' ha. The ' + o.method.toLowerCase() + ' part is sprayed in a separate ' + o.method + ' event, so it cannot be changed here.')),
+    set: function (before, v) { mineFrozen.style.width = before + '%'; mineFill.style.width = v + '%'; } };
+}
+
+/** Coverage slider for one field (or one method's part of it): 0 to 100%. What earlier events already covered (beforePct) is locked; you can only go above it.
+ *  ctx (a field with two methods): {method, fieldHa, partHa, other:{method, ha, done_pct}} shows the other method's part beside this one. */
+function coverSlider(areaHa, beforePct, pct, onChange, ctx) {
   const lo = beforePct >= 99.5 ? 100 : Math.floor(beforePct + 1e-9) + 1;       // at least 1% more than before
   let v = Math.max(lo, Math.min(100, Math.round(pct)));
-  const range = h('input', { type: 'range', min: '0', max: '100', step: '1', value: String(v), 'aria-label': 'Percent of the field covered by this event' });
+  const what = ctx ? ctx.method.toLowerCase() + ' part' : 'field';
+  const range = h('input', { type: 'range', min: '0', max: '100', step: '1', value: String(v), 'aria-label': 'Percent of the ' + what + ' covered by this event' });
   const track = h('div', { class: 'rtrack' + (beforePct > 0 ? ' has-frozen' : '') }, h('div', { class: 'rt-bg' }), h('div', { class: 'rt-fill' }), h('div', { class: 'rt-frozen' }), range);
+  const strip = ctx ? fieldStrip(ctx) : null;
   const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' });
   const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v - 5); } }, '- 5%');
   const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v + 5); } }, '+ 5%');
   const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(100); } }, '100%');
   function show() {
     track.style.setProperty('--q', String(v / 100)); track.style.setProperty('--p', String(beforePct / 100));
-    head.textContent = v + '% of the field = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
+    head.textContent = v + '% of the ' + what + ' = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
     sub.textContent = 'This event covers ' + r2(areaHa * (v - beforePct) / 100) + ' ha';
+    if (strip) strip.set(beforePct, v);
     minus.disabled = v <= lo; plus.disabled = v >= 100;
     if (onChange) onChange(v);
   }
   function set(x) { v = Math.max(lo, Math.min(100, Math.round(x))); range.value = String(v); show(); }
   range.addEventListener('input', function () { set(parseFloat(range.value)); });
   show();
-  return { node: h('div', { class: 'slider' }, head, sub, track,
-    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% was sprayed earlier (locked, you can only go forward)') : null,
+  return { node: h('div', { class: 'slider' }, head, sub, strip ? strip.node : null, track,
+    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% ' + (ctx ? 'of the ' + what + ' ' : '') + 'was sprayed earlier (locked, you can only go forward)') : null,
     h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full)), get: function () { return v; } };
 }
 
@@ -1198,7 +1272,7 @@ function newEventState(date, method) {
 }
 /** What goes to the server from a state (the popup validates first; for an old unsent draft the server does the checking). */
 function eventPayload(st) {
-  return { event_id: st.event_id, date: st.date, kg: Number(st.kg), men: parseInt(st.method === 'Drone' ? st.drones : st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
+  return { event_id: st.event_id, date: st.date, method: st.method, kg: Number(st.kg), men: parseInt(st.method === 'Drone' ? st.drones : st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
     lines: Object.keys(st.pct).map(function (id) { return { field_id: id, pct: st.pct[id] }; }) };
 }
 /** A Drone event has one man per drone, so its crew is just the drones. */
@@ -1207,12 +1281,15 @@ function crewText(method, men, drones) { return method === 'Drone' ? drones + (d
 /** The popup. o: {st, fields, existing (server event being edited, or null), persist, from, onDone, onDelete} */
 function openSprayEvent(o) {
   const st = o.st, fields = o.fields, byId = {}; fields.forEach(function (f) { byId[f.field_id] = f; });
+  const origMethod = o.existing ? o.existing.method : '';
   const members = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; });
-  const beforeOf = function (id) { return members[id] !== undefined ? members[id] : byId[id].progress.done_pct; };
-  const methods = []; fields.forEach(function (f) { if (methods.indexOf(f.method) < 0) methods.push(f.method); });
+  const isMember = function (id) { return members[id] !== undefined && st.method === origMethod; };      // a field of the event being changed (its earlier % is what came before THIS event)
+  const beforeOf = function (id) { return isMember(id) ? members[id] : sprayPart(byId[id], st.method).done_pct; };
+  // the methods this person may record and that some field offers; a field sprayed partly by drone and partly by hand offers both
+  const methods = SPRAY_METHODS.filter(function (m) { return (!o.methods || o.methods.indexOf(m) >= 0) && fields.some(function (f) { return sprayPart(f, m).ha > 0; }); });
   if (methods.indexOf(st.method) < 0) st.method = methods.length === 1 ? methods[0] : '';        // two kinds of field: the person chooses Drone or Manual FIRST
   if (!methods.length) st.method = 'Manual';
-  Object.keys(st.pct).forEach(function (id) { if (!byId[id]) delete st.pct[id]; });       // a field that is no longer yours
+  Object.keys(st.pct).forEach(function (id) { if (!byId[id] || sprayPart(byId[id], st.method).ha <= 0) delete st.pct[id]; });       // a field that is no longer yours, or has no part for this method
   let openId = null, q = '';
   const save = function () { if (o.persist) Draft.set('sprayevent', st.date, { cur: st }); };
 
@@ -1226,7 +1303,7 @@ function openSprayEvent(o) {
   drones.node.addEventListener('input', function () { st.drones = drones.get(); save(); renderSummary(); });
   start.addEventListener('input', function () { st.start = start.value; save(); }); end.addEventListener('input', function () { st.end = end.value; save(); });
 
-  function totals() { let ha = 0; Object.keys(st.pct).forEach(function (id) { ha += byId[id].area_ha * (st.pct[id] - beforeOf(id)) / 100; }); const kg = Number(st.kg) || 0; return { ha: ha, kg: kg, kgha: ha > 0 && kg > 0 ? kg / ha : '' }; }
+  function totals() { let ha = 0; Object.keys(st.pct).forEach(function (id) { ha += sprayPart(byId[id], st.method).ha * (st.pct[id] - beforeOf(id)) / 100; }); const kg = Number(st.kg) || 0; return { ha: ha, kg: kg, kgha: ha > 0 && kg > 0 ? kg / ha : '' }; }
   function renderSummary() {
     const t = totals(), n = Object.keys(st.pct).length;
     clear(sumBox); add(sumBox, [
@@ -1241,7 +1318,8 @@ function openSprayEvent(o) {
     methods.forEach(function (m) {
       seg.appendChild(h('button', { type: 'button', class: m === st.method ? 'on' : '', 'data-method': m, onclick: function () {
         if (st.method === m) return;
-        st.method = m; Object.keys(st.pct).forEach(function (id) { if (byId[id].method !== m) delete st.pct[id]; }); openId = null; save(); renderMethod(); renderPick(); renderCover(); renderSummary();
+        st.method = m; st.pct = {}; openId = null;          // the coverage of a field is a % of ONE method's part, so choosing the other method starts the selection again
+         save(); renderMethod(); renderPick(); renderCover(); renderSummary();
       } }, m));
     });
     methodBox.appendChild(h('div', { class: 'f' }, 'How was it sprayed?', seg));
@@ -1253,7 +1331,7 @@ function openSprayEvent(o) {
   }
   function renderPick() {
     clear(pickBox);
-    const list = fields.filter(function (f) { return f.method === st.method; });
+    const list = fields.filter(function (f) { return sprayPart(f, st.method).ha > 0; });
     if (list.length > 12) {
       const s = h('input', { type: 'search', placeholder: 'Find a field', value: q, 'aria-label': 'Find a field' });
       s.addEventListener('input', function () { q = s.value; renderPickGrid(); });
@@ -1265,18 +1343,20 @@ function openSprayEvent(o) {
   function renderPickGrid() {
     const host = pickBox.querySelector('.pick-grids'); clear(host);
     const t = q.trim().toLowerCase();
-    const list = fields.filter(function (f) { return f.method === st.method && (!t || (f.code + ' ' + f.name + ' ' + f.division).toLowerCase().indexOf(t) >= 0); });
-    if (!list.length) { host.appendChild(h('div', { class: 'muted small' }, fields.some(function (f) { return f.method === st.method; }) ? 'No field matches.' : 'You have no ' + st.method + ' fields.')); return; }
+    const list = fields.filter(function (f) { return sprayPart(f, st.method).ha > 0 && (!t || (f.code + ' ' + f.name + ' ' + f.division).toLowerCase().indexOf(t) >= 0); });
+    if (!list.length) { host.appendChild(h('div', { class: 'muted small' }, fields.some(function (f) { return sprayPart(f, st.method).ha > 0; }) ? 'No field matches.' : 'You have no fields with a ' + st.method.toLowerCase() + ' part.')); return; }
     groupBy(list, function (f) { return f.division || ''; }).forEach(function (g) {
       const picked = g.items.filter(function (f) { return st.pct[f.field_id] !== undefined; }).length;
       if (g.key) host.appendChild(h('div', { class: 'divhead fdiv' }, h('span', null, g.key), h('span', null, picked ? picked + ' selected' : '')));
       const grid = h('div', { class: 'picks' });
       g.items.forEach(function (f) {
-        const id = f.field_id, sel = st.pct[id] !== undefined, blocked = f.done_today && members[id] === undefined, before = beforeOf(id);
-        grid.appendChild(h('button', { type: 'button', 'data-code': f.code, 'data-state': blocked ? 'done' : (sel ? 'on' : 'off'), class: 'pick ' + f.method.toLowerCase() + (sel ? ' on' : '') + (blocked ? ' dis' : ''), disabled: blocked,
-          'aria-pressed': sel ? 'true' : 'false', 'aria-label': f.code + (blocked ? ', already fully sprayed today' : (sel ? ', selected' : '')), onclick: function () { toggle(f); } },
-          h('span', { class: 'pk-mark' }, icon('check')), h('span', { class: 'pk-code' }, f.code), h('span', { class: 'pk-ha' }, r2(f.area_ha) + ' ha'),
-          h('span', { class: 'pk-state' }, blocked ? 'Fully sprayed today' : (before > 0 ? Math.round(before) + '% done earlier' : 'Not sprayed')),
+        const id = f.field_id, sel = st.pct[id] !== undefined, part = sprayPart(f, st.method), mixed = f.method === 'Mixed', om = otherMethod(st.method), op = sprayPart(f, om);
+        const blocked = !isMember(id) && (f.done_today || part.done), before = beforeOf(id), why = f.done_today ? 'Fully sprayed today' : st.method + ' part done';
+        grid.appendChild(h('button', { type: 'button', 'data-code': f.code, 'data-state': blocked ? 'done' : (sel ? 'on' : 'off'), class: 'pick ' + st.method.toLowerCase() + (mixed ? ' mixed' : '') + (sel ? ' on' : '') + (blocked ? ' dis' : ''), disabled: blocked,
+          'aria-pressed': sel ? 'true' : 'false', 'aria-label': f.code + (blocked ? ', ' + why.toLowerCase() : (sel ? ', selected' : '')), onclick: function () { toggle(f); } },
+          h('span', { class: 'pk-mark' }, icon('check')), h('span', { class: 'pk-code' }, f.code), h('span', { class: 'pk-ha' }, mixed ? r2(part.ha) + ' of ' + r2(f.area_ha) + ' ha' : r2(f.area_ha) + ' ha'),
+          h('span', { class: 'pk-state' }, blocked ? why : (before > 0 ? Math.round(before) + '% done earlier' : 'Not sprayed')),
+          mixed ? h('span', { class: 'pk-other' }, om + ' part ' + r2(op.ha) + ' ha' + (op.done_pct >= 99.9 ? ' done' : (op.done_pct > 0 ? ', ' + Math.round(op.done_pct) + '%' : ''))) : null,
           before > 0 && !blocked ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + Math.min(100, before) + '%' })) : null));
       });
       host.appendChild(grid);
@@ -1291,16 +1371,17 @@ function openSprayEvent(o) {
     covBox.appendChild(grid);
   }
   function covCard(f) {
-    const id = f.field_id, before = beforeOf(id), d = donut(st.pct[id], f.method, 64);
-    const haNow = function () { return r2(f.area_ha * (st.pct[id] - before) / 100); };
+    const id = f.field_id, before = beforeOf(id), part = sprayPart(f, st.method), mixed = f.method === 'Mixed', om = otherMethod(st.method), op = sprayPart(f, om), d = donut(st.pct[id], st.method, 64);
+    const haNow = function () { return r2(part.ha * (st.pct[id] - before) / 100); };
     const haText = h('div', { class: 'cov-ha' }, haNow() + ' ha');
-    const card = h('div', { class: 'covcard ' + f.method.toLowerCase() + (openId === id ? ' open' : ''), 'data-code': f.code });
+    const card = h('div', { class: 'covcard ' + st.method.toLowerCase() + (openId === id ? ' open' : ''), 'data-code': f.code });
     const ring = h('button', { type: 'button', class: 'ring', 'aria-expanded': openId === id ? 'true' : 'false', 'aria-label': 'Change how much of ' + f.code + ' was covered. Now ' + Math.round(st.pct[id]) + '%', onclick: function () { openId = openId === id ? null : id; renderCover(); } }, d.node);
-    card.appendChild(h('div', { class: 'cov-top' }, ring, h('div', { class: 'cov-info' }, h('div', { class: 'cov-code' }, f.code), h('div', { class: 'cov-meta' }, r2(f.area_ha) + ' ha field'), haText,
+    card.appendChild(h('div', { class: 'cov-top' }, ring, h('div', { class: 'cov-info' }, h('div', { class: 'cov-code' }, f.code), h('div', { class: 'cov-meta' }, mixed ? r2(part.ha) + ' ha ' + st.method.toLowerCase() + ' part of ' + r2(f.area_ha) + ' ha' : r2(f.area_ha) + ' ha field'), haText,
       before > 0 ? h('div', { class: 'cov-note' }, icon('lock'), Math.round(before) + '% earlier') : null),
       h('button', { type: 'button', class: 'cov-x', 'aria-label': 'Remove ' + f.code, onclick: function () { toggle(f); } }, icon('x'))));
     if (openId === id) {
-      const sl = coverSlider(f.area_ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); });
+      const ctx = mixed ? { method: st.method, fieldHa: f.area_ha, partHa: part.ha, other: { method: om, ha: op.ha, done_pct: op.done_pct } } : null;
+      const sl = coverSlider(part.ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); }, ctx);
       card.appendChild(h('div', { class: 'cov-slider' }, sl.node, h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:8px' }, h('button', { type: 'button', class: 'btn primary small', onclick: function () { openId = null; renderCover(); } }, 'Done'))));
     }
     return card;
@@ -1333,9 +1414,9 @@ function openSprayEvent(o) {
     choice.appendChild(h('div', { class: 'evsec-h' }, 'How was the foliar sprayed?'));
     choice.appendChild(h('div', { class: 'muted small', style: 'margin:-4px 0 12px' }, 'Choose first. You will then see only the fields reserved for that way of spraying.'));
     choice.appendChild(h('div', { class: 'mc-grid' }, methods.map(function (m) {
-      const n = fields.filter(function (f) { return f.method === m; }).length;
+      const list = fields.filter(function (f) { return sprayPart(f, m).ha > 0; }), n = list.length, part = list.filter(function (f) { return f.method === 'Mixed'; }).length;
       return h('button', { type: 'button', class: 'mc ' + m.toLowerCase(), 'data-method': m, onclick: function () { choose(m); } },
-        h('span', { class: 'mc-ic' }, icon(m === 'Drone' ? 'wind' : 'tractor')), h('span', { class: 'mc-t' }, m), h('span', { class: 'mc-s' }, n + (n === 1 ? ' field' : ' fields')));
+        h('span', { class: 'mc-ic' }, icon(m === 'Drone' ? 'wind' : 'tractor')), h('span', { class: 'mc-t' }, m), h('span', { class: 'mc-s' }, n + (n === 1 ? ' field' : ' fields') + (part ? ', ' + part + ' of them only partly' : '')));
     })));
   }
   function updateGate() {
@@ -1386,11 +1467,11 @@ VIEWS['spray.entry'] = function (root) {
 
   function loadAll() {
     clear(listBox).appendChild(skeleton(3)); const date = dateIn.value;
-    return api('api_sprayDay', date).then(function (d) { data = d; offlineInfo = ''; Cache.set('spray:day:' + date, d); Cache.set('spray:fields', { fields: d.fields, saved: new Date().toISOString() }); afterLoad(); }).catch(function (e) {
+    return api('api_sprayDay', date).then(function (d) { data = d; offlineInfo = ''; Cache.set('spray:day:' + date, d); Cache.set('spray:fields', { fields: d.fields, methods: d.methods, saved: new Date().toISOString() }); afterLoad(); }).catch(function (e) {
       if (!e.network) { clear(listBox).appendChild(msgBox('err', e.message)); return; }
       const cd = Cache.get('spray:day:' + date), cf = Cache.get('spray:fields');
       if (!cf) { clear(listBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
-      data = { fields: cf.fields, events: cd ? cd.events : [] };
+      data = { fields: cf.fields, methods: cf.methods, events: cd ? cd.events : [] };
       offlineInfo = 'No signal. Showing what this phone saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Events you create are kept on this phone and upload when you have signal.';
       afterLoad();
     });
@@ -1426,11 +1507,11 @@ VIEWS['spray.entry'] = function (root) {
     return out;
     function fromServer(e) {
       return { kind: 'recorded', event_id: e.event_id, no: e.no, method: e.method, kg: e.kg, men: e.men, drones: e.drones, start: e.start_time, end: e.end_time, total_ha: e.total_ha, kg_per_ha: e.kg_per_ha,
-        lines: e.lines.map(function (l) { return { code: l.code, pct: l.pct_total, id: l.field_id }; }), can_edit: e.can_edit, can_delete: e.can_delete, lock_reason: e.lock_reason, by: e.entered_by, server: e, flags: e.flags };
+        lines: e.lines.map(function (l) { return { code: l.code, pct: l.pct_method !== undefined ? l.pct_method : l.pct_total, id: l.field_id, mixed: !!l.mixed, ha: l.area_ha }; }), can_edit: e.can_edit, can_delete: e.can_delete, lock_reason: e.lock_reason, by: e.entered_by, server: e, flags: e.flags };
     }
     function fromQueued(ev, server, no) {
-      const before = {}; if (server) server.lines.forEach(function (l) { before[l.field_id] = l.before_pct; });
-      let ha = 0; const lines = ev.lines.map(function (l) { const f = byId[l.field_id], b = before[l.field_id] !== undefined ? before[l.field_id] : (f ? f.progress.done_pct : 0); if (f) ha += f.area_ha * (l.pct - b) / 100; return { code: f ? f.code : '?', pct: l.pct, id: l.field_id }; });
+      const before = {}; if (server && server.method === ev.method) server.lines.forEach(function (l) { before[l.field_id] = l.before_pct; });
+      let ha = 0; const lines = ev.lines.map(function (l) { const f = byId[l.field_id], part = f ? sprayPart(f, ev.method) : { ha: 0, done_pct: 0 }, b = before[l.field_id] !== undefined ? before[l.field_id] : part.done_pct, mine = part.ha * (l.pct - b) / 100; ha += mine; return { code: f ? f.code : '?', pct: l.pct, id: l.field_id, mixed: !!f && f.method === 'Mixed', ha: mine }; });
       return { kind: 'queued', event_id: ev.event_id, no: no, method: ev.method || (byId[ev.lines[0].field_id] || {}).method || 'Manual', kg: ev.kg, men: ev.men, drones: ev.drones, start: ev.start_time, end: ev.end_time, total_ha: round2(ha), kg_per_ha: ha > 0 ? round2(ev.kg / ha) : '',
         lines: lines, can_edit: true, can_delete: true, lock_reason: '', by: S.me.username, server: server, queuedEvent: ev };
     }
@@ -1458,7 +1539,7 @@ VIEWS['spray.entry'] = function (root) {
   function openNew(from) {
     const cur = Draft.get('sprayevent', dateIn.value).cur;
     from.classList.add('editing');
-    openSprayEvent({ st: cur || newEventState(dateIn.value, ''), fields: data.fields, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); } });
+    openSprayEvent({ st: cur || newEventState(dateIn.value, ''), fields: data.fields, methods: data.methods, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); } });
   }
 
   function renderList() {
@@ -1478,7 +1559,7 @@ VIEWS['spray.entry'] = function (root) {
       h('div', { class: 'ev-head' }, h('div', { class: 'ev-title' }, c.no ? 'Spray event ' + c.no : 'New spray event'), methodBadge(c.method), h('div', { class: 'ev-actions' }, actions)),
       h('div', { class: 'ev-sub' }, h('span', { class: 'ev-time' }, c.start + ' to ' + c.end), c.kind === 'queued' ? h('span', { class: 'badge warn' }, icon('upload'), 'Waiting to upload') : null),
       h('div', { class: 'ev-stats' }, stat(r2(c.total_ha).toFixed(2), 'ha covered'), stat(String(r2(c.kg)), 'kg used' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')), stat(crewText(c.method, c.men, c.drones), 'crew')),
-      h('div', { class: 'tags', 'aria-label': 'Fields sprayed' }, c.lines.map(function (l) { return h('span', { class: 'tag' + (l.pct < 100 ? ' part' : '') }, l.code + (l.pct < 100 ? ' ' + Math.round(l.pct) + '%' : '')); })),
+      h('div', { class: 'tags', 'aria-label': 'Fields sprayed' }, c.lines.map(function (l) { return h('span', { class: 'tag' + (l.mixed || l.pct < 100 ? ' part' : '') }, l.mixed ? l.code + ' ' + r2(l.ha) + ' ha' : l.code + (l.pct < 100 ? ' ' + Math.round(l.pct) + '%' : '')); })),
       c.flags ? h('div', { class: 'small', style: 'color:var(--warn);margin-top:8px' }, 'Check: ' + c.flags) : null,
       !readOnly() && !c.can_edit && c.lock_reason ? h('div', { class: 'small muted', style: 'margin-top:8px' }, icon('lock'), ' ' + c.lock_reason) : null);
     return el;
@@ -1490,7 +1571,7 @@ VIEWS['spray.entry'] = function (root) {
         pct: c.queuedEvent.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) }
       : { event_id: c.event_id, date: dateIn.value, method: c.method, kg: c.kg, men: c.men, drones: c.drones || 1, start: c.start, end: c.end, pct: c.lines.reduce(function (m, l) { m[l.id] = l.pct; return m; }, {}) };
     from.classList.add('editing');
-    openSprayEvent({ st: st, fields: data.fields, existing: c.server, persist: false, from: from, onDone: renderAll, onDelete: function () { askDelete(c); }, onClosed: function () { from.classList.remove('editing'); } });
+    openSprayEvent({ st: st, fields: data.fields, methods: data.methods, existing: c.server, persist: false, from: from, onDone: renderAll, onDelete: function () { askDelete(c); }, onClosed: function () { from.classList.remove('editing'); } });
   }
 
   function viewEvent(c, from) {
@@ -1622,7 +1703,7 @@ VIEWS['records.manage'] = function (root) {
 'use strict';
 /* ===== Administration: Home checklist, Estate setup, Users, Job roles, Parameters, Audit log ===== */
 
-const SCOPE_TEXT = { assigned: 'Only the fields assigned to the person', drone: 'All Drone fields', all: 'All fields' };
+const SCOPE_TEXT = { assigned: 'Only the fields assigned to the person', drone: 'Every field that has a drone part (Drone events only)', all: 'All fields' };
 
 // ---------------------------------------------------------------- Home (admin)
 VIEWS['home'] = function (root) {
@@ -1635,8 +1716,8 @@ VIEWS['home'] = function (root) {
     const st = s.stats;
     box.appendChild(h('div', { class: 'kpis four' },
       kpi('neutral', 'Fields', st.fields, st.complete + ' filled in, ' + num(st.ha, 1) + ' ha', 'map'),
-      kpi('drone', 'Drone fields', st.drone, num(st.drone_ha, 1) + ' ha', 'wind'),
-      kpi('manual', 'Manual fields', st.manual, num(st.manual_ha, 1) + ' ha', 'tractor'),
+      kpi('drone', 'Drone spraying', num(st.drone_ha, 1) + ' ha', st.drone + ' fields have a drone part', 'wind'),
+      kpi('manual', 'Manual spraying', num(st.manual_ha, 1) + ' ha', st.manual + ' fields have a manual part (' + st.mixed + ' fields have both)', 'tractor'),
       kpi('neutral', 'Entered today', st.spray_today + ' sprays', st.pluck_today + ' plucking records, ' + num(st.kg_today, 0) + ' kg', 'droplet')));
     const done = s.steps.filter(function (x) { return x.done; }).length;
     const list = h('ul', { class: 'steps' });
@@ -1655,7 +1736,7 @@ VIEWS['estate.manage'] = function (root) {
   const out = h('div');
   let data = null, openDiv = null;
   const headActions = h('div', { class: 'row' });
-  root.appendChild(pageHead('Estate setup', 'Create the estate, then its divisions and fields. Every field needs its area, last prune date, tea type and spray method before it can be used.', headActions));
+  root.appendChild(pageHead('Estate setup', 'Create the estate, then its divisions and fields. Every field needs its area, last prune date, tea type and drone area (the part sprayed by drone) before it can be used.', headActions));
   root.appendChild(out);
   refresh();
 
@@ -1683,8 +1764,8 @@ VIEWS['estate.manage'] = function (root) {
 
   function overview() {
     const act = data.fields.filter(function (f) { return f.active; });
-    const haOf = function (l) { return l.reduce(function (t, f) { return t + (f.area_ha || 0); }, 0); };
-    const dr = act.filter(function (f) { return f.method === 'Drone'; }), ma = act.filter(function (f) { return f.method === 'Manual'; });
+    const haOf = function (l, k) { return l.reduce(function (t, f) { return t + (f[k || 'area_ha'] || 0); }, 0); };
+    const dr = act.filter(function (f) { return f.drone_ha > 0; }), ma = act.filter(function (f) { return f.manual_ha > 0; });
     const complete = act.filter(function (f) { return f.complete; }).length;
     clear(headActions);
     headActions.appendChild(h('button', { class: 'btn', onclick: renameEstate }, 'Rename estate'));
@@ -1692,16 +1773,16 @@ VIEWS['estate.manage'] = function (root) {
     out.appendChild(h('div', { class: 'kpis four' },
       kpi('neutral', 'Estate', data.estate.name, data.divisions.length + ' divisions', 'leaf'),
       kpi('neutral', 'Fields', act.length, complete + ' filled in', 'map'),
-      kpi('drone', 'Drone fields', dr.length, num(haOf(dr), 1) + ' ha', 'wind'),
-      kpi('manual', 'Manual fields', ma.length, num(haOf(ma), 1) + ' ha', 'tractor')));
+      kpi('drone', 'Drone spraying', num(haOf(dr, 'drone_ha'), 1) + ' ha', dr.length + ' fields have a drone part', 'wind'),
+      kpi('manual', 'Manual spraying', num(haOf(ma, 'manual_ha'), 1) + ' ha', ma.length + ' fields have a manual part', 'tractor')));
     const grid = h('div', { class: 'divgrid' });
     data.divisions.forEach(function (d) {
       const mine = data.fields.filter(function (f) { return f.division_id === d.division_id && f.active; });
-      const drn = mine.filter(function (f) { return f.method === 'Drone'; }).length, man = mine.filter(function (f) { return f.method === 'Manual'; }).length;
+      const drn = mine.filter(function (f) { return f.method === 'Drone'; }).length, man = mine.filter(function (f) { return f.method === 'Manual'; }).length, mix = mine.filter(function (f) { return f.method === 'Mixed'; }).length;
       const cnt = numInput('', { step: '1', min: '1', max: '300', placeholder: 'How many?', class: 'w120' });
       grid.appendChild(h('div', { class: 'card divcard' },
         h('div', { class: 'row between', style: 'margin-bottom:8px' }, h('h2', { style: 'margin:0' }, d.name, d.active ? '' : ' (inactive)'), h('button', { class: 'btn small ghost', onclick: function () { renameDivision(d); } }, 'Rename')),
-        h('div', { class: 'mini' }, h('span', { class: 'muted' }, num(haOf(mine), 1) + ' ha'), drn ? badge(drn + ' Drone', 'drone') : null, man ? badge(man + ' Manual', 'manual') : null),
+        h('div', { class: 'mini' }, h('span', { class: 'muted' }, num(haOf(mine), 1) + ' ha'), drn ? badge(drn + ' Drone', 'drone') : null, mix ? badge(mix + ' Mixed', 'mixed') : null, man ? badge(man + ' Manual', 'manual') : null),
         h('div', { class: 'muted', style: 'margin:12px 0 6px' }, d.field_count + ' fields: ' + d.complete_count + ' complete, ' + d.assigned_count + ' with an AFO'),
         h('div', { class: 'progress', style: 'margin-bottom:16px' }, h('i', { style: 'width:' + (d.field_count ? Math.round(d.complete_count / d.field_count * 100) : 0) + '%' })),
         d.field_count ? h('button', { class: 'btn primary', style: 'width:100%;margin-bottom:14px', onclick: function () { openDiv = d.division_id; render(); } }, 'Fill in the fields') : null,
@@ -1732,41 +1813,50 @@ VIEWS['estate.manage'] = function (root) {
       { label: 'Save', kind: 'primary', onclick: function (m, b) { run(b, function () { return api('api_saveDivision', { division_id: d.division_id, name: name.value, active: act.value === 'true' }).then(function () { m.close(); return refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); }); } }]);
   }
 
-  // The grid: one row per field; fill in area, last prune date, VP/SD and spray method.
+  // The grid: one row per field; fill in area, drone area (the rest is sprayed by hand), last prune date and VP/SD.
   function gridView(dv) {
     const rows = data.fields.filter(function (f) { return f.division_id === dv.division_id; }).map(function (f) {
       return { f: f,
         code: h('input', { type: 'text', value: f.code, maxlength: '20', class: 'w90' }), name: h('input', { type: 'text', value: f.name, maxlength: '80', placeholder: 'optional' }),
         area: numInput(f.area_ha, { step: '0.01', class: 'w90' }), prune: h('input', { type: 'date', value: f.last_prune_date || '', max: S.today }),
         tea: select([{ value: '', label: '-' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], f.tea_type),
-        method: select([{ value: '', label: '-' }, { value: 'Drone', label: 'Drone' }, { value: 'Manual', label: 'Manual' }], f.method),
+        drone: numInput(f.drone_ha, { step: '0.01', class: 'w90', placeholder: 'ha' }), manual: h('span', { class: 'small' }),
         active: h('input', { type: 'checkbox', checked: f.active }) };
     });
     const msg = h('div');
+    /** the manual part is what is left of the field after the drone part; shown as the person types */
+    function showManual(r) {
+      const a = parseFloat(r.area.value), d = parseFloat(r.drone.value);
+      r.manual.textContent = r.drone.value === '' || !(a > 0) ? '' : (d > a + 0.006 || d < 0 ? 'more than the field' : num(Math.round((a - d) * 100) / 100, 2) + (d <= 0 ? '  (all manual)' : (a - d < 0.05 ? '  (all drone)' : '')));
+      r.manual.style.color = r.manual.textContent === 'more than the field' ? 'var(--bad)' : '';
+    }
+    rows.forEach(function (r) { showManual(r); r.area.addEventListener('input', function () { showManual(r); }); r.drone.addEventListener('input', function () { showManual(r); }); });
     const fillTea = select([{ value: '', label: 'Tea type...' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], '');
-    const fillMeth = select([{ value: '', label: 'Method...' }, { value: 'Drone', label: 'Drone' }, { value: 'Manual', label: 'Manual' }], '');
+    const fillMeth = select([{ value: '', label: 'Spraying...' }, { value: 'Drone', label: 'All drone' }, { value: 'Manual', label: 'All manual' }], '');
     const fillPrune = h('input', { type: 'date', max: S.today }), fillArea = numInput('', { step: '0.01', placeholder: 'ha', class: 'w90' });
     function save(btn) {
       clear(msg);
-      const payload = rows.map(function (r) { return { field_id: r.f.field_id, code: r.code.value, name: r.name.value, area_ha: r.area.value, last_prune_date: r.prune.value, tea_type: r.tea.value, method: r.method.value, active: r.active.checked }; });
+      const payload = rows.map(function (r) { return { field_id: r.f.field_id, code: r.code.value, name: r.name.value, area_ha: r.area.value, last_prune_date: r.prune.value, tea_type: r.tea.value, drone_ha: r.drone.value, active: r.active.checked }; });
       run(btn, function () { return api('api_saveFields', dv.division_id, payload).then(function (r) { toast(r.changed ? r.changed + ' fields saved' : 'Nothing had changed'); return api('api_getEstate').then(function (d) { data = d; msg.appendChild(msgBox('ok', r.changed ? 'Saved.' : 'Nothing had changed.')); }); }).catch(function (e) { msg.appendChild(msgBox('err', e.message)); }); });
     }
     const saveBtn = h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields');
     out.appendChild(h('div', { class: 'card' },
       h('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, h('h2', { style: 'margin:0' }, dv.name + ': fields'),
         h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openDiv = null; refresh(); } }, 'Back to divisions'), saveBtn)),
-      h('div', { class: 'muted small', style: 'margin:6px 0' }, 'For every field enter the area, the last pruning date, the tea type and the spray method. The method is fixed per field: spray entry never asks for it. Fields that are not complete cannot be used for data entry.'),
+      h('div', { class: 'muted small', style: 'margin:6px 0' }, 'For every field enter the area, the drone area, the last pruning date and the tea type. The drone area is the part of the field that the drone sprays; the rest is sprayed by hand. Enter 0 if the whole field is sprayed by hand, or the whole area if it is all by drone. Fields that are not complete cannot be used for data entry.'),
       h('div', { class: 'row fillbar' }, h('strong', { class: 'small' }, 'Fill empty cells in all rows:'), fillTea, fillMeth, fillPrune, fillArea,
         h('button', { class: 'btn small', onclick: function () {
           rows.forEach(function (r) {
-            if (fillTea.value && !r.tea.value) r.tea.value = fillTea.value; if (fillMeth.value && !r.method.value) r.method.value = fillMeth.value;
+            if (fillTea.value && !r.tea.value) r.tea.value = fillTea.value;
             if (fillPrune.value && !r.prune.value) r.prune.value = fillPrune.value; if (fillArea.value && !r.area.value) r.area.value = fillArea.value;
+            if (fillMeth.value && r.drone.value === '' && r.area.value !== '') r.drone.value = fillMeth.value === 'Drone' ? r.area.value : '0';
+            showManual(r);
           });
         } }, 'Apply')),
       msg,
-      h('div', { class: 'tablewrap scroll' }, h('table', { class: 'grid-edit' }, h('thead', null, h('tr', null, ['Code', 'Name', 'Area (ha)', 'Last prune date', 'Tea type', 'Spray method', 'AFO', 'Active'].map(function (x) { return h('th', null, x); }))),
+      h('div', { class: 'tablewrap scroll' }, h('table', { class: 'grid-edit' }, h('thead', null, h('tr', null, ['Code', 'Name', 'Area (ha)', 'Drone area (ha)', 'Manual area (ha)', 'Last prune date', 'Tea type', 'AFO', 'Active'].map(function (x) { return h('th', null, x); }))),
         h('tbody', null, rows.map(function (r) {
-          return h('tr', { class: r.f.complete ? '' : 'incomplete' }, h('td', null, r.code), h('td', null, r.name), h('td', null, r.area), h('td', null, r.prune), h('td', null, r.tea), h('td', null, r.method),
+          return h('tr', { class: r.f.complete ? '' : 'incomplete' }, h('td', null, r.code), h('td', null, r.name), h('td', null, r.area), h('td', null, r.drone), h('td', null, r.manual), h('td', null, r.prune), h('td', null, r.tea),
             h('td', { class: 'small' }, r.f.afo_name ? r.f.afo_name + (r.f.afo_active ? '' : ' (inactive)') : h('span', { class: 'muted' }, 'none')), h('td', null, r.active));
         })))),
       h('div', { style: 'margin-top:12px' }, h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields'))));
@@ -2083,7 +2173,8 @@ function roundsCard(r) {
     h('p', { class: 'muted small', style: 'margin:0 0 12px' }, 'A round is finished when the whole field has been covered, which can take several days. Days to complete counts from the first day of the round to the day it was finished. The gap is the number of days between the first day of a round and the first day of the round before it.'), box);
 }
 
-VIEWS['dashboard.view'] = function (root) {
+/** The earlier plain summary (daily totals, by years since prune, rounds). Kept inside Experiment monitoring until that part is designed. */
+function legacyDashboard(root, noHead) {
   const to = h('input', { type: 'date', value: S.today, max: S.today });
   const from = h('input', { type: 'date', value: addDaysStr(S.today, -29), max: S.today });
   const out = h('div');
@@ -2093,7 +2184,7 @@ VIEWS['dashboard.view'] = function (root) {
       from.value = addDaysStr(S.today, -(p[0] - 1)); to.value = S.today; load();
     } }, p[1]));
   });
-  root.appendChild(pageHead('Dashboard', 'Green leaf and foliar spray summary, drone fields vs manual fields.'));
+  if (!noHead) root.appendChild(pageHead('Dashboard', 'Green leaf and foliar spray summary, drone fields vs manual fields.'));
   root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' }, h('div', null, h('div', { class: 'small muted', style: 'margin-bottom:6px' }, 'Period'), seg),
     h('div', { class: 'grow' }, field('From', from)), h('div', { class: 'grow' }, field('To', to)),
     h('button', { class: 'btn primary', onclick: function (ev) { run(ev.currentTarget, load); } }, 'Show'))));
@@ -2119,7 +2210,8 @@ VIEWS['dashboard.view'] = function (root) {
         kpi('neutral', 'Drone vs manual, kg per plucked ha', diff === '' ? '-' : (diff > 0 ? '+' : '') + num(diff, 1) + '%', 'Raw difference. Not yet compared with each field\'s own baseline.', 'trend'),
         kpi('drone', 'Drone spraying', dash(cell(hrD, 2)) + (hrD !== '' ? ' ha/h' : ''), Sp.Drone.fields + ' field sprays, ' + cell(Sp.Drone.ha, 1) + ' ha, ' + cell(Sp.Drone.hours, 1) + ' h', 'droplet'),
         kpi('manual', 'Manual spraying', dash(cell(hrM, 2)) + (hrM !== '' ? ' ha/h' : ''), Sp.Manual.fields + ' field sprays, ' + cell(Sp.Manual.ha, 1) + ' ha, ' + cell(Sp.Manual.hours, 1) + ' h', 'droplet'),
-        kpi('neutral', 'Fields in the trial', E.fields.Drone + ' + ' + E.fields.Manual, 'Drone + Manual (' + cell(E.ha.Drone, 1) + ' + ' + cell(E.ha.Manual, 1) + ' ha)' + (E.fields.incomplete ? '. ' + E.fields.incomplete + ' not filled in yet' : ''), 'map')));
+        kpi('neutral', 'Fields in the trial', E.fields.Drone + ' + ' + E.fields.Manual + ' + ' + E.fields.Mixed, 'All drone + all manual + part drone, part manual (' + cell(E.ha.Drone, 1) + ' + ' + cell(E.ha.Manual, 1) + ' + ' + cell(E.ha.Mixed, 1) + ' ha)' + (E.fields.incomplete ? '. ' + E.fields.incomplete + ' not filled in yet' : ''), 'map')));
+      if (d.mixed && d.mixed.kg > 0) out.appendChild(msgBox('warn', 'Fields sprayed partly by drone and partly by hand are not in the Drone or Manual figures above. In this period ' + cell(d.mixed.kg, 0) + ' kg was plucked from ' + cell(d.mixed.ha, 1) + ' ha of them. How to compare them is still to be designed.'));
 
       const chart = lineChart(d.daily);
       out.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Green leaf per plucked hectare, by day'),
@@ -2140,6 +2232,155 @@ VIEWS['dashboard.view'] = function (root) {
       out.appendChild(roundsCard(d.rounds));
       out.appendChild(h('p', { class: 'muted small' }, 'This first dashboard shows that everything entered arrives in one place. The KPI and cost views are added once data collection is running.'));
     }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+}
+</script>
+
+<script>
+'use strict';
+/* ===== Monitoring: Operation monitoring (Plucking rounds, Foliar rounds) and Experiment monitoring =====
+ *  The rounds are drawn as a timeline after GreenLens v3: one row per field on a shared date axis that scrolls sideways; each round a block
+ *  over the days it took (kg above, days below); between two rounds a line with the days between their first days, green when it is within
+ *  the target gap and red, with the days beyond it, when it is not; a round not finished is hatched; each month shows how many rounds started in it. */
+
+const MON_PX = { small: 12, normal: 22, large: 34 };
+const MON_DAY = 86400000;
+const monDay = function (iso) { return Math.floor(new Date(iso + 'T00:00:00Z').getTime() / MON_DAY); };
+const daysWord = function (n) { return n + (n === 1 ? ' day' : ' days'); };
+
+/** The timeline for one list of fields. d: {today, from, to, target_gap, fields:[{code, division, method, area_ha, avg_per_month, rounds:[...]}]}. what: words for the tooltips. */
+/** The method badge of a field; a field sprayed partly by drone says how much. */
+function mixedBadge(f) {
+  const b = methodBadge(f.method);
+  if (f.method === 'Mixed') b.setAttribute('title', r2(f.drone_ha) + ' ha by drone and ' + r2(f.area_ha - f.drone_ha) + ' ha by hand (' + f.drone_pct + '% drone)');
+  return b;
+}
+function roundsTimeline(d, zoom, what) {
+  const px = MON_PX[zoom] || MON_PX.normal, first = monDay(d.from), last = monDay(d.to) + 3, total = last - first + 1, laneW = total * px;
+  const pos = function (iso) { return (Math.min(Math.max(monDay(iso), first), last + 1) - first) / total * 100; };
+  const wide = function (a, b) { return (Math.min(monDay(b), last) - Math.max(monDay(a), first) + 1) / total * 100; };
+  const todayAt = (monDay(d.today) + 1 - first) / total * 100, labels = px >= 20;
+
+  const months = [];                                                   // the calendar months inside the window
+  for (let day = first; day <= last;) {
+    const dt = new Date(day * MON_DAY), monthEnd = Math.min(last, Math.floor(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0) / MON_DAY));
+    months.push({ key: dt.toISOString().slice(0, 7), name: dt.toLocaleDateString('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' }), at: (day - first) / total * 100, width: (monthEnd - day + 1) / total * 100 });
+    day = monthEnd + 1;
+  }
+
+  const head = h('tr', null, h('th', { class: 'mon-field', scope: 'col' }, 'Field'),
+    h('th', { class: 'mon-axis', scope: 'col', style: 'min-width:' + laneW + 'px;width:' + laneW + 'px' }, h('div', { style: 'position:relative;height:100%;width:' + laneW + 'px' },
+      months.map(function (m) { return h('span', { style: 'left:' + m.at + '%' }, m.name); }))));
+  const body = h('tbody');
+  groupBy(d.fields, function (f) { return f.division || ''; }).forEach(function (g) {
+    body.appendChild(h('tr', { class: 'mon-div' }, h('th', { colspan: '2', scope: 'colgroup' }, h('div', { class: 'mon-divtxt' }, (g.key || 'Fields') + '  |  ' + g.items.length + (g.items.length === 1 ? ' field' : ' fields')))));
+    g.items.forEach(function (f) { body.appendChild(fieldRow(f)); });
+  });
+
+  function fieldRow(f) {
+    const rounds = f.rounds, lane = h('div', { class: 'lane', style: 'width:' + laneW + 'px;min-width:' + laneW + 'px' });
+    months.forEach(function (m, i) {                                    // month bands, with how many rounds started in each
+      const n = (f.months.filter(function (x) { return x.month === m.key; })[0] || { n: 0 }).n;
+      lane.appendChild(h('i', { class: 'band' + (i % 2 ? ' odd' : ''), style: 'left:' + m.at + '%;width:' + m.width + '%', title: n + (n === 1 ? ' round started' : ' rounds started') + ' in ' + m.name },
+        h('b', { class: n === 0 ? 'none' : '' }, labels ? n + (n === 1 ? ' round' : ' rounds') : String(n))));
+    });
+    lane.appendChild(h('i', { class: 'today', style: 'left:' + todayAt + '%', 'aria-hidden': 'true' }));
+    rounds.forEach(function (r, i) {                                    // the gap to the previous round
+      const prev = rounds[i - 1];
+      if (!prev || r.gap === '') return;
+      const a = pos(prev.end) + 100 / total, b = pos(r.start);
+      lane.appendChild(h('span', { class: 'link ' + (r.late > 0 ? 'late' : 'ok'), style: 'left:' + a + '%;width:' + Math.max(b - a, 0) + '%',
+        title: 'Gap of ' + daysWord(r.gap) + ' between the first days of round ' + prev.no + ' and round ' + r.no + '. Target gap: ' + daysWord(d.target_gap) + (r.late > 0 ? '. Late by ' + daysWord(r.late) + '.' : '. On time.') },
+        h('em', null, r.gap + 'd' + (r.late > 0 && labels ? ' +' + r.late : ''))));
+    });
+    rounds.forEach(function (r) {                                       // the rounds
+      const open = !r.complete, tip = what.noun + ' round ' + r.no + ': ' + shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + ' (' + daysWord(r.days) + '). ' + what.amount(r) + ' ' + r.percent + '% of the field' + (open ? ' so far (not finished)' : '') + '.';
+      lane.appendChild(h('span', { class: 'item', style: 'left:' + pos(r.start) + '%;width:max(' + wide(r.start, r.end) + '%,8px)', title: tip, 'data-round': String(r.no) },
+        labels ? h('i', { class: 'kg' }, what.short(r)) : null, h('span', { class: 'rd ' + f.method.toLowerCase() + (open ? ' open' : ''), style: f.method === 'Mixed' ? '--dp:' + f.drone_pct + '%' : null }), labels ? h('i', { class: 'took' }, open ? r2(r.done_ha) + ' ha' : daysWord(r.days)) : null));
+    });
+    if (!rounds.length) lane.appendChild(h('small', { class: 'mon-none' }, 'No round in this period'));
+    return h('tr', { 'data-field': f.field_id }, h('th', { class: 'mon-field', scope: 'row' }, h('b', { class: 'code' }, f.code), h('span', { class: 'sub' }, r2(f.area_ha) + ' ha  ', mixedBadge(f)),
+      h('span', { class: 'avg' }, f.avg_per_month === '' ? what.avgNone : 'about ' + num(f.avg_per_month, 1) + ' ' + what.avgWord)), h('td', { class: 'mon-lane' }, lane));
+  }
+  const table = h('table', { class: 'mon', 'aria-label': what.title }, h('thead', null, head), body);
+  const box = h('div', { class: 'mon-scroll' }, table);
+  return {
+    node: box,
+    toToday: function (smooth) { const ax = box.querySelector('.mon-axis'); if (!ax || !box.scrollTo) return; box.scrollTo({ left: Math.max(0, ax.offsetLeft + todayAt / 100 * laneW - box.clientWidth * 0.72), behavior: smooth ? 'smooth' : 'auto' }); },
+    by: function (days) { if (box.scrollBy) box.scrollBy({ left: days * px, behavior: 'smooth' }); }
+  };
+}
+
+const MON_WORDS = {
+  pluck: { noun: 'Plucking', title: 'Plucking rounds of every field', avgWord: 'rounds a month', avgNone: 'average: not enough months yet',
+    amount: function (r) { return r2(r.kg) + ' kg from ' + r2(r.done_ha) + ' ha' + (r.kg_per_ha !== '' ? ' (' + r2(r.kg_per_ha) + ' kg/ha)' : '') + ', '; },
+    short: function (r) { return r.kg ? Math.round(r.kg).toLocaleString() + ' kg' : ''; } }
+};
+
+/** The screen of one kind of rounds: a legend, the controls and the timeline. */
+function roundsScreen(host, kind, load) {
+  let zoom = S.monZoom || 'normal', data = null, tl = null;
+  const body = h('div');
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Size' });
+  [['small', 'Small'], ['normal', 'Normal'], ['large', 'Large']].forEach(function (z) {
+    seg.appendChild(h('button', { type: 'button', 'data-zoom': z[0], class: z[0] === zoom ? 'on' : '', onclick: function () { zoom = z[0]; S.monZoom = zoom; Array.prototype.forEach.call(seg.children, function (b) { b.classList.toggle('on', b.getAttribute('data-zoom') === zoom); }); draw(); } }, z[1]));
+  });
+  const nav = h('div', { class: 'seg', role: 'group', 'aria-label': 'Move' },
+    h('button', { type: 'button', onclick: function () { if (tl) tl.by(-30); } }, '‹ Earlier'), h('button', { type: 'button', onclick: function () { if (tl) tl.toToday(true); } }, 'Today'), h('button', { type: 'button', onclick: function () { if (tl) tl.by(30); } }, 'Later ›'));
+  const divBox = h('div', { class: 'mon-div-pick' });
+  host.appendChild(h('div', { class: 'mon-ctl' }, divBox, seg, nav));
+  host.appendChild(body);
+  clear(body).appendChild(skeleton(4));
+  load().then(function (d) { data = d; setupDivisions(); draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
+
+  /** One division at a time, as in GreenLens: a whole estate on one screen would be too heavy to read (and to draw). */
+  function setupDivisions() {
+    const names = []; data.fields.forEach(function (f) { if (names.indexOf(f.division) < 0) names.push(f.division); });
+    if (names.indexOf(S.monDiv) < 0) S.monDiv = names[0];
+    if (names.length < 2) return;
+    const sel = select(names.map(function (n) { return { value: n, label: n || 'Fields' }; }), S.monDiv, { 'aria-label': 'Division' });
+    sel.addEventListener('change', function () { S.monDiv = sel.value; draw(); });
+    clear(divBox).appendChild(h('label', { class: 'mon-divsel' }, h('span', null, 'Division'), sel));
+  }
+  function draw() {
+    if (!data) return;
+    clear(body);
+    const shown = { today: data.today, from: data.from, to: data.to, target_gap: data.target_gap, fields: data.fields.filter(function (f) { return f.division === S.monDiv; }) };
+    body.appendChild(h('ul', { class: 'legend mon-legend', 'aria-label': 'Legend' },
+      h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual (the blue share is the drone share)'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'),
+      h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
+      h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month')));
+    body.appendChild(h('p', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + ' between the first days of two rounds (the Admin sets it under Parameters). Showing ' + shortDate(data.from) + ' to ' + shortDate(data.to) + '. Hover a round or a gap for the details.'));
+    if (!shown.fields.length) { body.appendChild(emptyState('No fields are set up yet.', 'map')); return; }
+    tl = roundsTimeline(shown, zoom, MON_WORDS[kind]);
+    body.appendChild(tl.node);
+    setTimeout(function () { tl.toToday(false); }, 0);
+  }
+}
+
+VIEWS['dashboard.view'] = function (root) {
+  let tab = S.monTab || 'operation', sub = S.monSub || 'pluck';
+  const top = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Monitoring sections' }), subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), page = h('div');
+  [['operation', 'Operation monitoring'], ['experiment', 'Experiment monitoring']].forEach(function (t) {
+    top.appendChild(h('button', { type: 'button', role: 'tab', 'data-tab': t[0], onclick: function () { tab = t[0]; S.monTab = tab; show(); } }, t[1]));
+  });
+  [['pluck', 'Plucking rounds'], ['foliar', 'Foliar rounds']].forEach(function (t) {
+    subBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-sub': t[0], onclick: function () { sub = t[0]; S.monSub = sub; show(); } }, t[1]));
+  });
+  root.appendChild(pageHead('Monitoring', 'Watch how the work is going on every field, and how the experiment is doing.'));
+  root.appendChild(h('div', { class: 'montabs' }, top, subBar));
+  root.appendChild(page);
+  show();
+
+  function show() {
+    Array.prototype.forEach.call(top.children, function (b) { const on = b.getAttribute('data-tab') === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    subBar.style.display = tab === 'operation' ? '' : 'none';
+    clear(page);
+    if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
+    if (tab === 'operation') { page.appendChild(h('div', { class: 'card' }, emptyState('Foliar rounds is the next piece we build together.', 'droplet'))); return; }
+    page.appendChild(msgBox('warn', 'Experiment monitoring is still to be designed together. Until then, the earlier summary is shown here.'));
+    legacyDashboard(page, true);
   }
 };
 </script>
