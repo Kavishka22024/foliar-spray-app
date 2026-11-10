@@ -487,6 +487,27 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .exp-bar.drone { fill: var(--drone-solid); } .exp-bar.manual { fill: var(--manual-solid); } .exp-bar:hover { opacity: .85; }
 .exp-val { fill: var(--ink); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; } .exp-val.big { font-size: 18px; font-weight: 800; }
 @media (max-width: 860px) { .exp-head { padding: 16px 18px; } .exp-head .eh-big { font-size: 34px; } .exp-head .eh-sub { font-size: 14px; } }
+
+/* ---- Field history ---- */
+.hx-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.hxrow { display: flex; flex-direction: column; gap: 6px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 12px 14px; cursor: pointer; font: inherit; color: inherit; }
+.hxrow:hover { box-shadow: var(--shadow-md); border-color: var(--line-strong); } .hxrow:focus-visible { outline: 3px solid var(--ring); }
+.hx-c { display: flex; align-items: center; gap: 8px; } .hx-c b { font-size: 16px; } .hx-c small { color: var(--muted); margin-left: auto; }
+.hx-l { display: flex; gap: 8px; font-size: 13px; color: var(--ink-2); } .hx-l i { font-style: normal; font-weight: 700; color: var(--muted); min-width: 78px; }
+.hx-back { margin: 0 0 12px; } .hx-back .btn { display: inline-flex; align-items: center; gap: 6px; } .hx-back svg { width: 16px; height: 16px; }
+.hx-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; } .hx-head .code { font-size: 22px; }
+.hx-part { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--line-strong); border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.hx-part.drone { border-left-color: var(--drone-solid); } .hx-part.manual { border-left-color: var(--manual-solid); }
+.hx-parthead { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 4px; } .hx-sum { margin-bottom: 10px; }
+.hx-rounds { display: flex; flex-direction: column; gap: 10px; } .hx-rounds > .btn { align-self: flex-start; }
+.hx-round { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-2); }
+.hx-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .hx-no { font-size: 15px; } .hx-dates { margin-left: auto; font-size: 13px; color: var(--ink-2); }
+.hx-tag { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 8px; } .hx-tag.done { color: var(--good); background: var(--good-soft); } .hx-tag.part { color: var(--bad); background: var(--bad-soft); } .hx-tag.ongoing { color: var(--primary-600); background: var(--primary-soft); }
+.hx-bar { display: flex; align-items: center; gap: 10px; margin: 8px 0 6px; } .hx-bar .pb { flex: 1; max-width: 360px; } .hx-pct { font-size: 13px; font-variant-numeric: tabular-nums; min-width: 38px; }
+.hx-nums { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); } .hx-nums b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.hx-gap { font-size: 12px; margin-top: 6px; } .hx-gap.ok { color: var(--good); } .hx-gap.late { color: var(--bad); }
+.hx-det { margin-top: 8px; font-size: 13px; } .hx-det summary { cursor: pointer; color: var(--primary-600); font-weight: 600; } .hx-det ul { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); } .hx-det li { margin: 3px 0; } .hx-det li b { color: var(--ink); }
+@media (max-width: 860px) { .hx-rows { grid-template-columns: 1fr; } .hx-dates { margin-left: 0; width: 100%; } }
 </style>
 
 </head>
@@ -561,9 +582,9 @@ function icon(name, cls) {
   (ICONS[name] || []).forEach(function (d) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.appendChild(p); });
   return s;
 }
-const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'dashboard.view': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
+const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'history.view': 'clock', 'dashboard.view': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
   'params.manage': 'sliders', 'users.manage': 'users', 'roles.manage': 'shield', 'audit.view': 'clock' };
-const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'dashboard.view': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
+const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'dashboard.view': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
   'params.manage': 'Administration', 'users.manage': 'Administration', 'roles.manage': 'Administration', 'audit.view': 'Administration' };
 
 // ---------- feedback widgets
@@ -751,7 +772,7 @@ function openChangePassword() {
 }
 
 // ---------- app shell: top bar, side navigation (bottom bar on phones), content
-const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'dashboard.view', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
+const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'history.view', 'dashboard.view', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
 
 function enterApp() {
   if (S.me.must_change) { showForcedChange(); return Promise.resolve(); }
@@ -2739,6 +2760,114 @@ VIEWS['dashboard.view'] = function (root) {
     experimentScreen(page);
     page.appendChild(h('div', { style: 'margin-top:28px' }));
     legacyDashboard(page, true);
+  }
+};
+</script>
+
+<script>
+'use strict';
+/* ===== Field history: for AFOs and drone pilots (and the Admin), the rounds and entries of each of their fields =====
+ *  A list of the person's fields (last plucking, last foliar, how many rounds); tap one to see its rounds, newest first: dates, how much of the field (or of its
+ *  drone / manual part) was covered, kg, kg per ha, the gap since the round before, and every entry inside the round. A field sprayed partly by drone and partly
+ *  by hand shows its drone part and its manual part as two blocks, each with its own rounds. Read only; needs signal. */
+
+const HX_KINDS = { spray: 'Foliar spray', pluck: 'Plucking' };
+const HX_FIRST = 8;                                                            // rounds shown before "Show earlier rounds"
+const hxDays = function (n) { return n + (n === 1 ? ' day' : ' days'); };
+const hxState = function (r) { return r.complete ? 'done' : (r.expired ? 'part' : 'ongoing'); };
+const hxBar = function (r, method) { return h('span', { class: 'pb ' + method.toLowerCase() + ' ' + hxState(r), style: 'position:relative;display:block;width:100%;height:14px' }, h('i', { class: 'fill', style: 'width:' + r.percent + '%' })); };
+
+function hxEntry(kind, method, e) {
+  const who = e.by ? '  |  ' + e.by : '';
+  if (kind === 'pluck') return h('li', null, h('b', null, shortDate(e.date)), '  ' + num(e.kg, 1) + ' kg from ' + r2(e.ha) + ' ha  (round at ' + e.reached + '%)' + who);
+  const crew = e.units ? e.units + (method === 'Drone' ? (e.units === 1 ? ' drone' : ' drones') : (e.units === 1 ? ' man' : ' men')) : '';
+  return h('li', null, h('b', null, shortDate(e.date)), '  ' + (e.start_time ? e.start_time + ' to ' + e.end_time + '  |  ' : '') + (crew ? crew + '  |  ' : '') + num(e.kg, 1) + ' kg on ' + r2(e.ha) + ' ha  (part at ' + e.reached + '%)' + who);
+}
+
+function hxRound(kind, method, r, target) {
+  const state = hxState(r), tag = state === 'done' ? 'Finished' : (state === 'part' ? 'Left unfinished' : 'Going on');
+  const gap = r.gap === '' ? null : h('div', { class: 'hx-gap ' + (r.late > 0 ? 'late' : 'ok') }, hxDays(r.gap) + ' after round ' + (r.no - 1) + ' started' + (r.late > 0 ? '  |  ' + hxDays(r.late) + ' later than the ' + hxDays(target) + ' target' : '  |  on time'));
+  return h('div', { class: 'hx-round ' + state, 'data-round': String(r.no) },
+    h('div', { class: 'hx-top' }, h('b', { class: 'hx-no' }, 'Round ' + r.no), h('span', { class: 'hx-tag ' + state }, tag),
+      h('span', { class: 'hx-dates' }, shortDate(r.start) + (r.end !== r.start ? ' to ' + shortDate(r.end) : '') + '  |  ' + hxDays(r.days))),
+    h('div', { class: 'hx-bar' }, hxBar(r, method), h('b', { class: 'hx-pct' }, r.percent + '%')),
+    h('div', { class: 'hx-nums' }, h('span', null, h('b', null, num(r.kg, 1)), ' kg'), r.kg_per_ha !== '' ? h('span', null, h('b', null, num(r.kg_per_ha, 1)), ' kg/ha') : null, h('span', null, h('b', null, r2(r.done_ha)), ' of ' + r2(r.ha) + ' ha'),
+      kind === 'spray' ? h('span', null, h('b', null, String(r.events)), r.events === 1 ? ' spray event' : ' spray events') : null),
+    gap,
+    h('details', { class: 'hx-det' }, h('summary', null, r.entries.length + (r.entries.length === 1 ? ' entry' : ' entries')), h('ul', null, r.entries.map(function (e) { return hxEntry(kind, method, e); }))));
+}
+
+function hxPart(kind, part, field, target, mixed) {
+  const box = h('div', { class: 'hx-part ' + part.method.toLowerCase() });
+  if (mixed) box.appendChild(h('div', { class: 'hx-parthead' }, h('i', { class: 'dot ' + part.method.toLowerCase() }), part.method + ' part', h('span', { class: 'muted' }, '  ' + r2(part.ha) + ' ha')));
+  if (!part.rounds.length) { box.appendChild(h('div', { class: 'muted small', style: 'padding:6px 0' }, 'No ' + (kind === 'spray' ? 'spraying' : 'plucking') + ' recorded yet.')); return box; }
+  const unfinished = part.n_rounds - part.n_complete;
+  box.appendChild(h('div', { class: 'hx-sum muted small' }, part.n_rounds + (part.n_rounds === 1 ? ' round' : ' rounds') + '  |  ' + part.n_complete + ' finished' + (unfinished ? '  |  ' + unfinished + ' not finished' : '')));
+  const list = h('div', { class: 'hx-rounds' });
+  const draw = function (all) {
+    clear(list);
+    part.rounds.slice(0, all ? part.rounds.length : HX_FIRST).forEach(function (r) { list.appendChild(hxRound(kind, part.method, r, target)); });
+    if (!all && part.rounds.length > HX_FIRST) list.appendChild(h('button', { type: 'button', class: 'btn', onclick: function () { draw(true); } }, 'Show earlier rounds (' + (part.rounds.length - HX_FIRST) + ')'));
+  };
+  draw(false); box.appendChild(list);
+  return box;
+}
+
+function hxField(host, d, back) {
+  const f = d.field, mixed = f.method === 'Mixed';
+  let kind = S.hxKind && d.kinds.some(function (k) { return k.kind === S.hxKind; }) ? S.hxKind : d.kinds[0].kind;
+  const body = h('div'), seg = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'History' });
+  const help1 = help(h('div', null, 'A round is all the entries on the same part of a field, up to a few days apart: foliar spray up to ' + hxDays(d.kinds.filter(function (k) { return k.kind === 'spray'; }).map(function (k) { return k.reset_days; })[0] || 3) + ', plucking up to ' + hxDays(d.kinds.filter(function (k) { return k.kind === 'pluck'; }).map(function (k) { return k.reset_days; })[0] || 2) + '. The next entry after that starts a new round. The bar shows how much of the field (or of its drone or manual part) was covered in the round; a full bar means finished, "Left unfinished" means nothing more came in time. The gap counts the days between the first days of two rounds. A field sprayed partly by drone and partly by hand shows its two parts separately, each with its own rounds.'), 'How to read this');
+  host.appendChild(h('div', { class: 'hx-back' }, h('button', { type: 'button', class: 'btn', onclick: back }, icon('left'), 'All fields')));
+  host.appendChild(h('div', { class: 'hx-head' }, h('b', { class: 'code' }, (f.division ? f.division + ' ' : '') + f.code), methodBadge(f.method), h('span', { class: 'muted' }, (f.name ? f.name + '  |  ' : '') + r2(f.area_ha) + ' ha' + (mixed ? '  (' + r2(f.drone_ha) + ' drone, ' + r2(f.manual_ha) + ' manual)' : '')), help1));
+  if (d.kinds.length > 1) { d.kinds.forEach(function (k) { seg.appendChild(h('button', { type: 'button', role: 'tab', 'data-kind': k.kind, onclick: function () { kind = k.kind; S.hxKind = kind; draw(); } }, HX_KINDS[k.kind])); }); host.appendChild(h('div', { class: 'mon-ctl' }, seg)); }
+  host.appendChild(body);
+  function draw() {
+    Array.prototype.forEach.call(seg.children, function (b) { const on = b.getAttribute('data-kind') === kind; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    clear(body);
+    const k = d.kinds.filter(function (x) { return x.kind === kind; })[0];
+    k.parts.forEach(function (p) { body.appendChild(hxPart(kind, p, f, k.target_gap, mixed)); });
+  }
+  draw();
+}
+
+VIEWS['history.view'] = function (root) {
+  const page = h('div');
+  root.appendChild(pageHead('Field history', 'Pick a field to see its rounds and what was entered.'));
+  root.appendChild(page);
+  list();
+
+  function list() {
+    clear(page); S.hxField = '';
+    page.appendChild(skeleton(4));
+    api('api_historyFields').then(function (d) {
+      clear(page);
+      if (!d.fields.length) { page.appendChild(h('div', { class: 'card' }, emptyState('You have no fields yet.', 'map'))); return; }
+      let q = '';
+      const search = h('input', { type: 'search', placeholder: 'Find a field', 'aria-label': 'Find a field' }), box = h('div', { class: 'hx-list' });
+      search.addEventListener('input', function () { q = search.value; draw(); });
+      page.appendChild(h('div', { class: 'row', style: 'margin-bottom:12px;max-width:360px' }, search)); page.appendChild(box);
+      function draw() {
+        clear(box);
+        const t = q.trim().toLowerCase(), fields = d.fields.filter(function (f) { return !t || (f.code + ' ' + f.name + ' ' + f.division).toLowerCase().indexOf(t) >= 0; });
+        if (!fields.length) { box.appendChild(h('div', { class: 'muted small' }, 'No field matches.')); return; }
+        groupBy(fields, function (f) { return f.division || ''; }).forEach(function (g) {
+          if (g.key) box.appendChild(h('div', { class: 'divhead fdiv' }, h('span', null, g.key)));
+          const grid = h('div', { class: 'hx-rows' });
+          g.items.forEach(function (f) {
+            const line = function (k) { const x = f[k]; return h('span', { class: 'hx-l' }, h('i', null, HX_KINDS[k]), x.rounds ? 'last ' + shortDate(x.last) + '  |  ' + x.rounds + (x.rounds === 1 ? ' round' : ' rounds') : 'none yet'); };
+            grid.appendChild(h('button', { type: 'button', class: 'hxrow', 'data-code': f.code, onclick: function () { open(f.field_id); } },
+              h('span', { class: 'hx-c' }, h('b', null, f.code), methodBadge(f.method), h('small', null, r2(f.area_ha) + ' ha')), d.kinds.map(line)));
+          });
+          box.appendChild(grid);
+        });
+      }
+      draw();
+    }).catch(function (e) { clear(page); page.appendChild(msgBox('err', e.message)); });
+  }
+  function open(id) {
+    S.hxField = id; clear(page); page.appendChild(skeleton(4));
+    api('api_fieldHistory', id).then(function (d) { clear(page); hxField(page, d, list); window.scrollTo(0, 0); }).catch(function (e) { clear(page); page.appendChild(h('div', { class: 'hx-back' }, h('button', { type: 'button', class: 'btn', onclick: list }, icon('left'), 'All fields'))); page.appendChild(msgBox('err', e.message)); });
   }
 };
 </script>
