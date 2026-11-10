@@ -638,6 +638,7 @@ const ICONS = {
   tractor: ['M3 4h9l1 7', 'M3 11h14', 'M18 5l2 6', 'M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
   trend: ['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6'],
   flask: ['M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2', 'M8.5 2h7', 'M7 16h10'],
+  wallet: ['M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1', 'M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
   coin: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'M12 18V6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
@@ -2592,6 +2593,13 @@ const EXP_MODES = {
     words: function (pct) { return pct < 0 ? ['cheaper', 'foliar cost per hectare with drones than with manual spraying'] : ['dearer', 'foliar cost per hectare with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.mat_cost, 0) + ' of foliar for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the cost of the foliar used divided by the area covered: the kg applied in each spray event times the price of one kg of foliar (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares covered. The labour and the drone are not included: see Labour cost saving.' },
+  total: { name: 'Total cost saving', icon: 'wallet', label: 'Total cost saving', title: 'Total cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
+    waits: function (r) { return !(r.worker && r.drone && r.material); }, waitText: 'The Admin enters the cost of a man-hour, of a drone-hour and the price of one kg of foliar under Parameters and rates.',
+    has: function (c) { return c.events > 0; },
+    value: function (c) { return c.ha > 0 && c.cost + c.mat_cost > 0 ? (c.cost + c.mat_cost) / c.ha : null; },
+    words: function (pct) { return pct < 0 ? ['cheaper', 'total cost per hectare (labour and foliar) with drones than with manual spraying'] : ['dearer', 'total cost per hectare (labour and foliar) with drones than with manual spraying']; },
+    tip: function (c) { return 'Rs ' + num(c.cost + c.mat_cost, 0) + ' (labour Rs ' + num(c.cost, 0) + ' + foliar Rs ' + num(c.mat_cost, 0) + ') for ' + num(c.ha, 2) + ' ha'; },
+    help: 'Each point is the labour cost and the foliar cost of the spraying added together and divided by the area covered. Labour: the hours of the spray events times the men (manual) or the drones (drone), at the cost of a man-hour or a drone-hour. Foliar: the kg applied times the price of one kg. All rates are the ones the Admin entered under Parameters and rates, as they were on that day.' },
   leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
     has: function (c) { return c.leaf_n > 0; },
     value: function (c) { return c.leaf_ha > 0 ? c.leaf_kg / c.leaf_ha : null; },
@@ -2809,7 +2817,7 @@ function experimentScreen(host) {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('mat'), kpiCard('speed'), kpiCard('cost'), kpiCard('leaf')));
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('mat'), kpiCard('cost'), kpiCard('total'), kpiCard('speed'), kpiCard('leaf')));
   }
 }
 
