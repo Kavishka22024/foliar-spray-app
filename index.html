@@ -639,6 +639,7 @@ const ICONS = {
   trend: ['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6'],
   flask: ['M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2', 'M8.5 2h7', 'M7 16h10'],
   wallet: ['M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1', 'M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+  banknote: ['M2 6h20v12H2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M6 12h.01', 'M18 12h.01'],
   coin: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'M12 18V6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
@@ -2607,6 +2608,13 @@ const EXP_MODES = {
     tip: function (c) { return num(c.leaf_kg, 0) + ' kg from ' + num(c.leaf_ha, 2) + ' ha plucked'; },
     help: 'Each point is the green leaf plucked (kg) divided by the area plucked (ha), from the parts of the fields sprayed by that method (a field sprayed partly by drone and partly by hand counts its two parts separately). A higher point means more leaf from the same area. This is a plain comparison: it does not yet correct for the age since pruning or for each field\'s own earlier yield.' }
 };
+EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue', title: 'Green leaf revenue per hectare', unit: 'Rs/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
+    waits: function (r) { return !r.leaf; }, waitText: 'The Admin enters the price of one kg of green leaf under Parameters and rates (Revenue).',
+    has: function (c) { return c.leaf_n > 0; },
+    value: function (c) { return c.leaf_ha > 0 && c.leaf_rev > 0 ? c.leaf_rev / c.leaf_ha : null; },
+    words: function (pct) { return pct > 0 ? ['more', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
+    tip: function (c) { return 'Rs ' + num(c.leaf_rev, 0) + ' from ' + num(c.leaf_kg, 0) + ' kg on ' + num(c.leaf_ha, 2) + ' ha plucked'; },
+    help: 'Each point is the value of the green leaf plucked divided by the area plucked: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares plucked, from the parts of the fields sprayed by that method. A higher point means more money from the same area. It is the revenue only: the costs are not taken off yet.' };
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2615,10 +2623,10 @@ const isoOf = function (n) { return new Date(n * 86400000).toISOString().slice(0
 const fullDate = function (iso) { return Number(iso.slice(8)) + ' ' + MON3[Number(iso.slice(5, 7)) - 1] + ' ' + iso.slice(0, 4); };
 
 function expSum(days, from, to, m) {
-  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 };
+  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 };
   days.forEach(function (d) {
     if (d.date < from || d.date > to) return;
-    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; if (x.events || x.leaf_n) c.days += 1;
+    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; if (x.events || x.leaf_n) c.days += 1;
   });
   return c;
 }
@@ -2633,8 +2641,8 @@ function expSeries(data, mode, period) {
     const cells = {};                                                                        // day number -> that day's totals
     data.days.forEach(function (d) { if (M.has(d[m])) cells[dayNo(d.date)] = d[m]; });
     const nums = Object.keys(cells).map(Number).sort(function (a, b) { return a - b; });
-    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.days += 1; return c; };
-    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 }; };
+    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; c.days += 1; return c; };
+    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 }; };
     const keyOf = function (t, label) { const k = out.keys[t] || (out.keys[t] = { t: t, label: label }); return k; };
     out.dots[m] = []; out.lines[m] = [];
     if (period === 'day') {
@@ -2817,7 +2825,7 @@ function experimentScreen(host) {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('mat'), kpiCard('cost'), kpiCard('total'), kpiCard('speed'), kpiCard('leaf')));
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('mat'), kpiCard('cost'), kpiCard('total'), kpiCard('speed'), kpiCard('leaf'), kpiCard('rev')));
   }
 }
 
