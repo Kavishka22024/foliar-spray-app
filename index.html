@@ -2359,7 +2359,8 @@ VIEWS['audit.view'] = function (root) {
 
 <script>
 'use strict';
-/* ===== Dashboard: daily summary of plucking and spraying, Drone vs Manual, by years since last prune ===== */
+/* ===== Small drawing helpers shared by the screens: SVG elements, round axis steps, and the small KPI tile of the Home screen. =====
+   (The earlier all-in-one summary dashboard was removed; the Monitoring screens are built piece by piece in JsMonitor.html.) */
 
 function svgEl(tag, attrs, text) {
   const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -2369,135 +2370,10 @@ function svgEl(tag, attrs, text) {
 }
 function niceStep(raw) { if (!(raw > 0)) return 1; const p = Math.pow(10, Math.floor(Math.log10(raw))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
 
-/** Two-series line chart (green leaf kg per plucked ha per day). Plain SVG, no library. */
-function lineChart(rows) {
-  const W = 900, H = 290, m = { l: 56, r: 18, t: 30, b: 36 };
-  const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Green leaf per plucked hectare by day, drone and manual' });
-  const series = [{ key: 'Drone', color: 'var(--drone)' }, { key: 'Manual', color: 'var(--manual)' }];
-  const dayMs = function (s) { return new Date(s + 'T00:00:00Z').getTime(); };
-  const pts = {};
-  let max = 0, min = Infinity, t0 = Infinity, t1 = -Infinity;
-  series.forEach(function (s) {
-    pts[s.key] = rows.filter(function (r) { return r[s.key].kg_per_ha !== ''; }).map(function (r) { const t = dayMs(r.date); max = Math.max(max, r[s.key].kg_per_ha); min = Math.min(min, r[s.key].kg_per_ha); t0 = Math.min(t0, t); t1 = Math.max(t1, t); return { t: t, v: r[s.key].kg_per_ha, d: r.date }; });
-  });
-  if (!isFinite(t0)) return null;
-  if (t1 === t0) t1 = t0 + 86400000;
-  // zoomed axis with round tick values (it does not start at zero, and the chart says so)
-  let lo = min * 0.9, hi = max * 1.05;
-  const step = niceStep((hi - lo) / 4);
-  lo = Math.max(0, Math.floor(lo / step) * step); hi = Math.ceil(hi / step) * step;
-  if (hi <= lo) hi = lo + step;
-  const x = function (t) { return m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r); }, y = function (v) { return H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b); };
-  for (let v = lo; v <= hi + step / 1000; v += step) {
-    svg.appendChild(svgEl('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), style: 'stroke:var(--line)', 'stroke-width': 1 }));
-    svg.appendChild(svgEl('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end', style: 'fill:var(--muted);font-size:11px' }, num(v, 0)));
-  }
-  const nx = Math.min(6, Math.max(2, Math.round((t1 - t0) / 86400000) + 1));
-  for (let i = 0; i < nx; i++) {
-    const t = t0 + (t1 - t0) / (nx - 1) * i, d = new Date(t);
-    svg.appendChild(svgEl('text', { x: x(t), y: H - 12, 'text-anchor': i === 0 ? 'start' : (i === nx - 1 ? 'end' : 'middle'), style: 'fill:var(--muted);font-size:11px' }, d.toISOString().slice(5, 10)));
-  }
-  svg.appendChild(svgEl('text', { x: 4, y: 12, style: 'fill:var(--muted);font-size:11px' }, 'kg per plucked ha' + (lo > 0 ? '  (axis starts at ' + num(lo, 0) + ')' : '')));
-  series.forEach(function (s) {
-    const p = pts[s.key];
-    if (p.length > 1) svg.appendChild(svgEl('polyline', { points: p.map(function (q) { return x(q.t) + ',' + y(q.v); }).join(' '), fill: 'none', style: 'stroke:' + s.color, 'stroke-width': 2.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-    p.forEach(function (q) { const c = svgEl('circle', { cx: x(q.t), cy: y(q.v), r: 3.6, style: 'fill:var(--surface);stroke:' + s.color, 'stroke-width': 2 }); c.appendChild(svgEl('title', {}, s.key + ' ' + q.d + ': ' + num(q.v, 1) + ' kg/ha')); svg.appendChild(c); });
-  });
-  return svg;
-}
-
 function kpi(kind, label, value, sub, ic) {
   return h('div', { class: 'kpi ' + kind }, h('div', { class: 'k-label' }, icon(ic || 'leaf'), label), h('div', { class: 'k-val' }, value), h('div', { class: 'k-sub' }, sub || ''));
 }
 
-
-/** Rounds: how many days a field takes to finish a round, and the gap between the first days of consecutive rounds. */
-function roundsCard(r) {
-  let which = 'pluck';
-  const box = h('div'), seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Round type' });
-  const btns = {};
-  [['pluck', 'Plucking rounds'], ['spray', 'Foliar spray rounds']].forEach(function (x) {
-    btns[x[0]] = h('button', { type: 'button', class: x[0] === which ? 'on' : '', onclick: function () { which = x[0]; Object.keys(btns).forEach(function (k) { btns[k].classList.toggle('on', k === which); }); paint(); } }, x[1]);
-    seg.appendChild(btns[x[0]]);
-  });
-  const dash = function (v, u) { return v === '' || v === null || v === undefined ? '-' : num(v, 1) + (u || ''); };
-  function paint() {
-    const d = r[which];
-    clear(box);
-    box.appendChild(table([{ label: 'Method', render: function (x) { return methodBadge(x.m); } }, { label: 'Rounds started', cls: 'num', key: 'rounds' }, { label: 'Completed', cls: 'num', key: 'complete' },
-      { label: 'Avg days to complete a round', cls: 'num', render: function (x) { return dash(x.avg_days); } }, { label: 'Avg gap between rounds (days)', cls: 'num', render: function (x) { return dash(x.avg_gap); } }],
-      [Object.assign({ m: 'Drone' }, d.Drone), Object.assign({ m: 'Manual' }, d.Manual)], null, { scroll: true }));
-    box.appendChild(h('div', { class: 'divhead' }, 'Rounds by field (newest first)'));
-    box.appendChild(table([{ label: 'Field', key: 'field', cls: 'nowrap' }, { label: 'Method', render: function (x) { return methodBadge(x.method); } }, { label: 'Round', cls: 'num', key: 'no' },
-      { label: 'Started', key: 'start', cls: 'nowrap' }, { label: 'Finished', cls: 'nowrap', render: function (x) { return x.complete ? x.end : h('span', { class: 'muted' }, 'in progress'); } },
-      { label: 'Days', cls: 'num', key: 'days' }, { label: 'Gap (days)', cls: 'num', render: function (x) { return x.gap === '' ? '-' : x.gap; } },
-      { label: 'Done', cls: 'num', render: function (x) { return num(x.done_ha, 1) + ' / ' + num(x.area_ha, 1) + ' ha'; } }], d.list, null, { scroll: true }));
-  }
-  paint();
-  return h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Rounds'), seg),
-    help('A round is finished when the whole field has been covered, which can take several days. Days to complete counts from the first day of the round to the day it was finished. The gap is the number of days between the first day of a round and the first day of the round before it.'), box);
-}
-
-/** The earlier plain summary (daily totals, by years since prune, rounds). Kept inside Experiment monitoring until that part is designed. */
-function legacyDashboard(root, noHead) {
-  const to = h('input', { type: 'date', value: S.today, max: S.today });
-  const from = h('input', { type: 'date', value: addDaysStr(S.today, -29), max: S.today });
-  const out = h('div');
-  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Period' });
-  [[7, 'Last 7 days'], [30, 'Last 30 days'], [90, 'Last 90 days']].forEach(function (p) {
-    seg.appendChild(h('button', { type: 'button', 'data-days': String(p[0]), class: p[0] === 30 ? 'on' : '', onclick: function () {
-      from.value = addDaysStr(S.today, -(p[0] - 1)); to.value = S.today; load();
-    } }, p[1]));
-  });
-  if (!noHead) root.appendChild(pageHead('Dashboard', 'Green leaf and foliar spray summary, drone fields vs manual fields.'));
-  root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' }, h('div', null, h('div', { class: 'small muted', style: 'margin-bottom:6px' }, 'Period'), seg),
-    h('div', { class: 'grow' }, field('From', from)), h('div', { class: 'grow' }, field('To', to)),
-    h('button', { class: 'btn primary', onclick: function (ev) { run(ev.currentTarget, load); } }, 'Show'))));
-  root.appendChild(out);
-  load();
-
-  function addDaysStr(s, n) { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
-  function cell(v, d) { return v === '' || v === null || v === undefined ? '' : num(v, d === undefined ? 1 : d); }
-  function dash(v) { return v === '' || v === null || v === undefined ? '-' : v; }
-  function load() {
-    Array.prototype.forEach.call(seg.children, function (b) {   // highlight the preset that matches the chosen dates
-      b.classList.toggle('on', to.value === S.today && from.value === addDaysStr(S.today, -(parseInt(b.getAttribute('data-days'), 10) - 1)));
-    });
-    clear(out).appendChild(skeleton(4));
-    return api('api_dashboard', { from: from.value, to: to.value }).then(function (d) {
-      clear(out);
-      const T = d.totals, Sp = d.spray, E = d.estate;
-      const hrD = Sp.Drone.hours > 0 ? Sp.Drone.ha / Sp.Drone.hours : '', hrM = Sp.Manual.hours > 0 ? Sp.Manual.ha / Sp.Manual.hours : '';
-      const diff = T.Drone.kg_per_ha !== '' && T.Manual.kg_per_ha !== '' && T.Manual.kg_per_ha > 0 ? (T.Drone.kg_per_ha / T.Manual.kg_per_ha - 1) * 100 : '';
-      out.appendChild(h('div', { class: 'kpis' },
-        kpi('drone', 'Drone fields: green leaf', dash(cell(T.Drone.kg_per_ha)) + (T.Drone.kg_per_ha !== '' ? ' kg/ha' : ''), cell(T.Drone.kg, 0) + ' kg from ' + cell(T.Drone.ha, 1) + ' ha plucked', 'wind'),
-        kpi('manual', 'Manual fields: green leaf', dash(cell(T.Manual.kg_per_ha)) + (T.Manual.kg_per_ha !== '' ? ' kg/ha' : ''), cell(T.Manual.kg, 0) + ' kg from ' + cell(T.Manual.ha, 1) + ' ha plucked', 'tractor'),
-        kpi('neutral', 'Drone vs manual, kg per plucked ha', diff === '' ? '-' : (diff > 0 ? '+' : '') + num(diff, 1) + '%', 'Raw difference. Not yet compared with each field\'s own baseline.', 'trend'),
-        kpi('drone', 'Drone spraying', dash(cell(hrD, 2)) + (hrD !== '' ? ' ha/h' : ''), Sp.Drone.fields + ' field sprays, ' + cell(Sp.Drone.ha, 1) + ' ha, ' + cell(Sp.Drone.hours, 1) + ' h', 'droplet'),
-        kpi('manual', 'Manual spraying', dash(cell(hrM, 2)) + (hrM !== '' ? ' ha/h' : ''), Sp.Manual.fields + ' field sprays, ' + cell(Sp.Manual.ha, 1) + ' ha, ' + cell(Sp.Manual.hours, 1) + ' h', 'droplet'),
-        kpi('neutral', 'Fields in the trial', E.fields.Drone + ' + ' + E.fields.Manual + ' + ' + E.fields.Mixed, 'All drone + all manual + part drone, part manual (' + cell(E.ha.Drone, 1) + ' + ' + cell(E.ha.Manual, 1) + ' + ' + cell(E.ha.Mixed, 1) + ' ha)' + (E.fields.incomplete ? '. ' + E.fields.incomplete + ' not filled in yet' : ''), 'map')));
-      if (d.mixed && d.mixed.kg > 0) out.appendChild(msgBox('warn', 'Fields sprayed partly by drone and partly by hand are not in the Drone or Manual figures above. In this period ' + cell(d.mixed.kg, 0) + ' kg was plucked from ' + cell(d.mixed.ha, 1) + ' ha of them. How to compare them is still to be designed.'));
-
-      const chart = lineChart(d.daily);
-      out.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Green leaf per plucked hectare, by day'),
-        help(h('div', { class: 'legend' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone fields'), h('span', null, h('i', { class: 'dot manual' }), 'Manual fields')), 'How to read this chart')),
-        chart ? h('div', { class: 'chartbox' }, chart) : emptyState('No plucking records in this period.', 'basket')));
-
-      out.appendChild(h('div', { class: 'card' }, h('h2', null, 'Daily summary'),
-        table([{ label: 'Date', key: 'date', cls: 'nowrap' },
-          { label: 'Drone kg', cls: 'num', render: function (r) { return cell(r.Drone.kg, 0); } }, { label: 'Drone ha', cls: 'num', render: function (r) { return cell(r.Drone.ha, 1); } }, { label: 'Drone kg/ha', cls: 'num', render: function (r) { return cell(r.Drone.kg_per_ha); } },
-          { label: 'Manual kg', cls: 'num', render: function (r) { return cell(r.Manual.kg, 0); } }, { label: 'Manual ha', cls: 'num', render: function (r) { return cell(r.Manual.ha, 1); } }, { label: 'Manual kg/ha', cls: 'num', render: function (r) { return cell(r.Manual.kg_per_ha); } },
-          { label: 'Sprayed ha (D / M)', cls: 'num hide-sm', render: function (r) { return (r.spray.Drone.ha || r.spray.Manual.ha) ? num(r.spray.Drone.ha, 1) + ' / ' + num(r.spray.Manual.ha, 1) : ''; } }], d.daily.slice().reverse(), null, { scroll: true })));
-
-      out.appendChild(h('div', { class: 'card' }, h('h2', null, 'By years since last prune'),
-        help('Age is measured from the field\'s last pruning date to the day of plucking.'),
-        table([{ label: 'Years since prune', render: function (r) { return h('strong', null, r.band); } },
-          { label: 'Drone kg', cls: 'num', render: function (r) { return cell(r.Drone.kg, 0); } }, { label: 'Drone ha', cls: 'num', render: function (r) { return cell(r.Drone.ha, 1); } }, { label: 'Drone kg/ha', cls: 'num', render: function (r) { return cell(r.Drone.kg_per_ha); } },
-          { label: 'Manual kg', cls: 'num', render: function (r) { return cell(r.Manual.kg, 0); } }, { label: 'Manual ha', cls: 'num', render: function (r) { return cell(r.Manual.ha, 1); } }, { label: 'Manual kg/ha', cls: 'num', render: function (r) { return cell(r.Manual.kg_per_ha); } }], d.byPrune, null, { scroll: true })));
-      out.appendChild(roundsCard(d.rounds));
-    }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
-  }
-}
 </script>
 
 <script>
@@ -2836,8 +2712,6 @@ VIEWS['dashboard.view'] = function (root) {
     if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
     if (tab === 'operation') { roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); }); return; }
     experimentScreen(page);
-    page.appendChild(h('div', { style: 'margin-top:28px' }));
-    legacyDashboard(page, true);
   }
 };
 </script>
