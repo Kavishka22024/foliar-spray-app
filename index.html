@@ -2495,7 +2495,7 @@ function roundsTimeline(d, zoom, what) {
       const its = row.rounds.map(function (r) { return { r: r, x: X(r.start) }; });
       its.forEach(function (it, i) {                                    // how much room each round has before the next one in this row
         const next = its[i + 1]; it.room = next ? next.x - it.x : Infinity;
-        it.total = next ? Math.min(BLOCK, Math.max(it.room - MIN_ROOM, 26)) : BLOCK;     // leave room for the gap line and its pill
+        it.total = next ? Math.max(6, Math.min(BLOCK, Math.max(it.room - MIN_ROOM, Math.min(26, it.room - 3)))) : BLOCK;     // leave room for the gap line and its pill; never wider than the room before the next round
         it.showPct = it.total >= 76; it.bar = it.showPct ? it.total - LABEL : it.total;
       });
       its.forEach(function (it, i) {                                    // the gap line to the previous round, in the colour of the method
@@ -2513,10 +2513,11 @@ function roundsTimeline(d, zoom, what) {
           + (state === 'ongoing' ? ' so far (still going on)' : (state === 'part' ? ' (not finished: no more ' + what.noun.toLowerCase() + ' came within ' + daysWord(d.reset_days) + ', so the next one starts a new round)' : '')) + '.';
         const item = h('span', { class: 'item', style: 'left:' + it.x + 'px;width:' + it.total + 'px;top:' + y0 + 'px', title: tip, 'data-round': String(r.no), 'data-part': m, 'data-expired': r.expired ? 'true' : 'false' });
         const text = labels && it.room >= 60;                           // the kg and days text only when it fits before the next round
+        const under = state === 'done' ? daysWord(r.days) : (state === 'part' ? (it.room >= 92 ? 'left unfinished' : (it.room >= 70 ? 'unfinished' : '')) : (it.room >= 70 ? 'going on' : ''));
         if (text) item.appendChild(h('i', { class: 'kg' }, what.short(r)));
         item.appendChild(h('span', { class: 'pb ' + name + ' ' + state, style: 'left:0;top:16px;width:' + it.bar + 'px' }, h('i', { class: 'fill', style: 'width:' + r.percent + '%' })));
         if (it.showPct) item.appendChild(h('b', { class: 'pl ' + name, style: 'left:' + (it.bar + 5) + 'px;top:16px' }, r.percent + '%'));
-        if (text) item.appendChild(h('i', { class: 'took', style: 'top:36px' }, state === 'done' ? daysWord(r.days) : (state === 'part' ? 'left unfinished' : 'going on')));
+        if (text && under) item.appendChild(h('i', { class: 'took', style: 'top:36px' }, under));
         lane.appendChild(item);
       });
     });
