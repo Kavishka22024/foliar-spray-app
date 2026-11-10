@@ -565,6 +565,15 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .exp-head .eh-kick { font-size: 14px; letter-spacing: .07em; color: var(--ink); } .exp-head .eh-word { font-size: 22px; }
 @media (min-width: 1100px) { .exp-heads .kpi-unit:not(.open) .eh-sub { min-height: 4.4em; } }   /* the three cards line up whatever the length of their sentence */
 .exp-val.drone { fill: var(--drone); } .exp-val.manual { fill: var(--manual); } .exp-val { paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+/* ---- four KPI cards; a card that waits for the cost rates is not clickable ---- */
+.exp-heads { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); } .exp-heads .exp-head.waiting { cursor: default; } .exp-heads .exp-head.waiting:hover { transform: none; box-shadow: var(--shadow-sm); }
+/* four cards in a row: the figure, the word and the two bars all fit */
+.exp-head .eh-num { font-size: clamp(36px, 3.2vw, 60px); } .exp-head .eh-word { font-size: 20px; } .exp-head .cmp-row { grid-template-columns: 54px 1fr auto; gap: 8px; } .exp-head .cmp-val { min-width: 0; }
+@media (min-width: 1100px) { .exp-heads .kpi-unit:not(.open) .eh-sub { min-height: 5.6em; } }
+/* equal cards: the two bars sit at the bottom of every card whatever the length of its sentence */
+.exp-heads { align-items: stretch; } .kpi-unit { display: flex; flex-direction: column; } .kpi-unit:not(.open) > .exp-head { flex: 1; } .exp-heads .exp-head { display: flex; flex-direction: column; } .exp-head .eh-cmp { margin-top: auto; padding-top: 14px; }
+.exp-head .eh-num { font-size: clamp(32px, 2.8vw, 56px); } .exp-head .eh-bigrow { flex-wrap: nowrap; } .exp-head .eh-num.small { font-size: 22px; line-height: 1.25; white-space: normal; }
+@media (max-width: 900px) { .exp-head .eh-num { font-size: 48px; } .exp-head .eh-bigrow { flex-wrap: wrap; } }
 </style>
 
 </head>
@@ -627,6 +636,7 @@ const ICONS = {
   wind: ['M9.59 4.59A2 2 0 1 1 11 8H2', 'M12.59 19.41A2 2 0 1 0 14 16H2', 'M17.73 7.73A2.5 2.5 0 1 1 19.5 12H2'],
   tractor: ['M3 4h9l1 7', 'M3 11h14', 'M18 5l2 6', 'M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
   trend: ['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6'],
+  coin: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'M12 18V6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
   upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12'],
@@ -2566,6 +2576,12 @@ const EXP_MODES = {
     words: function (pct) { return pct > 0 ? ['faster', 'area covered per hour with drones than with manual spraying'] : ['slower', 'area covered per hour with drones than with manual spraying']; },
     tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
     help: 'Each point is the area covered (ha) divided by the hours worked by that method. A higher point means more area covered per hour.' },
+  cost: { name: 'Cost saving', icon: 'coin', label: 'Cost saving', title: 'Spraying cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
+    has: function (c) { return c.events > 0; },
+    value: function (c) { return c.ha > 0 && c.cost > 0 ? c.cost / c.ha : null; },
+    words: function (pct) { return pct < 0 ? ['cheaper', 'spraying cost per hectare with drones than with manual spraying'] : ['dearer', 'spraying cost per hectare with drones than with manual spraying']; },
+    tip: function (c) { return 'Rs ' + num(c.cost, 0) + ' for ' + num(c.ha, 2) + ' ha'; },
+    help: 'Each point is the cost of the spraying divided by the area covered. The cost is the hours of the spray events times the men (manual spraying, at the cost of a man-hour) or times the drones (drone spraying, at the cost of a drone-hour, pilot included), using the rates the Admin entered under Parameters and rates as they were on that day. The foliar product itself is not included.' },
   leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
     has: function (c) { return c.leaf_n > 0; },
     value: function (c) { return c.leaf_ha > 0 ? c.leaf_kg / c.leaf_ha : null; },
@@ -2581,14 +2597,14 @@ const isoOf = function (n) { return new Date(n * 86400000).toISOString().slice(0
 const fullDate = function (iso) { return Number(iso.slice(8)) + ' ' + MON3[Number(iso.slice(5, 7)) - 1] + ' ' + iso.slice(0, 4); };
 
 function expSum(days, from, to, m) {
-  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 };
+  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 };
   days.forEach(function (d) {
     if (d.date < from || d.date > to) return;
-    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; if (x.events || x.leaf_n) c.days += 1;
+    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; if (x.events || x.leaf_n) c.days += 1;
   });
   return c;
 }
-function expFmt(v) { return Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
+function expFmt(v) { return v >= 1000 ? num(v, 0) : Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
 
 
 /** The points of one KPI over the whole history, per method. Daily: one dot per day with events (that day's total / total) and a moving-average line (the last
@@ -2599,8 +2615,8 @@ function expSeries(data, mode, period) {
     const cells = {};                                                                        // day number -> that day's totals
     data.days.forEach(function (d) { if (M.has(d[m])) cells[dayNo(d.date)] = d[m]; });
     const nums = Object.keys(cells).map(Number).sort(function (a, b) { return a - b; });
-    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.days += 1; return c; };
-    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 }; };
+    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.days += 1; return c; };
+    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0 }; };
     const keyOf = function (t, label) { const k = out.keys[t] || (out.keys[t] = { t: t, label: label }); return k; };
     out.dots[m] = []; out.lines[m] = [];
     if (period === 'day') {
@@ -2727,6 +2743,10 @@ function expHeadline(data, mode) {
       h('span', { class: 'cmp-track' }, v === null ? null : h('i', { class: 'cmp-fill', style: 'width:' + Math.max(4, v / top * 100) + '%' })),
       h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + M.unit));
   }));
+  if (mode === 'cost' && data.rates_set && !(data.rates_set.worker && data.rates_set.drone)) {                 // the Admin has not entered the cost rates yet
+    return h('div', { class: 'exp-head none waiting' }, h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name)),
+      h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Waiting for the cost rates')), h('div', { class: 'eh-sub' }, 'The Admin enters the cost of a man-hour and of a drone-hour under Parameters and rates.'));
+  }
   const topRow = h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name), h('i', { class: 'chev', 'aria-hidden': 'true' }));
   if (dv === null || mv === null || mv === 0) {
     return h('div', { class: 'exp-head none' }, topRow, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs ' + M.needs + '.'), bars);
@@ -2769,6 +2789,7 @@ function experimentScreen(host) {
   /** A KPI card and, when it is clicked, its graph attached right under it: the card is the header of the graph. Click again to fold. */
   function kpiCard(mode) {
     const card = expHeadline(data, mode), open = !!S.expOpen[mode], toggle = function () { S.expOpen[mode] = !open; draw(); };
+    if (card.classList.contains('waiting')) return h('div', { class: 'kpi-unit', 'data-kpi': mode }, card);          // nothing to unfold yet
     card.setAttribute('data-kpi', mode); card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0'); card.setAttribute('aria-expanded', open ? 'true' : 'false'); card.setAttribute('title', open ? 'Click to fold the graph' : 'Click to see the graph');
     card.addEventListener('click', toggle); card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     if (open) card.classList.add('open');
@@ -2778,7 +2799,7 @@ function experimentScreen(host) {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('speed'), kpiCard('leaf')));
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('speed'), kpiCard('cost'), kpiCard('leaf')));
   }
 }
 
