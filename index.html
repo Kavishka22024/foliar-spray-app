@@ -1735,7 +1735,86 @@ VIEWS['dashboard.view'] = function (root) {
 };
 </script>
 
-<script>boot();</script>
+<script>
+// Install gate for the hosted phone-app version (inlined into pwa/index.html by tools/build-pwa.js).
+// Opened in an ordinary browser tab -> ONLY an "Install the app" screen is shown. Opened from the home-screen icon (installed) -> the app starts.
+// This is a convenience for staff, not a security measure: the login still protects all data.
+(function () {
+  function standalone() {
+    try {
+      if (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches)) return true;
+    } catch (e) { /* ignore */ }
+    return window.navigator.standalone === true;          // iPhone
+  }
+  if (standalone()) { boot(); return; }
+
+  var ua = navigator.userAgent || '';
+  var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var iosSafari = ios && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+  var deferred = null, installed = false, copied = false;
+
+  var css = document.createElement('style');
+  css.textContent =
+    'html,body{margin:0;min-height:100%;background:#0e3a29}' +
+    '.ig{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:linear-gradient(160deg,#0e3a29,#1d6b47)}' +
+    '.ig-card{width:100%;max-width:400px;background:#fff;color:#16261f;border-radius:20px;padding:28px 24px;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}' +
+    '.ig-card img{width:72px;height:72px;border-radius:16px}' +
+    '.ig-card h1{font-size:22px;margin:16px 0 8px}' +
+    '.ig-card p{font-size:15px;line-height:1.5;margin:0 0 16px;color:#44564d}' +
+    '.ig-btn{display:block;width:100%;box-sizing:border-box;border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:600;color:#fff;background:#1d6b47;cursor:pointer;margin:6px 0 4px}' +
+    '.ig-btn.alt{background:#e8f1ec;color:#14502f}' +
+    '.ig-steps{text-align:left;margin:8px 0 4px;padding:0;list-style:none;counter-reset:s}' +
+    '.ig-steps li{counter-increment:s;position:relative;padding:10px 0 10px 40px;font-size:15px;line-height:1.45;border-top:1px solid #e3ebe6}' +
+    '.ig-steps li:first-child{border-top:0}' +
+    '.ig-steps li:before{content:counter(s);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;background:#e8f1ec;color:#14502f;font-weight:700;font-size:14px;text-align:center;line-height:26px}' +
+    '.ig-note{font-size:13px;color:#6b7c73;margin-top:14px}' +
+    '.ig-ok{width:56px;height:56px;border-radius:50%;background:#e1f3e8;color:#1d6b47;font-size:32px;line-height:56px;margin:0 auto}' +
+    '.ig-ico{display:inline-block;vertical-align:-4px;width:20px;height:20px}';
+  document.head.appendChild(css);
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function steps(list) { var ol = el('ol', 'ig-steps'); list.forEach(function (t) { var li = el('li'); if (typeof t === 'string') li.textContent = t; else t.forEach(function (n) { li.appendChild(typeof n === 'string' ? document.createTextNode(n) : n); }); ol.appendChild(li); }); return ol; }
+  function shareIcon() { var s = el('span', 'ig-ico'); s.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1d6b47" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>'; return s; }
+
+  function render() {
+    var root = document.getElementById('app'); root.textContent = '';
+    var wrap = el('div', 'ig'), card = el('div', 'ig-card'); wrap.appendChild(card); root.appendChild(wrap);
+    if (installed) {
+      card.appendChild(el('div', 'ig-ok', '✓'));
+      card.appendChild(el('h1', '', 'App installed'));
+      card.appendChild(el('p', '', 'Close this page and open "Foliar Spray" from the icon on your home screen. That is where you log in and use the app.'));
+      return;
+    }
+    var img = el('img'); img.src = 'icon-192.png'; img.alt = ''; card.appendChild(img);
+    card.appendChild(el('h1', '', 'Install the Foliar Spray app'));
+    card.appendChild(el('p', '', 'To use this app you need to install it on your phone first. Once installed it opens from your home screen, even with no signal.'));
+    if (deferred) {
+      var b = el('button', 'ig-btn', 'Install app'); b.type = 'button';
+      b.onclick = function () {
+        var d = deferred; deferred = null;
+        d.prompt();
+        Promise.resolve(d.userChoice).then(function (c) { if (c && c.outcome === 'accepted') installed = true; render(); }, render);
+      };
+      card.appendChild(b);
+    } else if (ios && iosSafari) {
+      card.appendChild(steps([[ 'Tap the Share button ', shareIcon(), ' at the bottom of the screen.' ], 'Scroll down and tap "Add to Home Screen".', 'Tap "Add". Then open "Foliar Spray" from your home screen.']));
+    } else if (ios) {
+      card.appendChild(el('p', '', 'On an iPhone the app can only be installed from Safari. Open this same address in Safari, then follow the steps shown there.'));
+      var c = el('button', 'ig-btn alt', copied ? 'Link copied' : 'Copy link'); c.type = 'button';
+      c.onclick = function () { try { navigator.clipboard.writeText(location.href.split('#')[0]).then(function () { copied = true; render(); }); } catch (e) { /* ignore */ } };
+      card.appendChild(c);
+    } else {
+      card.appendChild(steps(['Open the browser menu (the three dots at the top right).', 'Tap "Install app" (or "Add to Home screen").', 'Tap "Install". Then open "Foliar Spray" from your home screen.']));
+      card.appendChild(el('p', 'ig-note', 'Not seeing "Install app"? Open this address in Google Chrome.'));
+    }
+    card.appendChild(el('p', 'ig-note', 'Already installed? Open it from the icon on your home screen.'));
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; render(); });
+  window.addEventListener('appinstalled', function () { installed = true; deferred = null; render(); });
+  render();
+})();
+</script>
 <script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
 </body>
 </html>
