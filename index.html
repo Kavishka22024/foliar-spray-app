@@ -311,6 +311,52 @@ td.nowrap, th.nowrap { white-space: nowrap; }
   .subbar { bottom: calc(10px + env(safe-area-inset-bottom)); padding: 10px 10px 10px 16px; border-radius: 16px; }
   .toast { bottom: 90px; }
 }
+
+/* ---- foliar spray events ---- */
+.evcreate { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "ic t" "ic s"; column-gap: 16px; align-items: center; width: 100%; text-align: left; padding: 22px 24px; margin-bottom: 18px; background: var(--surface); border: 2px dashed var(--line-strong); border-radius: var(--r-lg); cursor: pointer; font: inherit; color: var(--ink); transition: border-color .15s, background .15s, box-shadow .15s; }
+.evcreate:hover { border-color: var(--primary); background: var(--primary-soft); box-shadow: var(--shadow-sm); } .evcreate:focus-visible { outline: 3px solid var(--ring); }
+.evcreate .ec-ic { grid-area: ic; width: 54px; height: 54px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); display: grid; place-items: center; } .evcreate .ec-ic svg { width: 28px; height: 28px; }
+.evcreate .ec-t { grid-area: t; font-size: 19px; font-weight: 700; letter-spacing: -.01em; } .evcreate .ec-s { grid-area: s; color: var(--muted); font-size: 14px; }
+.evcreate.has-draft { border-style: solid; border-color: var(--warn); background: var(--warn-soft); } .evcreate.has-draft .ec-ic { background: var(--warn); }
+.evcreate.editing, .evcard.editing { opacity: .35; }
+.evday { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: baseline; margin: 0 0 14px; font-size: 14px; color: var(--ink-2); } .evday b { color: var(--ink); }
+.evcard { position: relative; background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--line-strong); border-radius: var(--r-lg); padding: 16px 18px 16px 16px; margin-bottom: 14px; box-shadow: var(--shadow-sm); cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.evcard:hover { box-shadow: var(--shadow-md); } .evcard:focus-visible { outline: 3px solid var(--ring); }
+.evcard.drone { border-left-color: var(--drone-solid); } .evcard.manual { border-left-color: var(--manual-solid); }
+.evcard.queued { border-style: dashed; border-left-style: solid; background: var(--surface-2); }
+.ev-head { display: flex; align-items: center; gap: 10px; } .ev-title { font-weight: 700; font-size: 16px; } .ev-sub { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 2px; } .ev-time { color: var(--muted); font-size: 13px; } .ev-actions { display: flex; gap: 2px; margin-left: auto; }
+.ev-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0 12px; }
+.ev-stat b { display: block; font-size: 22px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.2; } .ev-stat span { font-size: 12.5px; color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; } .tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: var(--tile); color: var(--tile-ink); } .tag.part { background: var(--warn-soft); color: var(--warn); }
+.iconbtn.ghost { background: none; border: 0; color: var(--muted); box-shadow: none; } .iconbtn.ghost:hover { background: var(--hover); color: var(--ink); } .iconbtn.ghost.danger:hover { color: var(--bad); background: var(--bad-soft); }
+/* the popup */
+.evform { display: grid; gap: 18px; }
+.evsec { border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px; background: var(--surface-2); }
+.evsec-h { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 12px; } .evsec-h .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--primary-ink); font-size: 13px; flex: none; }
+.methodline { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.pick { position: relative; text-align: left; border: 1.5px solid transparent; border-radius: 12px; background: var(--tile); color: var(--tile-ink); padding: 10px 10px 12px; cursor: pointer; font: inherit; display: flex; flex-direction: column; gap: 1px; min-height: 74px; overflow: hidden; transition: background .12s, border-color .12s; }
+.pick:hover { background: var(--tile-hover); } .pick:focus-visible { outline: 3px solid var(--ring); }
+.pk-code { font-weight: 700; font-size: 15px; color: var(--ink); } .pk-ha { font-size: 12px; } .pk-state { font-size: 11.5px; color: var(--muted); }
+.pk-mark { position: absolute; top: 7px; right: 7px; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); color: #fff; display: none; place-items: center; } .pk-mark svg { width: 12px; height: 12px; }
+.pick.on.drone { background: var(--drone-soft); border-color: var(--drone-solid); } .pick.on.manual { background: var(--manual-soft); border-color: var(--manual-solid); } .pick.on .pk-mark { display: grid; }
+.pick.dis { opacity: .55; cursor: not-allowed; background: var(--surface); border: 1.5px dashed var(--line-strong); }
+.pick .t-bar { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 4px; background: var(--line); border-radius: 0; margin: 0; } .pick .t-bar i { display: block; height: 100%; background: var(--primary); }
+.covgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.covcard { position: relative; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 14px; padding: 10px 10px 10px 12px; }
+.covcard.drone { border-color: var(--drone-solid); } .covcard.manual { border-color: var(--manual-solid); } .covcard.open { grid-column: 1 / -1; }
+.cov-top { display: flex; align-items: center; gap: 12px; }
+.ring { border: 0; background: none; padding: 0; cursor: pointer; border-radius: 50%; flex: none; line-height: 0; } .ring:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; } .ring:hover .donut { transform: scale(1.06); }
+.donut { transition: transform .15s; } .d-track { stroke: var(--line); } .donut.drone .d-arc { stroke: var(--drone-solid); } .donut.manual .d-arc { stroke: var(--manual-solid); } .d-text { font-size: 9px; font-weight: 700; fill: var(--ink); }
+.cov-info { min-width: 0; flex: 1; } .cov-code { font-weight: 700; } .cov-meta { font-size: 12px; color: var(--muted); } .cov-ha { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cov-note { font-size: 11.5px; color: var(--warn); display: flex; gap: 4px; align-items: center; } .cov-note svg { width: 12px; height: 12px; }
+.cov-x { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 8px; align-self: flex-start; } .cov-x:hover { background: var(--bad-soft); color: var(--bad); } .cov-x svg { width: 16px; height: 16px; display: block; }
+.cov-slider { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); } .cov-slider .sl-val { font-size: 19px; font-weight: 700; } .cov-slider .slider { padding: 0; border: 0; background: none; box-shadow: none; }
+.covempty { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 14px; padding: 4px 2px; } .covempty svg { width: 28px; height: 28px; flex: none; }
+.modal:has(.evform) { max-width: 780px; } .modal .actions { flex-wrap: wrap; }
+.evsum { flex: 1 0 100%; order: -1; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; }
+.evsum > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; } .evsum-s b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; } .evsum-s span { font-size: 11.5px; color: var(--muted); }
+@media (max-width: 860px) { .evcreate { padding: 18px; column-gap: 14px; } .evcreate .ec-t { font-size: 17px; } .ev-stat b { font-size: 18px; } .covgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .covcard.open { grid-column: 1 / -1; } .evsec { padding: 14px 12px; } }
 </style>
 
 </head>
@@ -352,6 +398,8 @@ function initials(name) { const p = String(name || '?').replace(/\(.*?\)/g, '').
 // ---------- icons (inline SVG, stroke = currentColor)
 const ICONS = {
   leaf: ['M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z', 'M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12'],
+  edit: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'],
+  trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6', 'M10 11v6', 'M14 11v6'],
   droplet: ['M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z'],
   basket: ['M5 11l4-7', 'M19 11l-4-7', 'M2 11h20', 'M4 11l1.2 8.2A2 2 0 0 0 7.2 21h9.6a2 2 0 0 0 2-1.8L20 11', 'M10 15v2', 'M14 15v2'],
   dashboard: ['M3 3h7v9H3z', 'M14 3h7v5h-7z', 'M14 12h7v9h-7z', 'M3 16h7v5H3z'],
@@ -666,7 +714,7 @@ const Cache = {
   set: function (name, v) { Local.set(Local.key('cache:' + name), v); }
 };
 
-const TYPE_LABEL = { spray: 'Foliar spray', pluck: 'Plucking' };
+const TYPE_LABEL = { spray: 'Foliar spray event', pluck: 'Plucking' };
 
 const Sync = {
   listeners: [], busy: false, offline: false, started: false, lastOk: '', uploaded: 0,
@@ -681,20 +729,32 @@ const Sync = {
     const ids = {}; lines.forEach(function (l) { ids[l.field_id] = true; });
     let list = this.items();
     list.forEach(function (it) { if (it.type === type && it.date === date && !it.failed) it.lines = it.lines.filter(function (l) { return !ids[l.field_id]; }); });
-    list = list.filter(function (it) { return it.lines.length; });
+    list = list.filter(function (it) { return it.event || it.lines.length; });
     list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), type: type, date: date, lines: lines, names: names || {}, created: new Date().toISOString(), error: '', failed: false });
     this.save(list);
     return this.run();
   },
+  /** A foliar spray EVENT waits in the outbox as one item. Sending the same event again (edited) replaces the waiting copy. */
+  queueEvent: function (ev, names) {
+    let list = this.items().filter(function (it) { return !(it.event && it.event.event_id === ev.event_id); });
+    list.push({ id: 'q' + Date.now() + Math.random().toString(36).slice(2, 6), type: 'spray', date: ev.date, event: ev, lines: [], names: names || {}, created: new Date().toISOString(), error: '', failed: false });
+    this.save(list);
+    return this.run();
+  },
+  waitingEvents: function (date) {
+    const m = {};
+    this.items().forEach(function (it) { if (it.event && it.date === date && !it.failed) m[it.event.event_id] = it.event; });
+    return m;
+  },
   remove: function (id) { this.save(this.items().filter(function (i) { return i.id !== id; })); },
   waitingFor: function (type, date) {
     const m = {};
-    this.items().forEach(function (it) { if (it.type === type && it.date === date && !it.failed) it.lines.forEach(function (l) { m[l.field_id] = l; }); });
+    this.items().forEach(function (it) { if (it.type === type && it.date === date && !it.failed && !it.event) it.lines.forEach(function (l) { m[l.field_id] = l; }); });
     return m;
   },
   status: function () {
     const items = this.items(), failed = items.filter(function (i) { return i.failed; }).length;
-    const waiting = items.filter(function (i) { return !i.failed; }).reduce(function (n, i) { return n + i.lines.length; }, 0);   // fields waiting, not submissions
+    const waiting = items.filter(function (i) { return !i.failed; }).reduce(function (n, i) { return n + (i.event ? 1 : i.lines.length); }, 0);   // fields (or spray events) waiting, not submissions
     const off = (typeof navigator !== 'undefined' && navigator.onLine === false) || this.offline;
     if (failed) return { kind: 'problem', n: failed, text: failed + ' need' + (failed === 1 ? 's' : '') + ' attention' };
     if (this.busy) return { kind: 'busy', text: 'Uploading...' };
@@ -714,7 +774,11 @@ const Sync = {
     function next(i) {
       if (i >= todo.length) return Promise.resolve();
       const it = todo[i];
-      return callServer(it.type === 'spray' ? 'api_saveSpray' : 'api_savePluck', [S.token, { date: it.date, lines: it.lines }]).then(function (r) {
+      if (!it.event && it.type !== 'pluck') {   // a per-field spray entry from an older version of the app: it cannot be uploaded any more
+        self.save(self.items().map(function (x) { if (x.id === it.id) { x.failed = true; x.error = 'Made with an older version of the app. Discard it and enter it again as a spray event.'; } return x; }));
+        return next(i + 1);
+      }
+      return (it.event ? callServer('api_saveSprayEvent', [S.token, it.event]) : callServer('api_savePluck', [S.token, { date: it.date, lines: it.lines }])).then(function (r) {
         count += r.saved; self.lastOk = new Date().toISOString();
         self.save(self.items().filter(function (x) { return x.id !== it.id; }));
         return next(i + 1);
@@ -767,9 +831,10 @@ function openSyncPanel() {
       h('div', null, s.kind === 'ok' ? 'Everything is uploaded.' : s.text + '.', Sync.lastOk ? h('div', { class: 'small' }, 'Last upload: ' + Sync.lastOk.replace('T', ' ').slice(0, 16)) : null)));
     if (!items.length) { body.appendChild(h('p', { class: 'muted' }, 'Nothing is waiting. Entries you submit are saved on this phone first and uploaded as soon as there is signal.')); return; }
     items.forEach(function (it) {
-      const codes = it.lines.map(function (l) { return (it.names && it.names[l.field_id]) || '?'; });
+      const src = it.event ? it.event.lines : it.lines;
+      const codes = src.map(function (l) { return (it.names && it.names[l.field_id]) || '?'; });
       body.appendChild(h('div', { class: 'qitem' + (it.failed ? ' failed' : '') },
-        h('div', null, h('strong', null, TYPE_LABEL[it.type] + '  |  ' + shortDate(it.date)), h('div', { class: 'small muted' }, it.lines.length + ' field' + (it.lines.length === 1 ? '' : 's') + ': ' + codes.join(', ')),
+        h('div', null, h('strong', null, TYPE_LABEL[it.type] + '  |  ' + shortDate(it.date)), h('div', { class: 'small muted' }, (it.event ? it.event.kg + ' kg, ' : '') + src.length + ' field' + (src.length === 1 ? '' : 's') + ': ' + codes.join(', ')),
           it.failed ? h('div', { class: 'small', style: 'color:var(--bad);margin-top:4px' }, it.error) : h('div', { class: 'small muted' }, 'Waiting for signal')),
         h('div', { class: 'row', style: 'flex-wrap:nowrap' },
           it.failed ? h('button', { class: 'btn small', onclick: function () { Sync.retry(it.id); } }, 'Retry') : null,
@@ -779,6 +844,14 @@ function openSyncPanel() {
   }
   /** Move a waiting submission back into drafts so it can be changed and submitted again. */
   function editAgain(it) {
+    if (it.event) {                                    // a spray event goes back into the "unfinished event" slot of that day
+      const cur = Draft.get('sprayevent', it.date).cur;
+      if (cur && cur.event_id !== it.event.event_id) { toast('Finish or discard the unfinished spray event first.'); return; }
+      Draft.set('sprayevent', it.date, { cur: { event_id: it.event.event_id, date: it.event.date, method: it.event.method || '', kg: it.event.kg, men: it.event.men, drones: it.event.drones, start: it.event.start_time, end: it.event.end_time,
+        pct: it.event.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) } });
+      Sync.remove(it.id); if (panel) panel.close(); toast('Moved back to your unfinished spray event.'); if (S.go && S.tab) S.go(S.tab);
+      return;
+    }
     const d = Draft.get(it.type, it.date);
     it.lines.forEach(function (l) { d[l.field_id] = l; });
     Draft.set(it.type, it.date, d); Sync.remove(it.id);
@@ -794,7 +867,7 @@ function openSyncPanel() {
 
 <script>
 'use strict';
-/* ===== Data collection: Foliar spray and Plucking (one grid of field cards, popup from the card), and the admin Records screen =====
+/* ===== Data collection: Plucking (one grid of field cards, popup from the card), Foliar spray EVENTS, and the admin Records screen =====
  *  Rules: data is entered for TODAY only (past days are view only). Typed entries are kept on the phone as drafts until submitted.
  *  Submitted entries go to the upload queue and reach the sheet as soon as there is signal. Entering a field again replaces its record.
  *  The area slider shows the running total for the field's current ROUND: earlier days are frozen, you can only move forward,
@@ -848,7 +921,7 @@ function roundSlider(maxHa, doneHa, startToday) {
 /** - [ n ] + counter for whole numbers (drones / men). */
 function stepper(initial, max) {
   const inp = h('input', { type: 'number', inputmode: 'numeric', min: '1', max: String(max || 500), step: '1', value: String(initial || 1), 'aria-label': 'Count' });
-  const bump = function (d) { inp.value = String(Math.min(max || 500, Math.max(1, (parseInt(inp.value, 10) || 0) + d))); };
+  const bump = function (d) { inp.value = String(Math.min(max || 500, Math.max(1, (parseInt(inp.value, 10) || 0) + d))); inp.dispatchEvent(new Event('input', { bubbles: true })); };
   return { node: h('div', { class: 'stepper' }, h('button', { type: 'button', class: 'btn', onclick: function () { bump(-1); } }, '-'), inp,
     h('button', { type: 'button', class: 'btn', onclick: function () { bump(1); } }, '+')), get: function () { return inp.value; } };
 }
@@ -857,7 +930,7 @@ function askVoid(type, r, done) {
   const why = h('input', { type: 'text', maxlength: '200', placeholder: 'e.g. wrong field, entered twice' });
   modal('Void this record?', h('div', { class: 'stack' },
     h('div', null, r.date + '  ' + (r.division ? r.division + ' ' : '') + r.field_code),
-    h('div', { class: 'muted small' }, 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
+    h('div', { class: 'muted small' }, type === 'spray' ? 'This voids the whole spray event this record belongs to (all its fields). It is kept for audit but no longer counts in any total.' : 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Void record', kind: 'danger', onclick: function (m, btn) {
       run(btn, function () { return api('api_voidRecord', type, r.record_id, why.value).then(function () { m.close(); toast('Record voided'); done(); }); });
@@ -1067,45 +1140,348 @@ function entryScreen(root, cfg) {
   }
 }
 
-// ---------------------------------------------------------------- Foliar spray
-VIEWS['spray.entry'] = function (root) {
-  entryScreen(root, {
-    type: 'spray', title: 'Foliar spray',
-    intro: 'Tap a field card to enter its start and end time, the drones or men used, and how much of the field you covered.',
-    idle: function (f) { const p = f.progress; return p.done_ha > 0 ? 'Round ' + p.round + ', day ' + p.day_no + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha done' : (f.last_date ? 'Last sprayed ' + shortDate(f.last_date) : 'Not sprayed yet'); },
-    bar: function (f) { const p = f.progress; return p.done_ha > 0 ? Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) : null; },
-    summary: function (f, d) { return d.start_time + ' to ' + d.end_time + '  |  ' + d.units + (f.method === 'Drone' ? (d.units > 1 ? ' drones' : ' drone') : ' men') + '  |  ' + r2(d.area_ha) + ' ha'; },
-    recorded: function (r) { return r.start_time + '-' + r.end_time + ', ' + r.units + (r.method === 'Drone' ? ' drone(s)' : ' men') + ', ' + r2(r.area_ha) + ' ha'; },
-    facts: function (r) { return [['Time', r.start_time + ' to ' + r.end_time + ' (' + r2(r.hours) + ' h)'], [r.method === 'Drone' ? 'Drones' : 'Men', String(r.units)], ['Area covered that day', r2(r.area_ha) + ' ha']]; },
-    toData: function (r) { return { start_time: r.start_time, end_time: r.end_time, units: r.units, area_ha: r.area_ha, complete: !!(r.round && r.round.complete) }; },
-    line: function (f, d) { return { field_id: f.field_id, start_time: d.start_time, end_time: d.end_time, units: d.units, area_ha: d.area_ha, complete: !!d.complete }; },
-    popup: function (f, existing, ctl) {
-      const drone = f.method === 'Drone', p = f.progress;
-      const start = h('input', { type: 'time', value: existing ? existing.start_time : '' }), end = h('input', { type: 'time', value: existing ? existing.end_time : '' });
-      const count = stepper(existing ? existing.units : 1, 500);
-      const sl = roundSlider(f.area_ha, p.done_ha, existing ? existing.area_ha : 0);
-      const live = h('div', { class: 'live' }), err = h('div');
-      function upd() { const hr = hoursBetween(start.value, end.value), a = sl.get().area; live.textContent = hr ? 'Time taken: ' + r2(hr) + ' h   |   ' + (a > 0 ? r2(a / hr) + ' ha per hour' : 'move the slider to set the area') : 'Enter the start and end time to see the time taken.'; }
-      [start, end].forEach(function (i) { i.addEventListener('input', upd); }); sl.onChange(upd); upd();
-      const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
-      modal(popTitle(f), h('div', { class: 'stack' },
-        p.done_ha > 0 ? h('div', { class: 'callout' }, roundNote(p, f, 'sprayed')) : null,
-        h('div', { class: 'pair' }, field('Start time', start), field('End time', end)),
-        field(drone ? 'Number of drones used' : 'Number of men used', count.node),
-        field('Area covered (running total for this round)', sl.node), live, err), left.concat([
-        { label: 'Cancel', onclick: function (m) { m.close(); } },
-        { label: 'Save details', kind: 'primary', onclick: function (m) {
-          clear(err);
-          if (!start.value || !end.value) { err.appendChild(msgBox('err', 'Enter the start and end time.')); return; }
-          if (!hoursBetween(start.value, end.value)) { err.appendChild(msgBox('err', 'End time must be after start time.')); return; }
-          if (!(parseInt(count.get(), 10) >= 1)) { err.appendChild(msgBox('err', 'Enter how many ' + (drone ? 'drones' : 'men') + ' were used.')); return; }
-          const g = sl.get();
-          if (g.area < 0.05) { err.appendChild(msgBox('err', 'Move the slider forward to show how much more of the field you covered today.')); return; }
-          const data = { start_time: start.value, end_time: end.value, units: parseInt(count.get(), 10), area_ha: g.area, complete: g.complete };
-          m.close(); ctl.done(data);
-        } }]), { from: ctl.from, onClose: ctl.closed });
+// ---------------------------------------------------------------- Foliar spray EVENTS
+// One card: "Create spray event". In the popup: kg of foliar applied, men (and drones), start/end time, then tap field cards to add the fields
+// that were sprayed. Each added field shows a doughnut at 100%; tap it to change how much of that field was covered (slider). A field already
+// partly sprayed starts at what was covered before and can only go up. After submitting, the event is a card with the totals and the field names.
+
+/** A ring showing how much of a field is covered. */
+function donut(pct, method, size) {
+  const C = 2 * Math.PI * 15.9155;
+  const svg = svgEl('svg', { viewBox: '0 0 36 36', class: 'donut ' + String(method || '').toLowerCase(), width: String(size || 64), height: String(size || 64), 'aria-hidden': 'true' });
+  svg.appendChild(svgEl('circle', { cx: 18, cy: 18, r: 15.9155, fill: 'none', class: 'd-track', 'stroke-width': 4 }));
+  const arc = svgEl('circle', { cx: 18, cy: 18, r: 15.9155, fill: 'none', class: 'd-arc', 'stroke-width': 4, 'stroke-linecap': 'round', transform: 'rotate(-90 18 18)' });
+  const label = svgEl('text', { x: 18, y: 21.4, 'text-anchor': 'middle', class: 'd-text' }, '');
+  svg.appendChild(arc); svg.appendChild(label);
+  const set = function (p) { arc.setAttribute('stroke-dasharray', (C * Math.max(0, Math.min(100, p)) / 100) + ' ' + C); label.textContent = Math.round(p) + '%'; };
+  set(pct);
+  return { node: svg, set: set };
+}
+
+/** Coverage slider for one field: 0 to 100%. What earlier events already covered (beforePct) is locked; you can only go above it. */
+function coverSlider(areaHa, beforePct, pct, onChange) {
+  const lo = beforePct >= 99.5 ? 100 : Math.floor(beforePct + 1e-9) + 1;       // at least 1% more than before
+  let v = Math.max(lo, Math.min(100, Math.round(pct)));
+  const range = h('input', { type: 'range', min: '0', max: '100', step: '1', value: String(v), 'aria-label': 'Percent of the field covered by this event' });
+  const track = h('div', { class: 'rtrack' + (beforePct > 0 ? ' has-frozen' : '') }, h('div', { class: 'rt-bg' }), h('div', { class: 'rt-fill' }), h('div', { class: 'rt-frozen' }), range);
+  const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' });
+  const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v - 5); } }, '- 5%');
+  const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v + 5); } }, '+ 5%');
+  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(100); } }, '100%');
+  function show() {
+    track.style.setProperty('--q', String(v / 100)); track.style.setProperty('--p', String(beforePct / 100));
+    head.textContent = v + '% of the field = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
+    sub.textContent = 'This event covers ' + r2(areaHa * (v - beforePct) / 100) + ' ha';
+    minus.disabled = v <= lo; plus.disabled = v >= 100;
+    if (onChange) onChange(v);
+  }
+  function set(x) { v = Math.max(lo, Math.min(100, Math.round(x))); range.value = String(v); show(); }
+  range.addEventListener('input', function () { set(parseFloat(range.value)); });
+  show();
+  return { node: h('div', { class: 'slider' }, head, sub, track,
+    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% was sprayed earlier (locked, you can only go forward)') : null,
+    h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full)), get: function () { return v; } };
+}
+
+function newEventState(date, method) {
+  return { event_id: 'EVT-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8), date: date, method: method || '', kg: '', men: 3, drones: 1, start: '', end: '', pct: {} };
+}
+/** What goes to the server from a state (the popup validates first; for an old unsent draft the server does the checking). */
+function eventPayload(st) {
+  return { event_id: st.event_id, date: st.date, kg: Number(st.kg), men: parseInt(st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
+    lines: Object.keys(st.pct).map(function (id) { return { field_id: id, pct: st.pct[id] }; }) };
+}
+function crewText(method, men, drones) { return method === 'Drone' ? drones + (drones === 1 ? ' drone' : ' drones') + ', ' + men + (men === 1 ? ' man' : ' men') : men + (men === 1 ? ' man' : ' men'); }
+
+/** The popup. o: {st, fields, existing (server event being edited, or null), persist, from, onDone, onDelete} */
+function openSprayEvent(o) {
+  const st = o.st, fields = o.fields, byId = {}; fields.forEach(function (f) { byId[f.field_id] = f; });
+  const members = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; });
+  const beforeOf = function (id) { return members[id] !== undefined ? members[id] : byId[id].progress.done_pct; };
+  const methods = []; fields.forEach(function (f) { if (methods.indexOf(f.method) < 0) methods.push(f.method); });
+  if (!st.method || methods.indexOf(st.method) < 0) st.method = methods[0] || 'Manual';
+  Object.keys(st.pct).forEach(function (id) { if (!byId[id]) delete st.pct[id]; });       // a field that is no longer yours
+  let openId = null, q = '';
+  const save = function () { if (o.persist) Draft.set('sprayevent', st.date, { cur: st }); };
+
+  const kgIn = numInput(st.kg, { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Foliar applied, kg' });
+  const men = stepper(st.men, 500), drones = stepper(st.drones, 50);
+  const start = h('input', { type: 'time', value: st.start || '', 'aria-label': 'Start time' }), end = h('input', { type: 'time', value: st.end || '', 'aria-label': 'End time' });
+  const dronesField = field('Drones used', drones.node);
+  const methodBox = h('div'), pickBox = h('div'), covBox = h('div'), sumBox = h('div'), err = h('div');
+  kgIn.addEventListener('input', function () { st.kg = kgIn.value; save(); renderSummary(); });
+  men.node.addEventListener('input', function () { st.men = men.get(); save(); renderSummary(); });
+  drones.node.addEventListener('input', function () { st.drones = drones.get(); save(); renderSummary(); });
+  start.addEventListener('input', function () { st.start = start.value; save(); }); end.addEventListener('input', function () { st.end = end.value; save(); });
+
+  function totals() { let ha = 0; Object.keys(st.pct).forEach(function (id) { ha += byId[id].area_ha * (st.pct[id] - beforeOf(id)) / 100; }); const kg = Number(st.kg) || 0; return { ha: ha, kg: kg, kgha: ha > 0 && kg > 0 ? kg / ha : '' }; }
+  function renderSummary() {
+    const t = totals(), n = Object.keys(st.pct).length;
+    clear(sumBox); add(sumBox, [
+      h('div', { class: 'evsum-s' }, h('b', null, r2(t.ha).toFixed(2)), h('span', null, 'ha covered')), h('div', { class: 'evsum-s' }, h('b', null, t.kg ? String(r2(t.kg)) : '-'), h('span', null, 'kg applied')),
+      h('div', { class: 'evsum-s' }, h('b', null, t.kgha === '' ? '-' : r2(t.kgha).toFixed(2)), h('span', null, 'kg per ha')), h('div', { class: 'evsum-s' }, h('b', null, String(n)), h('span', null, n === 1 ? 'field' : 'fields'))]);
+  }
+  function renderMethod() {
+    clear(methodBox); dronesField.style.display = st.method === 'Drone' ? '' : 'none';
+    if (methods.length < 2) { methodBox.appendChild(h('div', { class: 'methodline' }, methodBadge(st.method), h('span', { class: 'muted small' }, st.method === 'Drone' ? 'Drone spray event' : 'Manual spray event'))); return; }
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Spray method' });
+    methods.forEach(function (m) {
+      seg.appendChild(h('button', { type: 'button', class: m === st.method ? 'on' : '', 'data-method': m, onclick: function () {
+        if (st.method === m) return;
+        st.method = m; Object.keys(st.pct).forEach(function (id) { if (byId[id].method !== m) delete st.pct[id]; }); openId = null; save(); renderMethod(); renderPick(); renderCover(); renderSummary();
+      } }, m));
+    });
+    methodBox.appendChild(h('div', { class: 'f' }, 'How was it sprayed?', seg));
+  }
+  function toggle(f) {
+    const id = f.field_id;
+    if (st.pct[id] !== undefined) { delete st.pct[id]; if (openId === id) openId = null; } else st.pct[id] = 100;
+    save(); renderPick(); renderCover(); renderSummary();
+  }
+  function renderPick() {
+    clear(pickBox);
+    const list = fields.filter(function (f) { return f.method === st.method; });
+    if (list.length > 12) {
+      const s = h('input', { type: 'search', placeholder: 'Find a field', value: q, 'aria-label': 'Find a field' });
+      s.addEventListener('input', function () { q = s.value; renderPickGrid(); });
+      pickBox.appendChild(s);
     }
+    pickBox.appendChild(h('div', { class: 'pick-grids' }));
+    renderPickGrid();
+  }
+  function renderPickGrid() {
+    const host = pickBox.querySelector('.pick-grids'); clear(host);
+    const t = q.trim().toLowerCase();
+    const list = fields.filter(function (f) { return f.method === st.method && (!t || (f.code + ' ' + f.name + ' ' + f.division).toLowerCase().indexOf(t) >= 0); });
+    if (!list.length) { host.appendChild(h('div', { class: 'muted small' }, fields.some(function (f) { return f.method === st.method; }) ? 'No field matches.' : 'You have no ' + st.method + ' fields.')); return; }
+    groupBy(list, function (f) { return f.division || ''; }).forEach(function (g) {
+      const picked = g.items.filter(function (f) { return st.pct[f.field_id] !== undefined; }).length;
+      if (g.key) host.appendChild(h('div', { class: 'divhead fdiv' }, h('span', null, g.key), h('span', null, picked ? picked + ' selected' : '')));
+      const grid = h('div', { class: 'picks' });
+      g.items.forEach(function (f) {
+        const id = f.field_id, sel = st.pct[id] !== undefined, blocked = f.done_today && members[id] === undefined, before = beforeOf(id);
+        grid.appendChild(h('button', { type: 'button', 'data-code': f.code, 'data-state': blocked ? 'done' : (sel ? 'on' : 'off'), class: 'pick ' + f.method.toLowerCase() + (sel ? ' on' : '') + (blocked ? ' dis' : ''), disabled: blocked,
+          'aria-pressed': sel ? 'true' : 'false', 'aria-label': f.code + (blocked ? ', already fully sprayed today' : (sel ? ', selected' : '')), onclick: function () { toggle(f); } },
+          h('span', { class: 'pk-mark' }, icon('check')), h('span', { class: 'pk-code' }, f.code), h('span', { class: 'pk-ha' }, r2(f.area_ha) + ' ha'),
+          h('span', { class: 'pk-state' }, blocked ? 'Fully sprayed today' : (before > 0 ? Math.round(before) + '% done earlier' : 'Not sprayed')),
+          before > 0 && !blocked ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + Math.min(100, before) + '%' })) : null));
+      });
+      host.appendChild(grid);
+    });
+  }
+  function renderCover() {
+    clear(covBox);
+    const ids = Object.keys(st.pct);
+    if (!ids.length) { covBox.appendChild(h('div', { class: 'covempty' }, icon('droplet'), h('div', null, 'Tap the field cards above. Each field you add appears here at 100%. Tap its ring if only part of it was sprayed.'))); return; }
+    const grid = h('div', { class: 'covgrid' });
+    fields.filter(function (f) { return st.pct[f.field_id] !== undefined; }).forEach(function (f) { grid.appendChild(covCard(f)); });
+    covBox.appendChild(grid);
+  }
+  function covCard(f) {
+    const id = f.field_id, before = beforeOf(id), d = donut(st.pct[id], f.method, 64);
+    const haNow = function () { return r2(f.area_ha * (st.pct[id] - before) / 100); };
+    const haText = h('div', { class: 'cov-ha' }, haNow() + ' ha');
+    const card = h('div', { class: 'covcard ' + f.method.toLowerCase() + (openId === id ? ' open' : ''), 'data-code': f.code });
+    const ring = h('button', { type: 'button', class: 'ring', 'aria-expanded': openId === id ? 'true' : 'false', 'aria-label': 'Change how much of ' + f.code + ' was covered. Now ' + Math.round(st.pct[id]) + '%', onclick: function () { openId = openId === id ? null : id; renderCover(); } }, d.node);
+    card.appendChild(h('div', { class: 'cov-top' }, ring, h('div', { class: 'cov-info' }, h('div', { class: 'cov-code' }, f.code), h('div', { class: 'cov-meta' }, r2(f.area_ha) + ' ha field'), haText,
+      before > 0 ? h('div', { class: 'cov-note' }, icon('lock'), Math.round(before) + '% earlier') : null),
+      h('button', { type: 'button', class: 'cov-x', 'aria-label': 'Remove ' + f.code, onclick: function () { toggle(f); } }, icon('x'))));
+    if (openId === id) {
+      const sl = coverSlider(f.area_ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); });
+      card.appendChild(h('div', { class: 'cov-slider' }, sl.node, h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:8px' }, h('button', { type: 'button', class: 'btn primary small', onclick: function () { openId = null; renderCover(); } }, 'Done'))));
+    }
+    return card;
+  }
+  function collect() {
+    const errs = [], kg = Number(st.kg);
+    if (!(kg > 0)) errs.push('Enter how many kg of foliar were applied.');
+    if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
+    if (st.method === 'Drone' && !(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.');
+    if (!st.start || !st.end) errs.push('Enter the start and end time.'); else if (hoursBetween(st.start, st.end) === null) errs.push('The end time must be after the start time.');
+    const ids = Object.keys(st.pct);
+    if (!ids.length) errs.push('Select at least one field that was sprayed.');
+    ids.forEach(function (id) { if (st.pct[id] <= beforeOf(id) + 1e-9) errs.push(byId[id].code + ': set the coverage above ' + Math.round(beforeOf(id)) + '% (already sprayed earlier).'); });
+    return errs;
+  }
+
+  const body = h('div', { class: 'evform' },
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The mix and the crew'), methodBox,
+      h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), field('Men used', men.node)), dronesField,
+      h('div', { class: 'pair' }, field('Start time', start), field('End time', end))),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?'), h('div', { class: 'muted small', style: 'margin:-4px 0 10px' }, 'Tap a field card to add it. Tap it again to remove it.'), pickBox),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How much of each field was covered?'), covBox),
+    err);
+  renderMethod(); renderPick(); renderCover(); renderSummary();
+
+  const left = [];
+  if (o.existing && o.existing.can_delete && o.onDelete) left.push({ label: 'Delete event', kind: 'danger', left: true, onclick: function (m) { m.close(); o.onDelete(); } });
+  else if (o.persist && Draft.get('sprayevent', st.date).cur) left.push({ label: 'Discard', kind: 'danger', left: true, onclick: function (m) { Draft.set('sprayevent', st.date, {}); m.close(); if (o.onDone) o.onDone(); } });
+  const dlg = modal(o.existing ? 'Change spray event' : 'New spray event', body, left.concat([
+    { label: o.persist ? 'Close' : 'Cancel', onclick: function (m) { m.close(); } },
+    { label: o.existing ? 'Save changes' : 'Submit event', kind: 'primary', onclick: function (m) {
+      clear(err); const errs = collect();
+      if (errs.length) { err.appendChild(msgBox('err', errs[0] + (errs.length > 1 ? ' (and ' + (errs.length - 1) + ' more to fix)' : ''))); return; }
+      const names = {}; Object.keys(st.pct).forEach(function (id) { names[id] = byId[id].code; });
+      const ev = eventPayload(st); ev.method = st.method;
+      if (o.persist) Draft.set('sprayevent', st.date, {});
+      m.close();
+      toast((navigator.onLine === false || Sync.offline) ? 'Saved on this phone. It uploads when you have signal.' : 'Submitting...');
+      Sync.queueEvent(ev, names);
+      if (o.onDone) o.onDone();
+    } }]), { from: o.from, onClose: function () { if (o.onClosed) o.onClosed(); } });
+  const acts = dlg.box.querySelector('.actions'); if (acts) acts.insertBefore(h('div', { class: 'evsum' }, sumBox), acts.firstChild);   // the totals stay in view next to the buttons
+}
+
+VIEWS['spray.entry'] = function (root) {
+  const dateIn = h('input', { type: 'date', value: S.today, max: S.today, 'aria-label': 'Date' });
+  const bannerBox = h('div'), sumBox = h('div'), createBox = h('div'), listBox = h('div');
+  let data = { fields: [], events: [] }, offlineInfo = '', hadQueue = false;
+  const readOnly = function () { return dateIn.value < S.today; };
+  function shiftDay(n) { const d = new Date(dateIn.value + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); const v = d.toISOString().slice(0, 10); if (v > S.today) return; dateIn.value = v; loadAll(); }
+  const bar = h('div', { class: 'entry-bar' }, h('div', { class: 'datepick' },
+    h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Previous day', onclick: function () { shiftDay(-1); } }, icon('left')), dateIn,
+    h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Next day', onclick: function () { shiftDay(1); } }, icon('right')),
+    h('button', { type: 'button', class: 'btn today', onclick: function () { dateIn.value = S.today; loadAll(); } }, 'Today')));
+  root.appendChild(pageHead('Foliar spray', 'Create a spray event each time a mix of foliar is sprayed: the kg applied, the crew, and the fields covered.'));
+  root.appendChild(bar); root.appendChild(bannerBox); root.appendChild(sumBox); root.appendChild(createBox); root.appendChild(listBox);
+  dateIn.addEventListener('change', loadAll);
+  Sync.onChange(function () {
+    if (!root.isConnected) return false;
+    const waiting = Object.keys(Sync.waitingEvents(dateIn.value)).length;
+    if (hadQueue && !waiting) { hadQueue = false; loadAll(); } else { if (waiting) hadQueue = true; renderAll(); }
   });
+  loadAll();
+
+  function loadAll() {
+    clear(listBox).appendChild(skeleton(3)); const date = dateIn.value;
+    return api('api_sprayDay', date).then(function (d) { data = d; offlineInfo = ''; Cache.set('spray:day:' + date, d); Cache.set('spray:fields', { fields: d.fields, saved: new Date().toISOString() }); afterLoad(); }).catch(function (e) {
+      if (!e.network) { clear(listBox).appendChild(msgBox('err', e.message)); return; }
+      const cd = Cache.get('spray:day:' + date), cf = Cache.get('spray:fields');
+      if (!cf) { clear(listBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
+      data = { fields: cf.fields, events: cd ? cd.events : [] };
+      offlineInfo = 'No signal. Showing what this phone saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Events you create are kept on this phone and upload when you have signal.';
+      afterLoad();
+    });
+  }
+  function afterLoad() { hadQueue = Object.keys(Sync.waitingEvents(dateIn.value)).length > 0; renderAll(); }
+  function renderAll() { renderBanners(); renderSummary(); renderCreate(); renderList(); }
+
+  function renderBanners() {
+    clear(bannerBox);
+    if (offlineInfo) bannerBox.appendChild(msgBox('warn', offlineInfo));
+    if (readOnly()) bannerBox.appendChild(h('div', { class: 'msg warn' }, icon('lock'), h('div', null, 'Viewing ' + shortDate(dateIn.value) + '. Past days are view only: spray events can only be created or changed for today.')));
+    else {
+      Draft.dates('sprayevent').filter(function (d) { return d < S.today; }).forEach(function (d) {
+        const cur = Draft.get('sprayevent', d).cur; if (!cur) return;
+        bannerBox.appendChild(h('div', { class: 'msg warn' }, icon('alert'), h('div', { style: 'flex:1' }, 'An unfinished spray event from ' + shortDate(d) + ' (' + Object.keys(cur.pct).length + ' field' + (Object.keys(cur.pct).length === 1 ? '' : 's') + ') is still on this phone.'),
+          h('button', { type: 'button', class: 'btn small', onclick: function () { Draft.set('sprayevent', d, {}); const ev = eventPayload(cur); ev.method = cur.method; const names = {}; data.fields.forEach(function (f) { names[f.field_id] = f.code; }); Sync.queueEvent(ev, names); renderBanners(); } }, 'Submit it'),
+          h('button', { type: 'button', class: 'btn small danger', onclick: function () { Draft.set('sprayevent', d, {}); renderBanners(); } }, 'Discard')));
+      });
+    }
+    const failed = Sync.items().filter(function (i) { return i.failed && i.type === 'spray'; });
+    if (failed.length) bannerBox.appendChild(h('div', { class: 'msg err' }, icon('alert'), h('div', { style: 'flex:1' }, failed.length + ' spray event' + (failed.length === 1 ? ' was' : 's were') + ' rejected: ' + failed[0].error), h('button', { type: 'button', class: 'btn small', onclick: openSyncPanel }, 'Review')));
+  }
+
+  // cards: the server's events, with a waiting (queued) copy replacing the original when one was edited, and new waiting events at the end
+  function cards() {
+    const queued = Sync.waitingEvents(dateIn.value), byId = {}; data.fields.forEach(function (f) { byId[f.field_id] = f; });
+    const out = [], seen = {};
+    data.events.forEach(function (e) {
+      seen[e.event_id] = true;
+      if (queued[e.event_id]) out.push(fromQueued(queued[e.event_id], e, e.no)); else out.push(fromServer(e));
+    });
+    Object.keys(queued).forEach(function (id) { if (!seen[id]) out.push(fromQueued(queued[id], null, 0)); });
+    return out;
+    function fromServer(e) {
+      return { kind: 'recorded', event_id: e.event_id, no: e.no, method: e.method, kg: e.kg, men: e.men, drones: e.drones, start: e.start_time, end: e.end_time, total_ha: e.total_ha, kg_per_ha: e.kg_per_ha,
+        lines: e.lines.map(function (l) { return { code: l.code, pct: l.pct_total, id: l.field_id }; }), can_edit: e.can_edit, can_delete: e.can_delete, lock_reason: e.lock_reason, by: e.entered_by, server: e, flags: e.flags };
+    }
+    function fromQueued(ev, server, no) {
+      const before = {}; if (server) server.lines.forEach(function (l) { before[l.field_id] = l.before_pct; });
+      let ha = 0; const lines = ev.lines.map(function (l) { const f = byId[l.field_id], b = before[l.field_id] !== undefined ? before[l.field_id] : (f ? f.progress.done_pct : 0); if (f) ha += f.area_ha * (l.pct - b) / 100; return { code: f ? f.code : '?', pct: l.pct, id: l.field_id }; });
+      return { kind: 'queued', event_id: ev.event_id, no: no, method: ev.method || (byId[ev.lines[0].field_id] || {}).method || 'Manual', kg: ev.kg, men: ev.men, drones: ev.drones, start: ev.start_time, end: ev.end_time, total_ha: round2(ha), kg_per_ha: ha > 0 ? round2(ev.kg / ha) : '',
+        lines: lines, can_edit: true, can_delete: true, lock_reason: '', by: S.me.username, server: server, queuedEvent: ev };
+    }
+  }
+  function round2(v) { return Math.round(v * 100) / 100; }
+
+  function renderSummary() {
+    clear(sumBox);
+    const ev = data.events; if (!ev.length) return;
+    let ha = 0, kg = 0; ev.forEach(function (e) { ha += e.total_ha; kg += e.kg; });
+    sumBox.appendChild(h('div', { class: 'evday' }, h('b', null, ev.length + (ev.length === 1 ? ' spray event' : ' spray events')), h('span', null, r2(ha).toFixed(2) + ' ha'), h('span', null, r2(kg) + ' kg of foliar')));
+  }
+
+  function renderCreate() {
+    clear(createBox);
+    if (readOnly()) return;
+    const draft = Draft.get('sprayevent', dateIn.value).cur, n = draft ? Object.keys(draft.pct).length : 0;
+    if (!data.fields.length) { createBox.appendChild(h('div', { class: 'card' }, msgBox('warn', S.me.field_scope === 'assigned' ? 'No fields are ready for you yet. Either none are assigned to you, or their area and last prune date are not filled in. Ask the Admin.' : 'No fields are ready yet. Their area and last prune date must be filled in under Estate setup.'))); return; }
+    const btn = h('button', { type: 'button', class: 'evcreate' + (draft ? ' has-draft' : ''), 'data-role': 'create-event', onclick: function () { openNew(btn); } },
+      h('span', { class: 'ec-ic' }, icon('plus')),
+      h('span', { class: 'ec-t' }, draft ? 'Continue the unfinished spray event' : 'Create spray event'),
+      h('span', { class: 'ec-s' }, draft ? n + (n === 1 ? ' field' : ' fields') + (draft.kg ? ', ' + draft.kg + ' kg' : '') + '. Saved on this phone.' : 'Enter the kg applied and the men used, then tap the fields that were sprayed.'));
+    createBox.appendChild(btn);
+  }
+  function openNew(from) {
+    const cur = Draft.get('sprayevent', dateIn.value).cur;
+    from.classList.add('editing');
+    openSprayEvent({ st: cur || newEventState(dateIn.value, ''), fields: data.fields, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); } });
+  }
+
+  function renderList() {
+    clear(listBox);
+    const list = cards();
+    if (!list.length) { listBox.appendChild(emptyState(readOnly() ? 'No spray events were recorded on this day.' : 'No spray event yet today. Tap "Create spray event" to record the first one.', 'droplet')); return; }
+    list.forEach(function (c) { listBox.appendChild(eventCard(c)); });
+  }
+
+  function eventCard(c) {
+    const open = function () { openCard(c, el); };
+    const stat = function (big, small) { return h('div', { class: 'ev-stat' }, h('b', null, big), h('span', null, small)); };
+    const actions = [];
+    if (!readOnly() && c.can_edit) actions.push(h('button', { type: 'button', class: 'iconbtn ghost', 'aria-label': 'Edit this spray event', onclick: function (ev) { ev.stopPropagation(); openCard(c, el); } }, icon('edit')));
+    if (!readOnly() && c.can_delete) actions.push(h('button', { type: 'button', class: 'iconbtn ghost danger', 'aria-label': 'Delete this spray event', onclick: function (ev) { ev.stopPropagation(); askDelete(c); } }, icon('trash')));
+    const el = h('div', { class: 'evcard ' + c.method.toLowerCase() + (c.kind === 'queued' ? ' queued' : ''), role: 'button', tabindex: '0', 'data-event': c.event_id, 'data-kind': c.kind, onclick: open, onkeydown: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } } },
+      h('div', { class: 'ev-head' }, h('div', { class: 'ev-title' }, c.no ? 'Spray event ' + c.no : 'New spray event'), methodBadge(c.method), h('div', { class: 'ev-actions' }, actions)),
+      h('div', { class: 'ev-sub' }, h('span', { class: 'ev-time' }, c.start + ' to ' + c.end), c.kind === 'queued' ? h('span', { class: 'badge warn' }, icon('upload'), 'Waiting to upload') : null),
+      h('div', { class: 'ev-stats' }, stat(r2(c.total_ha).toFixed(2), 'ha covered'), stat(String(r2(c.kg)), 'kg used' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')), stat(crewText(c.method, c.men, c.drones), 'crew')),
+      h('div', { class: 'tags', 'aria-label': 'Fields sprayed' }, c.lines.map(function (l) { return h('span', { class: 'tag' + (l.pct < 100 ? ' part' : '') }, l.code + (l.pct < 100 ? ' ' + Math.round(l.pct) + '%' : '')); })),
+      c.flags ? h('div', { class: 'small', style: 'color:var(--warn);margin-top:8px' }, 'Check: ' + c.flags) : null,
+      !readOnly() && !c.can_edit && c.lock_reason ? h('div', { class: 'small muted', style: 'margin-top:8px' }, icon('lock'), ' ' + c.lock_reason) : null);
+    return el;
+  }
+
+  function openCard(c, from) {
+    if (readOnly() || !c.can_edit) { viewEvent(c, from); return; }
+    const st = c.queuedEvent ? { event_id: c.event_id, date: dateIn.value, method: c.method, kg: c.queuedEvent.kg, men: c.queuedEvent.men, drones: c.queuedEvent.drones, start: c.queuedEvent.start_time, end: c.queuedEvent.end_time,
+        pct: c.queuedEvent.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) }
+      : { event_id: c.event_id, date: dateIn.value, method: c.method, kg: c.kg, men: c.men, drones: c.drones || 1, start: c.start, end: c.end, pct: c.lines.reduce(function (m, l) { m[l.id] = l.pct; return m; }, {}) };
+    from.classList.add('editing');
+    openSprayEvent({ st: st, fields: data.fields, existing: c.server, persist: false, from: from, onDone: renderAll, onDelete: function () { askDelete(c); }, onClosed: function () { from.classList.remove('editing'); } });
+  }
+
+  function viewEvent(c, from) {
+    const facts = h('dl', { class: 'facts' });
+    [['Time', c.start + ' to ' + c.end], ['Foliar applied', r2(c.kg) + ' kg'], ['Area covered', r2(c.total_ha).toFixed(2) + ' ha' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')], ['Crew', crewText(c.method, c.men, c.drones)], ['Entered by', c.by]].forEach(function (x) { facts.appendChild(h('dt', null, x[0])); facts.appendChild(h('dd', null, x[1])); });
+    const rows = (c.server ? c.server.lines : []).map(function (l) { return { f: l.label, pct: l.pct_total, ha: l.area_ha, kg: l.kg }; });
+    modal('Spray event' + (c.no ? ' ' + c.no : ''), h('div', { class: 'stack' }, c.lock_reason ? h('div', { class: 'msg warn', style: 'margin:0' }, icon('lock'), h('div', null, c.lock_reason)) : null, facts,
+      rows.length ? table([{ label: 'Field', key: 'f' }, { label: 'Covered (total)', cls: 'num', render: function (r) { return Math.round(r.pct) + '%'; } }, { label: 'ha this event', cls: 'num', render: function (r) { return r2(r.ha).toFixed(2); } }, { label: 'kg share', cls: 'num', render: function (r) { return r2(r.kg); } }], rows, null, { scroll: true }) : null),
+      [{ label: 'Close', onclick: function (m) { m.close(); } }], { from: from });
+  }
+
+  function askDelete(c) {
+    modal('Delete this spray event?', h('div', { class: 'stack' }, h('div', null, 'Spray event' + (c.no ? ' ' + c.no : '') + ': ' + r2(c.total_ha).toFixed(2) + ' ha, ' + r2(c.kg) + ' kg, ' + c.lines.length + (c.lines.length === 1 ? ' field' : ' fields') + '.'),
+      h('div', { class: 'muted small' }, c.kind === 'queued' && !c.server ? 'It has not been uploaded yet. It will simply be removed from this phone.' : 'It no longer counts in any total. The fields go back to how much was sprayed before it. A record of the deletion is kept.')), [
+      { label: 'Keep it', onclick: function (m) { m.close(); } },
+      { label: 'Delete event', kind: 'danger', onclick: function (m, btn) {
+        const item = Sync.items().filter(function (i) { return i.event && i.event.event_id === c.event_id; })[0];
+        if (item) Sync.remove(item.id);
+        if (!c.server) { m.close(); toast('Event removed'); renderAll(); return; }
+        if (navigator.onLine === false) { toast('Deleting an event needs a signal. Try again when you are online.', true); m.close(); renderAll(); return; }
+        run(btn, function () { return api('api_deleteSprayEvent', c.event_id).then(function () { m.close(); toast('Spray event deleted'); loadAll(); }).catch(function (e) { m.close(); toast(e.message, true); loadAll(); }); });
+      } }]);
+  }
 };
 
 // ---------------------------------------------------------------- Plucking
@@ -1154,7 +1530,7 @@ VIEWS['records.manage'] = function (root) {
   const find = h('input', { type: 'search', placeholder: 'Division or field' });
   const out = h('div');
   let last = null;
-  root.appendChild(pageHead('Records', 'Every spray and plucking record. Edit a measurement or void a record (the history is kept).'));
+  root.appendChild(pageHead('Records', 'Every spray and plucking record. A spray record is one field of a spray event: voiding it voids the whole event. The history is kept.'));
   root.appendChild(h('div', { class: 'card' }, h('div', { class: 'row' },
     h('div', { class: 'grow' }, field('Type', type)), h('div', { class: 'grow' }, field('From', from)), h('div', { class: 'grow' }, field('To', to)),
     h('div', { class: 'grow' }, field('Method', meth)), h('div', { class: 'grow' }, field('Status', stat)), h('div', { class: 'grow' }, field('Field', find)),
@@ -1175,14 +1551,15 @@ VIEWS['records.manage'] = function (root) {
     const cols = [{ label: 'Date', key: 'date', cls: 'nowrap' }, { label: 'Field', render: function (r) { return (r.division ? r.division + ' ' : '') + r.field_code + (r.field_name ? ' ' + r.field_name : ''); } }, { label: 'Method', render: function (r) { return methodBadge(r.method); } }];
     if (spray) {
       cols.push({ label: 'Time', cls: 'nowrap', render: function (r) { return r.start_time + '-' + r.end_time; } }, { label: 'Hours', cls: 'num', render: function (r) { return num(r.hours, 2); } },
-        { label: 'Drones/men', cls: 'num', key: 'units' }, { label: 'ha', cls: 'num', render: function (r) { return num(r.area_ha, 2); } });
+        { label: 'Drones/men', cls: 'num', key: 'units' }, { label: 'ha', cls: 'num', render: function (r) { return num(r.area_ha, 2); } },
+        { label: 'kg share', cls: 'num', render: function (r) { return r.kg_applied === '' || r.kg_applied === undefined ? '' : num(r.kg_applied, 2); } }, { label: 'Covered', cls: 'num', render: function (r) { return r.pct_total === '' || r.pct_total === undefined ? '' : num(r.pct_total, 0) + '%'; } });
     } else {
       cols.push({ label: 'kg', cls: 'num', render: function (r) { return num(r.kg, 1); } }, { label: 'ha', cls: 'num', render: function (r) { return num(r.area_ha, 2); } }, { label: 'kg/ha', cls: 'num', render: function (r) { return num(r.kg_per_ha, 1); } });
     }
     cols.push({ label: 'Entered by', render: function (r) { return r.entered_by + ' ' + String(r.entered_at).slice(0, 10); } },
       { label: 'Status', render: function (r) { return r.status === 'Voided' ? badge('Voided: ' + r.void_reason, 'bad') : (r.flags ? badge(r.flags, 'warn') : badge('OK', 'good')); } },
       { label: '', cls: 'nowrap', render: function (r) { return [r.can_edit ? h('button', { class: 'btn small', onclick: function () { edit(last.type, r); } }, 'Edit') : null, ' ',
-        r.can_void ? h('button', { class: 'btn small danger', onclick: function () { askVoid(last.type, r, search); } }, 'Void') : null]; } });
+        r.can_void ? h('button', { class: 'btn small danger', onclick: function () { askVoid(last.type, r, search); } }, last.type === 'spray' ? 'Void event' : 'Void') : null]; } });
     clear(out);
     out.appendChild(h('p', { class: 'muted small' }, last.d.total + ' record' + (last.d.total === 1 ? '' : 's') + (last.d.total > last.d.rows.length ? ' (showing the newest ' + last.d.rows.length + ')' : '')));
     out.appendChild(table(cols, rows, function (r) { return r.status === 'Voided' ? 'void' : ''; }, { scroll: true }));
