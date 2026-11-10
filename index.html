@@ -357,6 +357,16 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .evsum { flex: 1 0 100%; order: -1; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; }
 .evsum > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; } .evsum-s b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; } .evsum-s span { font-size: 11.5px; color: var(--muted); }
 @media (max-width: 860px) { .evcreate { padding: 18px; column-gap: 14px; } .evcreate .ec-t { font-size: 17px; } .ev-stat b { font-size: 18px; } .covgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .covcard.open { grid-column: 1 / -1; } .evsec { padding: 14px 12px; } }
+
+.methodchoice { border: 1px solid var(--line); border-radius: var(--r-md); padding: 18px 16px; background: var(--surface-2); }
+.mc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mc { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "ic t" "ic s"; column-gap: 14px; align-items: center; text-align: left; padding: 18px 16px; min-height: 92px; border: 2px solid var(--line-strong); border-radius: 16px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; transition: transform .12s, box-shadow .12s, background .12s; }
+.mc:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); } .mc:focus-visible { outline: 3px solid var(--ring); }
+.mc.drone { border-color: var(--drone-solid); } .mc.drone:hover { background: var(--drone-soft); } .mc.manual { border-color: var(--manual-solid); } .mc.manual:hover { background: var(--manual-soft); }
+.mc-ic { grid-area: ic; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; } .mc-ic svg { width: 24px; height: 24px; }
+.mc.drone .mc-ic { background: var(--drone-soft); color: var(--drone); } .mc.manual .mc-ic { background: var(--manual-soft); color: var(--manual); }
+.mc-t { grid-area: t; font-size: 20px; font-weight: 700; letter-spacing: -.01em; } .mc-s { grid-area: s; font-size: 13px; color: var(--muted); }
+@media (max-width: 520px) { .mc-grid { grid-template-columns: 1fr; } }
 </style>
 
 </head>
@@ -1200,7 +1210,8 @@ function openSprayEvent(o) {
   const members = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; });
   const beforeOf = function (id) { return members[id] !== undefined ? members[id] : byId[id].progress.done_pct; };
   const methods = []; fields.forEach(function (f) { if (methods.indexOf(f.method) < 0) methods.push(f.method); });
-  if (!st.method || methods.indexOf(st.method) < 0) st.method = methods[0] || 'Manual';
+  if (methods.indexOf(st.method) < 0) st.method = methods.length === 1 ? methods[0] : '';        // two kinds of field: the person chooses Drone or Manual FIRST
+  if (!methods.length) st.method = 'Manual';
   Object.keys(st.pct).forEach(function (id) { if (!byId[id]) delete st.pct[id]; });       // a field that is no longer yours
   let openId = null, q = '';
   const save = function () { if (o.persist) Draft.set('sprayevent', st.date, { cur: st }); };
@@ -1223,7 +1234,8 @@ function openSprayEvent(o) {
       h('div', { class: 'evsum-s' }, h('b', null, t.kgha === '' ? '-' : r2(t.kgha).toFixed(2)), h('span', null, 'kg per ha')), h('div', { class: 'evsum-s' }, h('b', null, String(n)), h('span', null, n === 1 ? 'field' : 'fields'))]);
   }
   function renderMethod() {
-    clear(methodBox); dronesField.style.display = st.method === 'Drone' ? '' : 'none'; menField.style.display = st.method === 'Drone' ? 'none' : '';   // a Drone event: one man per drone, so only the drones are asked
+    clear(methodBox); if (!st.method) return;
+    dronesField.style.display = st.method === 'Drone' ? '' : 'none'; menField.style.display = st.method === 'Drone' ? 'none' : '';   // a Drone event: one man per drone, so only the drones are asked
     if (methods.length < 2) { methodBox.appendChild(h('div', { class: 'methodline' }, methodBadge(st.method), h('span', { class: 'muted small' }, st.method === 'Drone' ? 'Drone spray event' : 'Manual spray event'))); return; }
     const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Spray method' });
     methods.forEach(function (m) {
@@ -1295,6 +1307,7 @@ function openSprayEvent(o) {
   }
   function collect() {
     const errs = [], kg = Number(st.kg);
+    if (!st.method) errs.push('Choose first how the foliar was sprayed: Drone or Manual.');
     if (!(kg > 0)) errs.push('Enter how many kg of foliar were applied.');
     if (st.method === 'Drone') { if (!(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.'); }
     else if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
@@ -1305,19 +1318,37 @@ function openSprayEvent(o) {
     return errs;
   }
 
-  const body = h('div', { class: 'evform' },
+  const formBox = h('div', { class: 'evform' },
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The mix and the crew'), methodBox,
       h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), h('div', null, menField, dronesField)),
       h('div', { class: 'pair' }, field('Start time', start), field('End time', end))),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?'), h('div', { class: 'muted small', style: 'margin:-4px 0 10px' }, 'Tap a field card to add it. Tap it again to remove it.'), pickBox),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How much of each field was covered?'), covBox),
     err);
-  renderMethod(); renderPick(); renderCover(); renderSummary();
+  const choice = h('div', { class: 'methodchoice' }), body = h('div', { class: 'evform' }, choice, formBox);
+  let sumWrap = null;
+  /** Before anything else the person says how it was sprayed; then only that method's fields are shown. */
+  function renderChoice() {
+    clear(choice);
+    choice.appendChild(h('div', { class: 'evsec-h' }, 'How was the foliar sprayed?'));
+    choice.appendChild(h('div', { class: 'muted small', style: 'margin:-4px 0 12px' }, 'Choose first. You will then see only the fields reserved for that way of spraying.'));
+    choice.appendChild(h('div', { class: 'mc-grid' }, methods.map(function (m) {
+      const n = fields.filter(function (f) { return f.method === m; }).length;
+      return h('button', { type: 'button', class: 'mc ' + m.toLowerCase(), 'data-method': m, onclick: function () { choose(m); } },
+        h('span', { class: 'mc-ic' }, icon(m === 'Drone' ? 'wind' : 'tractor')), h('span', { class: 'mc-t' }, m), h('span', { class: 'mc-s' }, n + (n === 1 ? ' field' : ' fields')));
+    })));
+  }
+  function updateGate() {
+    choice.style.display = st.method ? 'none' : ''; formBox.style.display = st.method ? '' : 'none';
+    if (sumWrap) sumWrap.style.display = st.method ? '' : 'none';
+  }
+  function choose(m) { st.method = m; save(); updateGate(); renderMethod(); renderPick(); renderCover(); renderSummary(); if (dlg && dlg.box) dlg.box.scrollTop = 0; }
+  renderChoice(); renderMethod(); renderPick(); renderCover(); renderSummary(); updateGate();
 
   const left = [];
   if (o.existing && o.existing.can_delete && o.onDelete) left.push({ label: 'Delete event', kind: 'danger', left: true, onclick: function (m) { m.close(); o.onDelete(); } });
   else if (o.persist && Draft.get('sprayevent', st.date).cur) left.push({ label: 'Discard', kind: 'danger', left: true, onclick: function (m) { Draft.set('sprayevent', st.date, {}); m.close(); if (o.onDone) o.onDone(); } });
-  const dlg = modal(o.existing ? 'Change spray event' : 'New spray event', body, left.concat([
+  var dlg = modal(o.existing ? 'Change spray event' : 'New spray event', body, left.concat([
     { label: o.persist ? 'Close' : 'Cancel', onclick: function (m) { m.close(); } },
     { label: o.existing ? 'Save changes' : 'Submit event', kind: 'primary', onclick: function (m) {
       clear(err); const errs = collect();
@@ -1330,7 +1361,7 @@ function openSprayEvent(o) {
       Sync.queueEvent(ev, names);
       if (o.onDone) o.onDone();
     } }]), { from: o.from, onClose: function () { if (o.onClosed) o.onClosed(); } });
-  const acts = dlg.box.querySelector('.actions'); if (acts) acts.insertBefore(h('div', { class: 'evsum' }, sumBox), acts.firstChild);   // the totals stay in view next to the buttons
+  const acts = dlg.box.querySelector('.actions'); if (acts) { sumWrap = h('div', { class: 'evsum' }, sumBox); acts.insertBefore(sumWrap, acts.firstChild); updateGate(); }   // the totals stay in view next to the buttons
 }
 
 VIEWS['spray.entry'] = function (root) {
