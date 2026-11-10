@@ -517,6 +517,40 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 /* ---- sidebar: the parts of Monitoring ---- */
 nav.tabs button.sub { padding: 7px 12px 7px 46px; margin: 0; font-size: 13.5px; font-weight: 500; opacity: .92; } nav.tabs button.sub.on { background: transparent; color: #fff; font-weight: 700; } nav.tabs button.sub.on::before { display: none; }
 nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--side-muted); } nav.tabs button.sub.on::after { background: #6fd9a4; }
+
+/* ---- KPI cards with their graph attached (a dropper) ---- */
+.exp-heads { align-items: start; } .exp-head.open.wide { grid-column: 1 / -1; }
+.exp-toggle { margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.75); border: 1px solid rgba(0,0,0,.14); border-radius: 10px; padding: 7px 12px; font: inherit; font-weight: 700; color: var(--ink); cursor: pointer; }
+.exp-toggle:hover { background: #fff; } .exp-toggle:focus-visible { outline: 3px solid var(--ring); }
+.exp-toggle .chev { width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; } .exp-toggle.open .chev { transform: rotate(-135deg) translate(-2px, -2px); }
+.exp-body { margin-top: 14px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.exp-body .mon-ctl { margin: 0 0 10px; } .exp-body .legend { margin: 0 0 6px; padding: 0; list-style: none; display: flex; gap: 18px; font-size: 13px; color: var(--ink-2); } .exp-body .legend li { display: inline-flex; align-items: center; gap: 7px; }
+.exp-head.none .exp-toggle, .exp-head .exp-toggle { color: var(--ink); }
+
+/* ---- KPI cards (v2): the percentage as a picture, the graph attached underneath ---- */
+.exp-heads { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; margin-bottom: 18px; } .kpi-unit { min-width: 0; } .kpi-unit.wide { grid-column: 1 / -1; }
+.exp-heads .exp-head { position: relative; cursor: pointer; padding: 18px 22px 20px; margin: 0; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-sm); transition: box-shadow .15s, transform .12s; user-select: none; -webkit-tap-highlight-color: transparent; }
+.exp-heads .exp-head:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); } .exp-heads .exp-head:focus-visible { outline: 3px solid var(--ring); }
+.exp-heads .exp-head.good { --kc: var(--good); background: linear-gradient(135deg, color-mix(in srgb, var(--good) 16%, var(--surface)) 0%, var(--surface) 78%); border-color: color-mix(in srgb, var(--good) 38%, var(--line)); }
+.exp-heads .exp-head.bad { --kc: var(--bad); background: linear-gradient(135deg, color-mix(in srgb, var(--bad) 14%, var(--surface)) 0%, var(--surface) 78%); border-color: color-mix(in srgb, var(--bad) 38%, var(--line)); }
+.exp-heads .exp-head.none { --kc: var(--ink-2); }
+.exp-head .eh-top { display: flex; align-items: center; gap: 10px; } .exp-head .eh-ico { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--kc); color: #fff; flex: none; } .exp-head .eh-ico svg { width: 20px; height: 20px; }
+.exp-head .eh-kick { flex: 1; margin: 0; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-2); }
+.exp-head .chev { width: 9px; height: 9px; border-right: 2.5px solid var(--ink-2); border-bottom: 2.5px solid var(--ink-2); transform: rotate(45deg) translate(-2px, -2px); transition: transform .18s; margin-right: 4px; } .exp-head.open .chev { transform: rotate(-135deg) translate(-2px, -2px); }
+.exp-head .eh-bigrow { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.exp-head .eh-num { font-size: 64px; line-height: .95; font-weight: 800; letter-spacing: -.035em; color: var(--kc); font-variant-numeric: tabular-nums; } .exp-head .eh-num.small { font-size: 28px; letter-spacing: -.01em; line-height: 1.2; }
+.exp-head .eh-word { font-size: 26px; font-weight: 700; color: var(--kc); }
+.exp-head .eh-arrow { align-self: center; width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; margin-right: 2px; } .exp-head .eh-arrow.down { border-top: 20px solid var(--kc); } .exp-head .eh-arrow.up { border-bottom: 20px solid var(--kc); }
+.exp-head .eh-sub { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+.exp-head .eh-cmp { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.exp-head .cmp-row { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 10px; font-size: 14px; } .exp-head .cmp-name { color: var(--ink-2); font-weight: 600; }
+.exp-head .cmp-track { height: 14px; border-radius: 8px; background: color-mix(in srgb, var(--ink) 7%, transparent); overflow: hidden; } .exp-head .cmp-fill { display: block; height: 100%; border-radius: 8px; transition: width .3s; }
+.exp-head .cmp-row.drone .cmp-fill { background: var(--drone-solid); } .exp-head .cmp-row.manual .cmp-fill { background: var(--manual-solid); } .exp-head .cmp-val { font-variant-numeric: tabular-nums; min-width: 96px; text-align: right; }
+/* the unfolded graph is the other half of the same card */
+.kpi-unit.open { border-radius: 20px; box-shadow: var(--shadow-md); } .kpi-unit.open .exp-head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: none; border-bottom-color: transparent; transform: none; }
+.kpi-unit .exp-body { margin: 0; border-radius: 0 0 20px 20px; border: 1px solid var(--line); border-top: 1px dashed var(--line-strong); padding: 16px 18px; background: var(--surface); }
+@media (max-width: 900px) { .exp-heads { grid-template-columns: 1fr; } .exp-head .eh-num { font-size: 52px; } }
+@media (prefers-reduced-motion: reduce) { .exp-heads .exp-head, .exp-head .chev, .exp-head .cmp-fill { transition: none; } .exp-heads .exp-head:hover { transform: none; } }
 </style>
 
 </head>
@@ -2704,52 +2738,74 @@ function expChart(data, mode, period, end) {
   return svg;
 }
 
-/** The one number users read: all the data, drone against manual. */
+/** The one number users read: all the data, drone against manual. A KPI card: the KPI's name, the big percentage with an arrow, one line saying what it means, and the
+ *  two methods drawn as bars against each other. Clicking it unfolds its graph (see experimentScreen). */
 function expHeadline(data, mode) {
   const M = EXP_MODES[mode], all = {};
   EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); });
-  const dv = M.value(all.Drone), mv = M.value(all.Manual);
-  const dot = function (m) { return h('span', { class: 'ev ' + m.toLowerCase() }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', h('b', null, (m === 'Drone' ? dv : mv) === null ? 'no data yet' : expFmt(m === 'Drone' ? dv : mv) + ' ' + M.unit)); };
+  const dv = M.value(all.Drone), mv = M.value(all.Manual), top = Math.max(dv || 0, mv || 0);
+  const bars = h('div', { class: 'eh-cmp' }, EXP_METHODS.map(function (m) {
+    const v = m === 'Drone' ? dv : mv;
+    return h('div', { class: 'cmp-row ' + m.toLowerCase() }, h('span', { class: 'cmp-name' }, m),
+      h('span', { class: 'cmp-track' }, v === null ? null : h('i', { class: 'cmp-fill', style: 'width:' + Math.max(4, v / top * 100) + '%' })),
+      h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + M.unit));
+  }));
+  const topRow = h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(mode === 'eff' ? 'droplet' : 'trend')), h('span', { class: 'eh-kick' }, M.label), h('i', { class: 'chev', 'aria-hidden': 'true' }));
   if (dv === null || mv === null || mv === 0) {
-    return h('div', { class: 'exp-head none' }, h('div', { class: 'eh-kick' }, M.label), h('div', { class: 'eh-big' }, 'Not enough data yet'), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+    return h('div', { class: 'exp-head none' }, topRow, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), bars);
   }
-  const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct);
-  const txt = same ? 'About the same' : (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '% ' + w[0];
-  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, h('div', { class: 'eh-kick' }, M.label), h('div', { class: 'eh-big' }, txt), h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+  const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct), up = pct > 0;
+  const num1 = (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '%';
+  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, topRow,
+    h('div', { class: 'eh-bigrow' }, same ? h('span', { class: 'eh-num small' }, 'About the same') : [h('i', { class: 'eh-arrow ' + (up ? 'up' : 'down'), 'aria-hidden': 'true' }), h('span', { class: 'eh-num' }, num1), h('span', { class: 'eh-word' }, w[0])]),
+    h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), bars);
 }
 
 function experimentScreen(host) {
   let period = S.expPeriod || 'all', data = null, end = S.expEnd || '';
-  const perBar = h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' }), dayNav = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' });
-  EXP_PERIODS.forEach(function (p) { perBar.appendChild(h('button', { type: 'button', 'data-period': p[0], onclick: function () { period = p[0]; S.expPeriod = period; draw(); } }, p[1])); });
-  const prev = h('button', { type: 'button', onclick: function () { end = expAddDays(end, -EXP_DAYS); S.expEnd = end; draw(); } }, '‹ Earlier'), next = h('button', { type: 'button', onclick: function () { end = expAddDays(end, EXP_DAYS); if (end > data.today) end = data.today; S.expEnd = end; draw(); } }, 'Later ›');
-  dayNav.appendChild(prev); dayNav.appendChild(next);
+  S.expOpen = S.expOpen || {};                                                   // which KPI card has its graph unfolded (all folded to begin with)
   const body = h('div');
   host.appendChild(body);
   clear(body).appendChild(skeleton(3));
   api('api_expCharts', {}).then(function (d) { data = d; if (!end || end > d.today) end = d.today; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
 
-  /** One KPI chart in its own card: title with its (i), the period, the colours, the bars. */
-  function chartCard(mode) {
+  const setPeriod = function (p) { period = p; S.expPeriod = p; draw(); };
+  const periodBar = function () {
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' });
+    EXP_PERIODS.forEach(function (p) { seg.appendChild(h('button', { type: 'button', 'data-period': p[0], class: p[0] === period ? 'on' : '', onclick: function () { setPeriod(p[0]); } }, p[1])); });
+    return seg;
+  };
+  const dayNavBar = function () {
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' }), later = h('button', { type: 'button', onclick: function () { end = expAddDays(end, EXP_DAYS); if (end > data.today) end = data.today; S.expEnd = end; draw(); } }, 'Later ›');
+    later.disabled = end >= data.today;
+    seg.appendChild(h('button', { type: 'button', onclick: function () { end = expAddDays(end, -EXP_DAYS); S.expEnd = end; draw(); } }, '‹ Earlier')); seg.appendChild(later);
+    return seg;
+  };
+  /** The graph of one KPI, attached to its card: the period choice, the title with its (i), the colours, the bars. */
+  function graph(mode, scrolls) {
     const M = EXP_MODES[mode], first = period === 'day' ? expAddDays(end, -(EXP_DAYS - 1)) : '', scroll = h('div', { class: 'exp-scroll' }, expChart(data, mode, period, end));
     scrolls.push(scroll);
-    return h('div', { class: 'card exp-chart', 'data-kpi': mode },
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big numbers at the top always use all the data from the start, whatever period is chosen. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
+    return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
+      h('div', { class: 'mon-ctl' }, periodBar(), period === 'day' ? dayNavBar() : null),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big number above always uses all the data from the start, whatever period is chosen here. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, period === 'day' ? shortDate(first) + ' to ' + shortDate(end) : (period === 'all' ? 'All time' : (period === 'year' ? 'Each year' : 'Each month'))),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
       scroll);
   }
-  let scrolls = [];
+  /** A KPI card and, when it is clicked, its graph attached right under it: the card is the header of the graph. Click again to fold. */
+  function kpiCard(mode, scrolls) {
+    const card = expHeadline(data, mode), open = !!S.expOpen[mode], toggle = function () { S.expOpen[mode] = !open; draw(); };
+    card.setAttribute('data-kpi', mode); card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0'); card.setAttribute('aria-expanded', open ? 'true' : 'false'); card.setAttribute('title', open ? 'Click to fold the graph' : 'Click to see the graph');
+    card.addEventListener('click', toggle); card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    if (open) card.classList.add('open');
+    return h('div', { class: 'kpi-unit' + (open ? ' open' : '') + (open && (period === 'month' || period === 'day') ? ' wide' : ''), 'data-kpi': mode }, card, open ? graph(mode, scrolls) : null);
+  }
   function draw() {
     if (!data) return;
-    Array.prototype.forEach.call(perBar.children, function (b) { b.classList.toggle('on', b.getAttribute('data-period') === period); });
-    dayNav.style.display = period === 'day' ? '' : 'none'; next.disabled = end >= data.today;
-    clear(body); scrolls = [];
+    clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    // the two highlighted numbers first (all time, both methods), then both charts together, then the period choice that changes the charts
-    body.appendChild(h('div', { class: 'exp-heads' }, expHeadline(data, 'eff'), expHeadline(data, 'speed')));
-    body.appendChild(h('div', { class: 'mon-ctl' }, perBar, dayNav));
-    body.appendChild(h('div', { class: 'exp-grid' + (period === 'all' || period === 'year' ? ' two' : '') }, chartCard('eff'), chartCard('speed')));
+    const scrolls = [];
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff', scrolls), kpiCard('speed', scrolls)));
     if (period === 'day' || period === 'month') setTimeout(function () { scrolls.forEach(function (sc) { sc.scrollLeft = period === 'month' ? sc.scrollWidth : 0; }); }, 0);
   }
 }
