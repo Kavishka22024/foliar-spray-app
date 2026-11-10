@@ -508,6 +508,15 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .hx-gap { font-size: 12px; margin-top: 6px; } .hx-gap.ok { color: var(--good); } .hx-gap.late { color: var(--bad); }
 .hx-det { margin-top: 8px; font-size: 13px; } .hx-det summary { cursor: pointer; color: var(--primary-600); font-weight: 600; } .hx-det ul { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); } .hx-det li { margin: 3px 0; } .hx-det li b { color: var(--ink); }
 @media (max-width: 860px) { .hx-rows { grid-template-columns: 1fr; } .hx-dates { margin-left: 0; width: 100%; } }
+
+/* ---- the two highlighted numbers side by side, then both charts ---- */
+.exp-heads { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; } .exp-heads .exp-head { margin-bottom: 0; }
+.eh-kick { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); margin-bottom: 6px; } .exp-head.good .eh-kick, .exp-head.bad .eh-kick { opacity: .85; }
+.exp-grid { display: grid; grid-template-columns: 1fr; gap: 16px; } .exp-grid.two { grid-template-columns: 1fr 1fr; } .exp-grid .card { margin-bottom: 0; min-width: 0; }
+@media (max-width: 900px) { .exp-heads, .exp-grid.two { grid-template-columns: 1fr; } }
+/* ---- sidebar: the parts of Monitoring ---- */
+nav.tabs button.sub { padding: 7px 12px 7px 46px; margin: 0; font-size: 13.5px; font-weight: 500; opacity: .92; } nav.tabs button.sub.on { background: transparent; color: #fff; font-weight: 700; } nav.tabs button.sub.on::before { display: none; }
+nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--side-muted); } nav.tabs button.sub.on::after { background: #6fd9a4; }
 </style>
 
 </head>
@@ -800,6 +809,7 @@ function renderShell() {
     closeNav();
     clear(main);
     try { VIEWS[id](main); } catch (e) { main.appendChild(msgBox('err', 'This screen could not be shown: ' + e.message)); }
+    if (typeof syncMonNav === 'function') syncMonNav();
     window.scrollTo(0, 0);
   }
   S.go = go;
@@ -809,6 +819,9 @@ function renderShell() {
     if (g && g !== lastGroup && tabs.length > 3) nav.appendChild(h('div', { class: 'navgroup' }, g));
     lastGroup = g;
     nav.appendChild(h('button', { type: 'button', 'data-id': id, onclick: function () { go(id); } }, icon(TASK_ICON[id]), h('span', null, labels[id])));
+    if (id === 'dashboard.view') [['operation', 'Operation monitoring'], ['experiment', 'Experiment monitoring']].forEach(function (t) {      // the two parts of Monitoring, one tap away
+      nav.appendChild(h('button', { type: 'button', class: 'sub', 'data-sub-tab': t[0], onclick: function () { S.monTab = t[0]; go('dashboard.view'); } }, h('span', null, t[1])));
+    });
   });
   const sidebar = h('aside', { class: 'sidebar', 'aria-label': 'Navigation' },
     h('div', { class: 'side-brand' }, h('div', { class: 'brand-mark' }, icon('leaf')), h('div', { class: 'brand-text' }, me.estate || 'Foliar Spray', h('small', null, 'Foliar spray experiment'))),
@@ -2660,7 +2673,7 @@ function expFmt(v) { return Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2));
 /** Grouped bars, drone (blue) beside manual (orange), the value on top of each bar; a period without a method has no bar for it. */
 function expChart(data, mode, period, end) {
   const buckets = expBuckets(data, period, end), M = EXP_MODES[mode];
-  const GW = { all: 560, year: 220, month: 120, day: 84 }[period], BW = { all: 150, year: 80, month: 46, day: 32 }[period];
+  const GW = { all: 380, year: 190, month: 120, day: 84 }[period], BW = { all: 120, year: 66, month: 46, day: 32 }[period];
   const G0 = 48, TOP = 34, BOT = 36, H = 310, plotH = H - TOP - BOT, big = period === 'all';
   const cols = buckets.map(function (b) {
     const o = { b: b };
@@ -2698,42 +2711,53 @@ function expHeadline(data, mode) {
   const dv = M.value(all.Drone), mv = M.value(all.Manual);
   const dot = function (m) { return h('span', { class: 'ev ' + m.toLowerCase() }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', h('b', null, (m === 'Drone' ? dv : mv) === null ? 'no data yet' : expFmt(m === 'Drone' ? dv : mv) + ' ' + M.unit)); };
   if (dv === null || mv === null || mv === 0) {
-    return h('div', { class: 'exp-head none' }, h('div', { class: 'eh-big' }, 'Not enough data yet'), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+    return h('div', { class: 'exp-head none' }, h('div', { class: 'eh-kick' }, M.label), h('div', { class: 'eh-big' }, 'Not enough data yet'), h('div', { class: 'eh-sub' }, M.title + ' needs spray events by both methods.'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
   }
   const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct);
   const txt = same ? 'About the same' : (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '% ' + w[0];
-  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, h('div', { class: 'eh-big' }, txt), h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
+  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, h('div', { class: 'eh-kick' }, M.label), h('div', { class: 'eh-big' }, txt), h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), h('div', { class: 'exp-vals' }, dot('Drone'), dot('Manual')));
 }
 
 function experimentScreen(host) {
-  let mode = S.expMode || 'eff', period = S.expPeriod || 'all', data = null, end = S.expEnd || '';
-  const modeBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Measure' }), perBar = h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' }), dayNav = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' });
-  Object.keys(EXP_MODES).forEach(function (k) { modeBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-mode': k, onclick: function () { mode = k; S.expMode = k; draw(); } }, EXP_MODES[k].label)); });
+  let period = S.expPeriod || 'all', data = null, end = S.expEnd || '';
+  const perBar = h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' }), dayNav = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' });
   EXP_PERIODS.forEach(function (p) { perBar.appendChild(h('button', { type: 'button', 'data-period': p[0], onclick: function () { period = p[0]; S.expPeriod = period; draw(); } }, p[1])); });
   const prev = h('button', { type: 'button', onclick: function () { end = expAddDays(end, -EXP_DAYS); S.expEnd = end; draw(); } }, '‹ Earlier'), next = h('button', { type: 'button', onclick: function () { end = expAddDays(end, EXP_DAYS); if (end > data.today) end = data.today; S.expEnd = end; draw(); } }, 'Later ›');
   dayNav.appendChild(prev); dayNav.appendChild(next);
   const body = h('div');
-  host.appendChild(h('div', { class: 'mon-ctl' }, modeBar, perBar, dayNav)); host.appendChild(body);
+  host.appendChild(body);
   clear(body).appendChild(skeleton(3));
   api('api_expCharts', {}).then(function (d) { data = d; if (!end || end > d.today) end = d.today; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
 
-  function draw() {
-    if (!data) return;
-    Array.prototype.forEach.call(modeBar.children, function (b) { const on = b.getAttribute('data-mode') === mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    Array.prototype.forEach.call(perBar.children, function (b) { b.classList.toggle('on', b.getAttribute('data-period') === period); });
-    dayNav.style.display = period === 'day' ? '' : 'none'; next.disabled = end >= data.today;
-    clear(body);
-    if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    const M = EXP_MODES[mode];
-    body.appendChild(expHeadline(data, mode));
-    const first = period === 'day' ? expAddDays(end, -(EXP_DAYS - 1)) : '', scroll = h('div', { class: 'exp-scroll' }, expChart(data, mode, period, end));
-    body.appendChild(h('div', { class: 'card exp-chart' },
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big number at the top always uses all the data from the start, whatever period is chosen here. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
+  /** One KPI chart in its own card: title with its (i), the period, the colours, the bars. */
+  function chartCard(mode) {
+    const M = EXP_MODES[mode], first = period === 'day' ? expAddDays(end, -(EXP_DAYS - 1)) : '', scroll = h('div', { class: 'exp-scroll' }, expChart(data, mode, period, end));
+    scrolls.push(scroll);
+    return h('div', { class: 'card exp-chart', 'data-kpi': mode },
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big numbers at the top always use all the data from the start, whatever period is chosen. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, period === 'day' ? shortDate(first) + ' to ' + shortDate(end) : (period === 'all' ? 'All time' : (period === 'year' ? 'Each year' : 'Each month'))),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
-      scroll));
-    if (period === 'day' || period === 'month') setTimeout(function () { scroll.scrollLeft = period === 'month' ? scroll.scrollWidth : 0; }, 0);
+      scroll);
   }
+  let scrolls = [];
+  function draw() {
+    if (!data) return;
+    Array.prototype.forEach.call(perBar.children, function (b) { b.classList.toggle('on', b.getAttribute('data-period') === period); });
+    dayNav.style.display = period === 'day' ? '' : 'none'; next.disabled = end >= data.today;
+    clear(body); scrolls = [];
+    if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
+    // the two highlighted numbers first (all time, both methods), then both charts together, then the period choice that changes the charts
+    body.appendChild(h('div', { class: 'exp-heads' }, expHeadline(data, 'eff'), expHeadline(data, 'speed')));
+    body.appendChild(h('div', { class: 'mon-ctl' }, perBar, dayNav));
+    body.appendChild(h('div', { class: 'exp-grid' + (period === 'all' || period === 'year' ? ' two' : '') }, chartCard('eff'), chartCard('speed')));
+    if (period === 'day' || period === 'month') setTimeout(function () { scrolls.forEach(function (sc) { sc.scrollLeft = period === 'month' ? sc.scrollWidth : 0; }); }, 0);
+  }
+}
+
+/** The Monitoring entries in the sidebar (Operation monitoring, Experiment monitoring): highlight the one that is open. */
+function syncMonNav() {
+  const open = S.tab === 'dashboard.view', cur = S.monTab || 'operation';
+  Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button[data-sub-tab]'), function (b) { b.classList.toggle('on', open && b.getAttribute('data-sub-tab') === cur); });
 }
 
 VIEWS['dashboard.view'] = function (root) {
@@ -2752,6 +2776,7 @@ VIEWS['dashboard.view'] = function (root) {
 
   function show() {
     Array.prototype.forEach.call(top.children, function (b) { const on = b.getAttribute('data-tab') === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    syncMonNav();
     Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
     subBar.style.display = tab === 'operation' ? '' : 'none';
     clear(page);
