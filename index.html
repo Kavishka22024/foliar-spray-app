@@ -551,6 +551,14 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .kpi-unit .exp-body { margin: 0; border-radius: 0 0 20px 20px; border: 1px solid var(--line); border-top: 1px dashed var(--line-strong); padding: 16px 18px; background: var(--surface); }
 @media (max-width: 900px) { .exp-heads { grid-template-columns: 1fr; } .exp-head .eh-num { font-size: 52px; } }
 @media (prefers-reduced-motion: reduce) { .exp-heads .exp-head, .exp-head .chev, .exp-head .cmp-fill { transition: none; } .exp-heads .exp-head:hover { transform: none; } }
+
+/* ---- the whole history as lines over time ---- */
+.exp-plot { position: relative; width: 100%; } .exp-plot svg { display: block; touch-action: pan-y; }
+.exp-dot { opacity: .38; } .exp-dot.drone, .exp-trend-dot.drone, .exp-pt.drone { fill: var(--drone-solid); } .exp-dot.manual, .exp-trend-dot.manual, .exp-pt.manual { fill: var(--manual-solid); }
+.exp-trend { fill: none; stroke-width: 3.2; stroke-linejoin: round; stroke-linecap: round; } .exp-trend.drone { stroke: var(--drone-solid); } .exp-trend.manual { stroke: var(--manual-solid); }
+.exp-pt { stroke: var(--surface); stroke-width: 2; }
+.exp-tip { position: absolute; z-index: 5; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow-md); font-size: 13px; min-width: 190px; }
+.exp-tip .tt-d { font-weight: 800; margin-bottom: 4px; } .exp-tip .tt-r { margin-top: 4px; } .exp-tip .tt-r b { margin-left: 4px; } .exp-tip .tt-s { margin-left: 16px; font-size: 12px; color: var(--ink-2); }
 </style>
 
 </head>
@@ -2551,66 +2559,119 @@ const EXP_MODES = {
     tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
     help: 'Each bar is the area covered (ha) divided by the hours worked, for that method in that day, month or year. A taller bar means more area covered per hour.' }
 };
-const EXP_PERIODS = [['all', 'All time'], ['year', 'Year'], ['month', 'Month'], ['day', 'Day']];
-const EXP_DAYS = 14;
+const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
+const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
+const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayNo = function (iso) { return Math.floor(new Date(iso + 'T00:00:00Z').getTime() / 86400000); };
+const isoOf = function (n) { return new Date(n * 86400000).toISOString().slice(0, 10); };
+const fullDate = function (iso) { return Number(iso.slice(8)) + ' ' + MON3[Number(iso.slice(5, 7)) - 1] + ' ' + iso.slice(0, 4); };
 
 function expSum(days, from, to, m) {
   const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0 };
   days.forEach(function (d) { if (d.date >= from && d.date <= to && d[m].events) { c.kg += d[m].kg; c.ha += d[m].ha; c.hours += d[m].hours; c.events += d[m].events; c.days += 1; } });
   return c;
 }
-function expAddDays(iso, n) { const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
-/** The periods to draw: one bucket for all time, one per year, one per month, or the 14 calendar days ending at `end`. */
-function expBuckets(data, period, end) {
-  const out = [], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], mon = function (iso) { return MON[Number(iso.slice(5, 7)) - 1]; };
-  if (period === 'all') return [{ label: 'All time', from: '0000-01-01', to: '9999-12-31' }];
-  if (period === 'day') {
-    for (let i = EXP_DAYS - 1; i >= 0; i--) { const d = expAddDays(end, -i); out.push({ label: String(Number(d.slice(8))) + ' ' + mon(d), from: d, to: d }); }
-    return out;
-  }
-  const start = data.first || data.today, ey = Number(data.today.slice(0, 4)), em = Number(data.today.slice(5, 7));
-  if (period === 'year') { for (let y = Number(start.slice(0, 4)); y <= ey; y++) out.push({ label: String(y), from: y + '-01-01', to: y + '-12-31' }); return out; }
-  let y = Number(start.slice(0, 4)), m = Number(start.slice(5, 7));
-  while (y < ey || (y === ey && m <= em)) {
-    const key = y + '-' + (m < 10 ? '0' : '') + m;
-    out.push({ label: mon(key + '-01') + ' ' + String(y).slice(2), from: key + '-01', to: key + '-31' });
-    m++; if (m > 12) { m = 1; y++; }
-  }
-  return out;
-}
 function expFmt(v) { return Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
 
-/** Grouped bars, drone (blue) beside manual (orange), the value on top of each bar; a period without a method has no bar for it. */
-function expChart(data, mode, period, end) {
-  const buckets = expBuckets(data, period, end), M = EXP_MODES[mode];
-  const GW = { all: 380, year: 190, month: 120, day: 84 }[period], BW = { all: 120, year: 66, month: 46, day: 32 }[period];
-  const G0 = 48, TOP = 34, BOT = 36, H = 310, plotH = H - TOP - BOT, big = period === 'all';
-  const cols = buckets.map(function (b) {
-    const o = { b: b };
-    EXP_METHODS.forEach(function (m) { const c = expSum(data.days, b.from, b.to, m), v = M.value(c); o[m] = v === null ? null : { v: v, c: c }; });
-    return o;
+
+/** The points of one KPI over the whole history, per method. Daily: one dot per day with events (that day's total / total) and a moving-average line (the last
+ *  14 days, total / total; the line breaks where more than a month passed without events). Monthly / yearly: one point per month / year, joined. */
+function expSeries(data, mode, period) {
+  const M = EXP_MODES[mode], out = { keys: {}, dots: {}, lines: {} };
+  EXP_METHODS.forEach(function (m) {
+    const cells = {};                                                                        // day number -> that day's totals
+    data.days.forEach(function (d) { if (d[m].events) cells[dayNo(d.date)] = d[m]; });
+    const nums = Object.keys(cells).map(Number).sort(function (a, b) { return a - b; });
+    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.days += 1; return c; };
+    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0 }; };
+    const keyOf = function (t, label) { const k = out.keys[t] || (out.keys[t] = { t: t, label: label }); return k; };
+    out.dots[m] = []; out.lines[m] = [];
+    if (period === 'day') {
+      let seg = [], prev = null;
+      nums.forEach(function (n) {
+        const v = M.value(cells[n]); if (v === null) return;
+        out.dots[m].push({ t: n, v: v }); keyOf(n, shortDate(isoOf(n)))[m] = { v: v, c: cells[n] };
+        const win = fresh(); for (let k = n - EXP_TREND + 1; k <= n; k++) if (cells[k]) add(win, cells[k]);
+        const tv = M.value(win); if (tv === null) return;
+        if (prev !== null && n - prev > 31) { out.lines[m].push(seg); seg = []; }
+        seg.push({ t: n, v: tv }); prev = n; out.keys[n][m].trend = tv;
+      });
+      if (seg.length) out.lines[m].push(seg);
+    } else {
+      const groups = {};
+      nums.forEach(function (n) { const iso = isoOf(n), k = period === 'month' ? iso.slice(0, 7) : iso.slice(0, 4); add(groups[k] || (groups[k] = fresh()), cells[n]); });
+      const seg = [];
+      Object.keys(groups).sort().forEach(function (k) {
+        const v = M.value(groups[k]); if (v === null) return;
+        const t = period === 'month' ? dayNo(k + '-15') : dayNo(k + '-07-01'), label = period === 'month' ? MON3[Number(k.slice(5)) - 1] + ' ' + k.slice(0, 4) : k;
+        seg.push({ t: t, v: v }); out.dots[m].push({ t: t, v: v }); keyOf(t, label)[m] = { v: v, c: groups[k] };
+      });
+      if (seg.length) out.lines[m].push(seg);
+    }
   });
-  let max = 0; cols.forEach(function (o) { EXP_METHODS.forEach(function (m) { if (o[m]) max = Math.max(max, o[m].v); }); });
-  const step = niceStep(Math.max(max, 0.0001) * 1.15 / 4), hi = step * 4, y = function (v) { return TOP + plotH - v / hi * plotH; };
-  const W = G0 + buckets.length * GW + 10;
-  const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': M.title + ', drone and manual' });
+  return out;
+}
+
+/** The whole history in one window: time along the bottom (every month marked), the KPI up the side; blue drone, orange manual; hover or tap to read a day. */
+function expLineChart(data, mode, period, W, tip) {
+  const M = EXP_MODES[mode], ser = expSeries(data, mode, period), small = W < 560, H = small ? 280 : 340, G0 = small ? 40 : 48, R = 14, TOP = 22, BOT = 36, plotH = H - TOP - BOT;
+  const first = dayNo(data.first || data.today), last = Math.max(dayNo(data.today), first + 1), span = last - first, X = function (t) { return G0 + (t - first) / span * (W - G0 - R); };
+  let max = 0; EXP_METHODS.forEach(function (m) { ser.dots[m].concat([].concat.apply([], ser.lines[m])).forEach(function (p) { max = Math.max(max, p.v); }); });
+  const step = niceStep(Math.max(max, 0.0001) * 1.1 / 4), hi = step * 4, Y = function (v) { return TOP + plotH - v / hi * plotH; };
+  const svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, width: W, height: H, role: 'img', 'aria-label': M.title + ' over time, drone and manual' });
   for (let i = 0; i <= 4; i++) {
-    svg.appendChild(svgEl('line', { x1: G0, x2: W - 10, y1: y(step * i), y2: y(step * i), style: 'stroke:var(--line)', 'stroke-width': 1 }));
-    svg.appendChild(svgEl('text', { x: G0 - 8, y: y(step * i) + 4, 'text-anchor': 'end', style: 'fill:var(--muted);font-size:11px' }, num(step * i, step < 1 ? 2 : (step < 10 ? 1 : 0))));
+    svg.appendChild(svgEl('line', { x1: G0, x2: W - R, y1: Y(step * i), y2: Y(step * i), style: 'stroke:var(--line)', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: G0 - 8, y: Y(step * i) + 4, 'text-anchor': 'end', style: 'fill:var(--muted);font-size:11px' }, num(step * i, step < 1 ? 2 : (step < 10 ? 1 : 0))));
   }
-  svg.appendChild(svgEl('text', { x: 4, y: 14, style: 'fill:var(--muted);font-size:11px;font-weight:700' }, M.unit));
-  cols.forEach(function (o, i) {
-    const cx = G0 + i * GW + GW / 2;
-    EXP_METHODS.forEach(function (m, k) {
-      if (!o[m]) return;
-      const x = k === 0 ? cx - BW - 2 : cx + 2, top = y(o[m].v), bar = svgEl('rect', { x: x, y: top, width: BW, height: Math.max(y(0) - top, 1), rx: big ? 8 : 5, 'class': 'exp-bar ' + m.toLowerCase() });
-      bar.appendChild(svgEl('title', {}, m + ', ' + o.b.label + ': ' + expFmt(o[m].v) + ' ' + M.unit + ' (' + M.tip(o[m].c) + ', ' + o[m].c.events + (o[m].c.events === 1 ? ' spray event' : ' spray events') + (o[m].c.days > 1 ? ' on ' + o[m].c.days + ' days' : '') + ')'));
-      svg.appendChild(bar);
-      svg.appendChild(svgEl('text', { x: x + BW / 2, y: top - 7, 'text-anchor': 'middle', 'class': 'exp-val' + (big ? ' big' : '') }, expFmt(o[m].v)));
+  svg.appendChild(svgEl('text', { x: 4, y: 12, style: 'fill:var(--muted);font-size:11px;font-weight:700' }, M.unit));
+  // the months along the bottom; January gets a line and its year; labels are thinned out so they never touch
+  const d0 = new Date(first * 86400000), perMonth = (W - G0 - R) / Math.max(span / 30.4, 1), every = Math.max(1, Math.ceil(56 / perMonth));
+  let y = d0.getUTCFullYear(), mo = d0.getUTCMonth(), idx = 0;
+  for (;;) {
+    const n = dayNo(y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1) + '-01');
+    if (n > last) break;
+    if (n >= first) {
+      const x = X(n), jan = mo === 0;
+      if (jan) svg.appendChild(svgEl('line', { x1: x, x2: x, y1: TOP, y2: TOP + plotH, style: 'stroke:var(--line-strong)', 'stroke-width': 1, 'stroke-dasharray': '3 4' }));
+      if (idx % every === 0 || jan) svg.appendChild(svgEl('text', { x: x, y: H - 12, 'text-anchor': 'middle', style: 'fill:' + (jan ? 'var(--ink)' : 'var(--muted)') + ';font-size:11px;font-weight:' + (jan ? 700 : 500) }, jan || idx === 0 ? MON3[mo] + ' ' + String(y).slice(2) : MON3[mo]));
+      idx++;
+    }
+    mo++; if (mo > 11) { mo = 0; y++; }
+  }
+  svg.appendChild(svgEl('line', { x1: G0, x2: W - R, y1: Y(0), y2: Y(0), style: 'stroke:var(--line-strong)', 'stroke-width': 1.5 }));
+  EXP_METHODS.forEach(function (m) {
+    const cls = m.toLowerCase();
+    if (period === 'day') ser.dots[m].forEach(function (p) { svg.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: small ? 1.9 : 2.5, 'class': 'exp-dot ' + cls })); });
+    ser.lines[m].forEach(function (seg) {
+      if (seg.length > 1) svg.appendChild(svgEl('path', { d: seg.map(function (p, i) { return (i ? 'L' : 'M') + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1); }).join(' '), 'class': 'exp-trend ' + cls }));
+      else svg.appendChild(svgEl('circle', { cx: X(seg[0].t), cy: Y(seg[0].v), r: 4, 'class': 'exp-trend-dot ' + cls }));
     });
-    svg.appendChild(svgEl('text', { x: cx, y: H - 12, 'text-anchor': 'middle', style: 'fill:var(--ink-2);font-size:' + (big ? 14 : 12) + 'px;font-weight:600' }, o.b.label));
+    if (period !== 'day') ser.dots[m].forEach(function (p) {
+      svg.appendChild(svgEl('circle', { cx: X(p.t), cy: Y(p.v), r: 5, 'class': 'exp-pt ' + cls }));
+      if (period === 'year' || perMonth >= 40) svg.appendChild(svgEl('text', { x: X(p.t), y: Y(p.v) - 10, 'text-anchor': 'middle', 'class': 'exp-val' }, expFmt(p.v)));
+    });
   });
-  svg.appendChild(svgEl('line', { x1: G0, x2: W - 10, y1: y(0), y2: y(0), style: 'stroke:var(--line-strong)', 'stroke-width': 1.5 }));
+  // reading a value: move over the chart, or tap it
+  const guide = svgEl('line', { y1: TOP, y2: TOP + plotH, style: 'stroke:var(--ink-2);opacity:.45', 'stroke-width': 1, visibility: 'hidden' });
+  svg.appendChild(guide);
+  const keys = Object.keys(ser.keys).map(function (k) { return ser.keys[k]; }).sort(function (a, b) { return a.t - b.t; });
+  const hide = function () { guide.setAttribute('visibility', 'hidden'); tip.style.display = 'none'; };
+  const show = function (e) {
+    const r = svg.getBoundingClientRect(); if (!r.width || !keys.length) return;
+    const px = (e.clientX - r.left) * (W / r.width), t = first + (px - G0) / (W - G0 - R) * span;
+    let best = keys[0]; keys.forEach(function (k) { if (Math.abs(k.t - t) < Math.abs(best.t - t)) best = k; });
+    if (Math.abs(X(best.t) - px) > (period === 'day' ? 22 : 60)) { hide(); return; }
+    guide.setAttribute('x1', X(best.t)); guide.setAttribute('x2', X(best.t)); guide.setAttribute('visibility', 'visible');
+    clear(tip).appendChild(h('div', { class: 'tt-d' }, best.label));
+    EXP_METHODS.forEach(function (m) {
+      const p = best[m];
+      tip.appendChild(h('div', { class: 'tt-r' }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', p ? [h('b', null, expFmt(p.v) + ' ' + M.unit), h('div', { class: 'tt-s' }, M.tip(p.c) + (p.trend !== undefined ? '  |  ' + EXP_TREND + '-day line ' + expFmt(p.trend) : ''))] : h('span', { class: 'muted' }, 'no spraying')));
+    });
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth || 190, left = Math.min(Math.max(X(best.t) * (r.width / W) + 12, 4), Math.max(r.width - tw - 4, 4));
+    tip.style.left = left + 'px'; tip.style.top = '8px';
+  };
+  svg.addEventListener('pointermove', show); svg.addEventListener('pointerdown', show); svg.addEventListener('pointerleave', hide);
   return svg;
 }
 
@@ -2638,12 +2699,12 @@ function expHeadline(data, mode) {
 }
 
 function experimentScreen(host) {
-  let period = S.expPeriod || 'all', data = null, end = S.expEnd || '';
+  let period = EXP_PERIODS.some(function (p) { return p[0] === S.expPeriod; }) ? S.expPeriod : 'day', data = null;
   S.expOpen = S.expOpen || {};                                                   // which KPI card has its graph unfolded (all folded to begin with)
   const body = h('div');
   host.appendChild(body);
   clear(body).appendChild(skeleton(3));
-  api('api_expCharts', {}).then(function (d) { data = d; if (!end || end > d.today) end = d.today; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
+  api('api_expCharts', {}).then(function (d) { data = d; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
 
   const setPeriod = function (p) { period = p; S.expPeriod = p; draw(); };
   const periodBar = function () {
@@ -2651,38 +2712,33 @@ function experimentScreen(host) {
     EXP_PERIODS.forEach(function (p) { seg.appendChild(h('button', { type: 'button', 'data-period': p[0], class: p[0] === period ? 'on' : '', onclick: function () { setPeriod(p[0]); } }, p[1])); });
     return seg;
   };
-  const dayNavBar = function () {
-    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Days' }), later = h('button', { type: 'button', onclick: function () { end = expAddDays(end, EXP_DAYS); if (end > data.today) end = data.today; S.expEnd = end; draw(); } }, 'Later ›');
-    later.disabled = end >= data.today;
-    seg.appendChild(h('button', { type: 'button', onclick: function () { end = expAddDays(end, -EXP_DAYS); S.expEnd = end; draw(); } }, '‹ Earlier')); seg.appendChild(later);
-    return seg;
-  };
-  /** The graph of one KPI, attached to its card: the period choice, the title with its (i), the colours, the bars. */
-  function graph(mode, scrolls) {
-    const M = EXP_MODES[mode], first = period === 'day' ? expAddDays(end, -(EXP_DAYS - 1)) : '', scroll = h('div', { class: 'exp-scroll' }, expChart(data, mode, period, end));
-    scrolls.push(scroll);
+  /** The graph of one KPI, attached to its card: the period tabs, the title with its (i), the colours, and the whole history in one window. */
+  function graph(mode) {
+    const M = EXP_MODES[mode], plot = h('div', { class: 'exp-plot' }), tip = h('div', { class: 'exp-tip', style: 'display:none' });
+    const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(data, mode, period, W, tip)); plot.appendChild(tip); };
+    setTimeout(render, 0);
+    if (window.ResizeObserver) { const ro = new ResizeObserver(function () { if (!plot.isConnected) { ro.disconnect(); return; } const w = Math.floor(plot.clientWidth); if (w && w !== plot._w) render(); }); ro.observe(plot); }
+    const sub = period === 'day' ? 'Every day from ' + fullDate(data.first) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(data.first) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(data.first) + ' to ' + fullDate(data.today));
     return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
-      h('div', { class: 'mon-ctl' }, periodBar(), period === 'day' ? dayNavBar() : null),
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'A day, month or year without a bar had no spray events by that method. The big number above always uses all the data from the start, whatever period is chosen here. Foliar kg is recorded per spray event and shared between its fields by area, so a bar describes the events of its period.')), 'How to read this')),
-      h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, period === 'day' ? shortDate(first) + ' to ' + shortDate(end) : (period === 'all' ? 'All time' : (period === 'year' ? 'Each year' : 'Each month'))),
+      h('div', { class: 'mon-ctl' }, periodBar()),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no spray events by that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a value describes the events of its day.')), 'How to read this')),
+      h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, sub),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
-      scroll);
+      plot);
   }
   /** A KPI card and, when it is clicked, its graph attached right under it: the card is the header of the graph. Click again to fold. */
-  function kpiCard(mode, scrolls) {
+  function kpiCard(mode) {
     const card = expHeadline(data, mode), open = !!S.expOpen[mode], toggle = function () { S.expOpen[mode] = !open; draw(); };
     card.setAttribute('data-kpi', mode); card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0'); card.setAttribute('aria-expanded', open ? 'true' : 'false'); card.setAttribute('title', open ? 'Click to fold the graph' : 'Click to see the graph');
     card.addEventListener('click', toggle); card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     if (open) card.classList.add('open');
-    return h('div', { class: 'kpi-unit' + (open ? ' open' : '') + (open && (period === 'month' || period === 'day') ? ' wide' : ''), 'data-kpi': mode }, card, open ? graph(mode, scrolls) : null);
+    return h('div', { class: 'kpi-unit' + (open ? ' open wide' : ''), 'data-kpi': mode }, card, open ? graph(mode) : null);
   }
   function draw() {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    const scrolls = [];
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff', scrolls), kpiCard('speed', scrolls)));
-    if (period === 'day' || period === 'month') setTimeout(function () { scrolls.forEach(function (sc) { sc.scrollLeft = period === 'month' ? sc.scrollWidth : 0; }); }, 0);
+    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('speed')));
   }
 }
 
