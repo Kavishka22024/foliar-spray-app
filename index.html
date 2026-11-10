@@ -604,8 +604,6 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .grp-body { padding: 18px 26px 26px; border-top: 1px dashed var(--line-strong); background: var(--surface-2); }
 .grp-body .exp-heads { margin-bottom: 0; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }   /* never wider than the card they sit in, even on a phone */
 .grp-body .exp-head .cmp-val { white-space: nowrap; }
-.exp-heads.solo { grid-template-columns: 1fr; margin-bottom: 0; }
-.exp-heads.solo .kpi-unit:not(.open) .eh-sub { min-height: 0; }
 .exp-head .eh-blurb { margin-top: 10px; font-size: 14.5px; line-height: 1.4; color: var(--ink-2); }
 @media (max-width: 760px) {
   .grp-head { padding: 18px 18px 14px; } .grp-foot { padding: 0 18px 14px; } .grp-body { padding: 14px 14px 18px; }
@@ -2623,21 +2621,21 @@ const EXP_MODES = {
     waits: function (r) { return !(r.worker && r.drone); }, waitText: 'The Admin enters the cost of a man-hour and of a drone-hour under Parameters and rates.',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 && c.cost > 0 ? c.cost / c.ha : null; },
-    words: function (pct) { return pct < 0 ? ['cheaper', 'labour cost per hectare with drones than with manual spraying'] : ['dearer', 'labour cost per hectare with drones than with manual spraying']; },
+    words: function (pct) { return pct < 0 ? ['saved', 'in labour cost per hectare with drones compared with manual spraying'] : ['dearer', 'labour cost per hectare with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost, 0) + ' for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the labour cost of the spraying divided by the area covered. The cost is the hours of the spray events times the men (manual spraying, at the cost of a man-hour) or times the drones (drone spraying, at the cost of a drone-hour, pilot included), using the rates the Admin entered under Parameters and rates as they were on that day. The foliar itself is not included: see Material cost saving.' },
   mat: { name: 'Material cost saving', icon: 'flask', label: 'Material cost saving', title: 'Foliar cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
     waits: function (r) { return !r.material; }, waitText: 'The Admin enters the price of one kg of foliar under Parameters and rates.',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 && c.mat_cost > 0 ? c.mat_cost / c.ha : null; },
-    words: function (pct) { return pct < 0 ? ['cheaper', 'foliar cost per hectare with drones than with manual spraying'] : ['dearer', 'foliar cost per hectare with drones than with manual spraying']; },
+    words: function (pct) { return pct < 0 ? ['saved', 'in foliar cost per hectare with drones compared with manual spraying'] : ['dearer', 'foliar cost per hectare with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.mat_cost, 0) + ' of foliar for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the cost of the foliar used divided by the area covered: the kg applied in each spray event times the price of one kg of foliar (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares covered. The labour and the drone are not included: see Labour cost saving.' },
   total: { name: 'Total cost saving', icon: 'wallet', label: 'Total cost saving', title: 'Total cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
     waits: function (r) { return !(r.worker && r.drone && r.material); }, waitText: 'The Admin enters the cost of a man-hour, of a drone-hour and the price of one kg of foliar under Parameters and rates.',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 && c.cost + c.mat_cost > 0 ? (c.cost + c.mat_cost) / c.ha : null; },
-    words: function (pct) { return pct < 0 ? ['cheaper', 'total cost per hectare (labour and foliar) with drones than with manual spraying'] : ['dearer', 'total cost per hectare (labour and foliar) with drones than with manual spraying']; },
+    words: function (pct) { return pct < 0 ? ['saved', 'in total cost per hectare (labour and foliar) with drones compared with manual spraying'] : ['dearer', 'total cost per hectare (labour and foliar) with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost + c.mat_cost, 0) + ' (labour Rs ' + num(c.cost, 0) + ' + foliar Rs ' + num(c.mat_cost, 0) + ') for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the labour cost and the foliar cost of the spraying added together and divided by the area covered. Labour: the hours of the spray events times the men (manual) or the drones (drone), at the cost of a man-hour or a drone-hour. Foliar: the kg applied times the price of one kg. All rates are the ones the Admin entered under Parameters and rates, as they were on that day.' },
   leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
@@ -2679,7 +2677,7 @@ function expSum(days, from, to, m) {
   });
   return c;
 }
-/* ===== The cards that hold the KPIs: Material, Labour, Yield (the Net gain card stands on its own) =====
+/* ===== The cards that hold the KPIs: Material, Labour, Yield and Money =====
  *  Folded, a card shows two plain numbers about the whole experiment (all the data): what the drones saved or gained compared with manual spraying, over the area THE DRONES
  *  covered ((manual per ha - drone per ha) x the ha of the drones). Opened, those numbers shrink to one line and the KPI cards of the group appear under them. */
 function expGap(D, M, a, ha) { return D[ha] > 0 && M[ha] > 0 ? (M[a] / M[ha] - D[a] / D[ha]) * D[ha] : null; }
@@ -2706,13 +2704,24 @@ function expYieldStats(data) {
   return [expSignedTile(kg === null ? null : -kg, 'kg', 'more green leaf from the drone parts', 'less green leaf from the drone parts') || expNoTile('plucking records from both methods'),
     !r.leaf ? expWaitTile('The price of one kg of green leaf') : (expSignedTile(rs === null ? null : -rs, 'Rs', 'more revenue from the drone parts', 'less revenue from the drone parts') || expNoTile('plucking records from both methods'))];
 }
+function expMoneyStats(data) {
+  const A = expAllData(data), D = A.Drone, M = A.Manual, r = data.rates_set || { worker: true, drone: true, material: true, leaf: true };
+  const D2 = D.cost + D.mat_cost, M2 = M.cost + M.mat_cost;                                                      // labour + foliar
+  const saved = D.ha > 0 && M.ha > 0 ? (M2 / M.ha - D2 / D.ha) * D.ha : null;
+  const nd = expNetCell(data, 'Drone', null, null), nm = expNetCell(data, 'Manual', null, null);               // what the drone land earned, against what it would have earned at the manual land's rate
+  const gain = nd.obs > 0 && nd.land > 0 && nm.land > 0 ? (nd.rev - nd.cost) - (nm.rev - nm.cost) * nd.land / nm.land : null;
+  return [!(r.worker && r.drone && r.material) ? expWaitTile('The cost of a man-hour, of a drone-hour and the price of foliar') : (expSignedTile(saved, 'Rs', 'labour and foliar cost saved by the drones', 'more labour and foliar cost with the drones') || expNoTile('spray events by both methods')),
+    !(r.worker && r.drone && r.material && r.leaf) ? expWaitTile('The rates of labour, foliar and green leaf') : (expSignedTile(gain, 'Rs', 'net gain from the drones', 'net loss from the drones') || expNoTile('spray events and plucking records by both methods'))];
+}
 const EXP_GROUPS = [
   { key: 'material', name: 'Material', icon: 'flask', sub: 'Foliar saving and Material cost saving', kpis: ['eff', 'mat'], stats: expMaterialStats,
     help: 'Over all the data, how much foliar and how many rupees of foliar the drones saved compared with manual spraying: (manual kg per ha minus drone kg per ha) times the hectares the drones sprayed, and the same with the cost of the foliar. A red number means the drones used more. Open the card for the two KPIs.' },
   { key: 'labour', name: 'Labour', icon: 'users', sub: 'Work speed and Labour cost saving', kpis: ['speed', 'cost'], stats: expLabourStats,
     help: '1 drone = N workers compares the area covered per hour: the hectares sprayed divided by the man-hours (manual) and by the drone-hours (drone). If a man covers 1 ha an hour and a drone 2.5 ha an hour, one drone does the work of 2.5 workers. The second number is the labour cost the drones saved: (manual labour cost per ha minus drone labour cost per ha) times the hectares the drones sprayed; red means the drones cost more. Open the card for the two KPIs.' },
   { key: 'yield', name: 'Yield', icon: 'leaf', sub: 'Leaf yield and Yield revenue', kpis: ['leaf', 'rev'], stats: expYieldStats,
-    help: 'Over all the data, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' }
+    help: 'Over all the data, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' },
+  { key: 'money', name: 'Money', icon: 'wallet', sub: 'Total cost saving and Net gain', kpis: ['total', 'net'], stats: expMoneyStats,
+    help: 'The first number is the labour cost and the foliar cost the drones saved together: (manual labour + foliar cost per ha minus drone labour + foliar cost per ha) times the hectares the drones sprayed. The second is the money the drones made or lost over manual spraying: what the drone-sprayed land earned (green leaf revenue minus spraying cost) minus what the same land would have earned at the rate of the manually sprayed land, over all the days on record. A red number means a loss. It does not correct for the age since pruning. Open the card for the two KPIs.' }
 ];
 
 /** The net margin pieces of one method over a range of days (null = the whole history): revenue, labour + foliar cost, its land and the days observed. Days before both
@@ -2961,7 +2970,7 @@ function experimentScreen(host) {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-groups' }, EXP_GROUPS.map(groupCard), h('div', { class: 'exp-heads solo' }, kpiCard('net'))));
+    body.appendChild(h('div', { class: 'exp-groups' }, EXP_GROUPS.map(groupCard)));
   }
 }
 
