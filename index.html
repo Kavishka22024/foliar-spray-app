@@ -2378,7 +2378,7 @@ function legacyDashboard(root, noHead) {
 
       const chart = lineChart(d.daily);
       out.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Green leaf per plucked hectare, by day'),
-        h('div', { class: 'legend' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone fields'), h('span', null, h('i', { class: 'dot manual' }), 'Manual fields'))),
+        help(h('div', { class: 'legend' }, h('span', null, h('i', { class: 'dot drone' }), 'Drone fields'), h('span', null, h('i', { class: 'dot manual' }), 'Manual fields')), 'How to read this chart')),
         chart ? h('div', { class: 'chartbox' }, chart) : emptyState('No plucking records in this period.', 'basket')));
 
       out.appendChild(h('div', { class: 'card' }, h('h2', null, 'Daily summary'),
@@ -2508,11 +2508,13 @@ function roundsScreen(host, kind, load) {
     if (!data) return;
     clear(body);
     const shown = { today: data.today, from: data.from, to: data.to, target_gap: data.target_gap, fields: data.fields.filter(function (f) { return f.division === S.monDiv; }) };
-    body.appendChild(h('ul', { class: 'legend mon-legend', 'aria-label': 'Legend' },
+    const legend = h('ul', { class: 'legend mon-legend', 'aria-label': 'Legend' },
       h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual (the blue share is the drone share)'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'),
       h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
-      h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month')));
-    body.appendChild(h('div', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + '  |  ' + shortDate(data.from) + ' to ' + shortDate(data.to) + ' ', help('The target gap is the number of days between the first days of two rounds (the Admin sets it under Parameters). Hover a round or a gap for the details.')));
+      h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month'));
+    // how to read the timeline: the colours, the gap pills and the month counts, all behind one (i)
+    body.appendChild(h('div', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + '  |  ' + shortDate(data.from) + ' to ' + shortDate(data.to) + ' ',
+      help(h('div', null, legend, h('div', { style: 'margin-top:8px' }, 'The target gap is the number of days between the first days of two rounds (the Admin sets it under Parameters). Hover a round or a gap for the details.')), 'How to read this')));
     if (!shown.fields.length) { body.appendChild(emptyState('No fields are set up yet.', 'map')); return; }
     tl = roundsTimeline(shown, zoom, MON_WORDS[kind]);
     body.appendChild(tl.node);
