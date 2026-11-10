@@ -2761,24 +2761,21 @@ function syncMonNav() {
 }
 
 VIEWS['dashboard.view'] = function (root) {
+  // Operation monitoring / Experiment monitoring are chosen in the sidebar (S.monTab); only the Plucking rounds / Foliar rounds switch is on the page
   let tab = S.monTab || 'operation', sub = S.monSub || 'pluck';
-  const top = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Monitoring sections' }), subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), page = h('div');
-  [['operation', 'Operation monitoring'], ['experiment', 'Experiment monitoring']].forEach(function (t) {
-    top.appendChild(h('button', { type: 'button', role: 'tab', 'data-tab': t[0], onclick: function () { tab = t[0]; S.monTab = tab; show(); } }, t[1]));
-  });
+  const subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), tabs = h('div', { class: 'montabs' }, subBar), head = h('div'), page = h('div');
   [['pluck', 'Plucking rounds'], ['foliar', 'Foliar rounds']].forEach(function (t) {
     subBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-sub': t[0], onclick: function () { sub = t[0]; S.monSub = sub; show(); } }, t[1]));
   });
-  root.appendChild(pageHead('Monitoring', 'Watch how the work is going on every field, and how the experiment is doing.'));
-  root.appendChild(h('div', { class: 'montabs' }, top, subBar));
-  root.appendChild(page);
+  root.appendChild(head); root.appendChild(tabs); root.appendChild(page);
   show();
 
   function show() {
-    Array.prototype.forEach.call(top.children, function (b) { const on = b.getAttribute('data-tab') === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    tab = S.monTab || 'operation';
+    clear(head); head.appendChild(tab === 'operation' ? pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.') : pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying.'));
     syncMonNav();
     Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    subBar.style.display = tab === 'operation' ? '' : 'none';
+    tabs.style.display = tab === 'operation' ? '' : 'none';
     clear(page);
     if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
     if (tab === 'operation') { roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); }); return; }
