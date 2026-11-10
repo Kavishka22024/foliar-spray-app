@@ -847,7 +847,7 @@ function openSyncPanel() {
     if (it.event) {                                    // a spray event goes back into the "unfinished event" slot of that day
       const cur = Draft.get('sprayevent', it.date).cur;
       if (cur && cur.event_id !== it.event.event_id) { toast('Finish or discard the unfinished spray event first.'); return; }
-      Draft.set('sprayevent', it.date, { cur: { event_id: it.event.event_id, date: it.event.date, method: it.event.method || '', kg: it.event.kg, men: it.event.men, drones: it.event.drones, start: it.event.start_time, end: it.event.end_time,
+      Draft.set('sprayevent', it.date, { cur: { event_id: it.event.event_id, date: it.event.date, method: it.event.method || '', kg: it.event.kg, men: it.event.men, drones: it.event.drones || 1, start: it.event.start_time, end: it.event.end_time,
         pct: it.event.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) } });
       Sync.remove(it.id); if (panel) panel.close(); toast('Moved back to your unfinished spray event.'); if (S.go && S.tab) S.go(S.tab);
       return;
@@ -1188,10 +1188,11 @@ function newEventState(date, method) {
 }
 /** What goes to the server from a state (the popup validates first; for an old unsent draft the server does the checking). */
 function eventPayload(st) {
-  return { event_id: st.event_id, date: st.date, kg: Number(st.kg), men: parseInt(st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
+  return { event_id: st.event_id, date: st.date, kg: Number(st.kg), men: parseInt(st.method === 'Drone' ? st.drones : st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
     lines: Object.keys(st.pct).map(function (id) { return { field_id: id, pct: st.pct[id] }; }) };
 }
-function crewText(method, men, drones) { return method === 'Drone' ? drones + (drones === 1 ? ' drone' : ' drones') + ', ' + men + (men === 1 ? ' man' : ' men') : men + (men === 1 ? ' man' : ' men'); }
+/** A Drone event has one man per drone, so its crew is just the drones. */
+function crewText(method, men, drones) { return method === 'Drone' ? drones + (drones === 1 ? ' drone' : ' drones') : men + (men === 1 ? ' man' : ' men'); }
 
 /** The popup. o: {st, fields, existing (server event being edited, or null), persist, from, onDone, onDelete} */
 function openSprayEvent(o) {
@@ -1207,7 +1208,7 @@ function openSprayEvent(o) {
   const kgIn = numInput(st.kg, { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Foliar applied, kg' });
   const men = stepper(st.men, 500), drones = stepper(st.drones, 50);
   const start = h('input', { type: 'time', value: st.start || '', 'aria-label': 'Start time' }), end = h('input', { type: 'time', value: st.end || '', 'aria-label': 'End time' });
-  const dronesField = field('Drones used', drones.node);
+  const menField = field('Men used', men.node), dronesField = field('Drones used', drones.node);
   const methodBox = h('div'), pickBox = h('div'), covBox = h('div'), sumBox = h('div'), err = h('div');
   kgIn.addEventListener('input', function () { st.kg = kgIn.value; save(); renderSummary(); });
   men.node.addEventListener('input', function () { st.men = men.get(); save(); renderSummary(); });
@@ -1222,7 +1223,7 @@ function openSprayEvent(o) {
       h('div', { class: 'evsum-s' }, h('b', null, t.kgha === '' ? '-' : r2(t.kgha).toFixed(2)), h('span', null, 'kg per ha')), h('div', { class: 'evsum-s' }, h('b', null, String(n)), h('span', null, n === 1 ? 'field' : 'fields'))]);
   }
   function renderMethod() {
-    clear(methodBox); dronesField.style.display = st.method === 'Drone' ? '' : 'none';
+    clear(methodBox); dronesField.style.display = st.method === 'Drone' ? '' : 'none'; menField.style.display = st.method === 'Drone' ? 'none' : '';   // a Drone event: one man per drone, so only the drones are asked
     if (methods.length < 2) { methodBox.appendChild(h('div', { class: 'methodline' }, methodBadge(st.method), h('span', { class: 'muted small' }, st.method === 'Drone' ? 'Drone spray event' : 'Manual spray event'))); return; }
     const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Spray method' });
     methods.forEach(function (m) {
@@ -1295,8 +1296,8 @@ function openSprayEvent(o) {
   function collect() {
     const errs = [], kg = Number(st.kg);
     if (!(kg > 0)) errs.push('Enter how many kg of foliar were applied.');
-    if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
-    if (st.method === 'Drone' && !(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.');
+    if (st.method === 'Drone') { if (!(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.'); }
+    else if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
     if (!st.start || !st.end) errs.push('Enter the start and end time.'); else if (hoursBetween(st.start, st.end) === null) errs.push('The end time must be after the start time.');
     const ids = Object.keys(st.pct);
     if (!ids.length) errs.push('Select at least one field that was sprayed.');
@@ -1306,7 +1307,7 @@ function openSprayEvent(o) {
 
   const body = h('div', { class: 'evform' },
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The mix and the crew'), methodBox,
-      h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), field('Men used', men.node)), dronesField,
+      h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), h('div', null, menField, dronesField)),
       h('div', { class: 'pair' }, field('Start time', start), field('End time', end))),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?'), h('div', { class: 'muted small', style: 'margin:-4px 0 10px' }, 'Tap a field card to add it. Tap it again to remove it.'), pickBox),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How much of each field was covered?'), covBox),
