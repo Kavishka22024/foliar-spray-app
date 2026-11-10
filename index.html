@@ -575,6 +575,44 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .exp-head .eh-num { font-size: clamp(32px, 2.8vw, 56px); } .exp-head .eh-bigrow { flex-wrap: nowrap; } .exp-head .eh-num.small { font-size: 22px; line-height: 1.25; white-space: normal; }
 @media (max-width: 900px) { .exp-head .eh-num { font-size: 48px; } .exp-head .eh-bigrow { flex-wrap: wrap; } }
 .exp-heads { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }   /* five cards: three, then two, at full width; one under the other on a phone */
+/* ---- Experiment monitoring: the Material / Labour / Yield cards, stacked, and the Net gain card on its own ---- */
+.exp-groups { display: flex; flex-direction: column; gap: 20px; margin-bottom: 18px; }
+.exp-group { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; min-width: 0; }
+.exp-group.open { box-shadow: var(--shadow-md); border-color: var(--line-strong); }
+.grp-head { display: block; padding: 22px 26px 18px; cursor: pointer; border-radius: 22px 22px 0 0; transition: background .15s; }
+.grp-head:hover { background: var(--surface-2); } .grp-head:focus-visible { outline: 3px solid var(--ring); outline-offset: -3px; }
+.grp-top { display: flex; align-items: center; gap: 14px; }
+.grp-ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--primary-ink); flex: none; } .grp-ico svg { width: 22px; height: 22px; }
+.grp-title { flex: 1; min-width: 0; } .grp-name { font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); } .grp-sub { margin-top: 2px; font-size: 13px; color: var(--muted); }
+.grp-chev { width: 10px; height: 10px; flex: none; border-right: 2.5px solid var(--ink-2); border-bottom: 2.5px solid var(--ink-2); transform: rotate(45deg) translate(-2px, -2px); transition: transform .18s; margin-right: 6px; }
+.exp-group.open .grp-chev { transform: rotate(-135deg) translate(-2px, -2px); }
+.grp-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+.grp-stat { min-width: 0; border-radius: 18px; padding: 16px 20px 18px; border: 1px solid var(--line); background: var(--surface-2); }
+.grp-stat.good { background: linear-gradient(135deg, color-mix(in srgb, var(--good) 15%, var(--surface)) 0%, var(--surface) 80%); border-color: color-mix(in srgb, var(--good) 34%, var(--line)); }
+.grp-stat.bad { background: linear-gradient(135deg, color-mix(in srgb, var(--bad) 13%, var(--surface)) 0%, var(--surface) 80%); border-color: color-mix(in srgb, var(--bad) 34%, var(--line)); }
+.gs-num { font-size: clamp(26px, 2.8vw, 40px); line-height: 1.1; font-weight: 800; letter-spacing: -.025em; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.grp-stat.good .gs-num { color: var(--good); } .grp-stat.bad .gs-num { color: var(--bad); }
+.grp-stat.none .gs-num, .grp-stat.wait .gs-num { font-size: 22px; line-height: 1.25; color: var(--ink-2); }
+.gs-lab { margin-top: 6px; font-size: 14.5px; line-height: 1.35; color: var(--ink-2); }
+/* opened: the two numbers shrink into one tidy line */
+.exp-group.open .grp-head { padding-bottom: 12px; border-radius: 22px 22px 0 0; }
+.exp-group.open .grp-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.exp-group.open .grp-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; padding: 7px 14px; border-radius: 999px; }
+.exp-group.open .gs-num, .exp-group.open .grp-stat.none .gs-num, .exp-group.open .grp-stat.wait .gs-num { font-size: 15px; line-height: 1.3; letter-spacing: 0; }
+.exp-group.open .gs-lab { margin: 0; font-size: 13px; }
+.grp-foot { margin: 0; padding: 0 26px 16px; font-size: 13px; color: var(--muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.grp-body { padding: 18px 26px 26px; border-top: 1px dashed var(--line-strong); background: var(--surface-2); }
+.grp-body .exp-heads { margin-bottom: 0; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }   /* never wider than the card they sit in, even on a phone */
+.grp-body .exp-head .cmp-val { white-space: nowrap; }
+.exp-heads.solo { grid-template-columns: 1fr; margin-bottom: 0; }
+.exp-heads.solo .kpi-unit:not(.open) .eh-sub { min-height: 0; }
+.exp-head .eh-blurb { margin-top: 10px; font-size: 14.5px; line-height: 1.4; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .grp-head { padding: 18px 18px 14px; } .grp-foot { padding: 0 18px 14px; } .grp-body { padding: 14px 14px 18px; }
+  .grp-stats { grid-template-columns: 1fr; gap: 12px; } .grp-name { font-size: 15px; } .grp-ico { width: 40px; height: 40px; }
+  .exp-group.open .grp-stat { border-radius: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .grp-head, .grp-chev { transition: none; } }
 </style>
 
 </head>
@@ -640,6 +678,7 @@ const ICONS = {
   flask: ['M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2', 'M8.5 2h7', 'M7 16h10'],
   wallet: ['M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1', 'M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
   banknote: ['M2 6h20v12H2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M6 12h.01', 'M18 12h.01'],
+  scale: ['M12 3v18', 'M7 21h10', 'M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2', 'm16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z', 'm2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'],
   coin: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'M12 18V6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
@@ -2615,6 +2654,16 @@ EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue
     words: function (pct) { return pct > 0 ? ['more', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
     tip: function (c) { return 'Rs ' + num(c.leaf_rev, 0) + ' from ' + num(c.leaf_kg, 0) + ' kg on ' + num(c.leaf_ha, 2) + ' ha plucked'; },
     help: 'Each point is the value of the green leaf plucked divided by the area plucked: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares plucked, from the parts of the fields sprayed by that method. A higher point means more money from the same area. It is the revenue only: the costs are not taken off yet.' };
+EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'The extra profit the drones bring over manual spraying: the green leaf revenue minus the spraying cost.', title: 'Net margin per hectare of land, per month', unit: 'Rs/ha/month', lowerBetter: false, first: 'first_net', net: true, needs: 'spray events and plucking records, and the land of both the drone-sprayed and the manually sprayed parts',
+    waits: function (r) { return !(r.worker && r.drone && r.material && r.leaf); }, waitText: 'The Admin enters the cost of a man-hour, of a drone-hour, the price of one kg of foliar and the price of one kg of green leaf under Parameters and rates.',
+    has: function (c) { return c.obs > 0; },
+    value: function (c) { return c.land > 0 && c.obs > 0 ? (c.rev - c.cost) / c.land * EXP_MONTH / c.obs : null; },
+    words: function (pct) { return pct > 0 ? ['more', 'net margin per hectare of land from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'net margin per hectare of land from the drone-sprayed parts than from the manually sprayed parts']; },
+    tip: function (c) { return 'Rs ' + num(c.rev, 0) + ' revenue - Rs ' + num(c.cost, 0) + ' cost over ' + c.obs + ' days, ' + num(c.land, 1) + ' ha of land'; },
+    help: 'The money left from the green leaf after the spraying cost, per hectare of land per month. For one method: add up the revenue of the period (kg of green leaf plucked x the green leaf price of each day) and the cost of the period (the labour and the foliar of its spray events), take the second from the first and divide by the hectares of land that method covers; the result is scaled to one month. Each method is worked out on its own, from the sums of the period: spraying and plucking do not happen on the same days, so a single day is never used. It is the margin after the spraying cost only: plucking labour and the other costs of the estate are not included. Spraying and plucking are counted from the first day both are on record. This is a plain comparison: it does not correct for the age since pruning, so it shows a difference, not proof that the drones caused it.' };
+const EXP_MONTH = 365.25 / 12;                                                              // days in an average month: the unit of the net margin
+const EXP_NET_WIN = 30;                                                                     // the Daily view of the net margin is a rolling window of this many days
+const EXP_NET_MIN = { month: 15, year: 90 };                                                // days observed before a month / year gets a point (fewer would be too lumpy to be fair)
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2623,12 +2672,86 @@ const isoOf = function (n) { return new Date(n * 86400000).toISOString().slice(0
 const fullDate = function (iso) { return Number(iso.slice(8)) + ' ' + MON3[Number(iso.slice(5, 7)) - 1] + ' ' + iso.slice(0, 4); };
 
 function expSum(days, from, to, m) {
-  const c = { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 };
+  const c = { kg: 0, ha: 0, hours: 0, uh: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 };
   days.forEach(function (d) {
     if (d.date < from || d.date > to) return;
-    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; if (x.events || x.leaf_n) c.days += 1;
+    const x = d[m]; c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; c.uh += x.unit_hours; if (x.events || x.leaf_n) c.days += 1;
   });
   return c;
+}
+/* ===== The cards that hold the KPIs: Material, Labour, Yield (the Net gain card stands on its own) =====
+ *  Folded, a card shows two plain numbers about the whole experiment (all the data): what the drones saved or gained compared with manual spraying, over the area THE DRONES
+ *  covered ((manual per ha - drone per ha) x the ha of the drones). Opened, those numbers shrink to one line and the KPI cards of the group appear under them. */
+function expGap(D, M, a, ha) { return D[ha] > 0 && M[ha] > 0 ? (M[a] / M[ha] - D[a] / D[ha]) * D[ha] : null; }
+function expTile(raw, num, lab, tone) { return { raw: raw, num: num, lab: lab, tone: tone }; }
+function expNoTile(why) { return expTile(null, 'Not enough data yet', 'needs ' + why, 'none'); }
+function expWaitTile(what) { return expTile(null, 'Waiting for the rate', what, 'wait'); }
+function expAmount(v, unit) { return (unit === 'Rs' ? 'Rs ' : '') + expFmt(Math.abs(v)) + (unit === 'kg' ? ' kg' : ''); }
+/** A signed amount as a tile: positive is good (green), negative bad (red); the label says which way it went. */
+function expSignedTile(v, unit, goodLab, badLab) { return v === null ? null : expTile(v, expAmount(v, unit), v >= 0 ? goodLab : badLab, v >= 0 ? 'good' : 'bad'); }
+function expAllData(data) { const all = {}; EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); }); return all; }
+function expMaterialStats(data) {
+  const A = expAllData(data), r = data.rates_set || { material: true }, kg = expGap(A.Drone, A.Manual, 'kg', 'ha'), rs = expGap(A.Drone, A.Manual, 'mat_cost', 'ha');
+  return [expSignedTile(kg, 'kg', 'of foliar saved by the drones', 'more foliar used by the drones') || expNoTile('spray events by both methods'),
+    !r.material ? expWaitTile('The price of one kg of foliar') : (expSignedTile(rs, 'Rs', 'saved on foliar by the drones', 'more spent on foliar by the drones') || expNoTile('spray events by both methods'))];
+}
+function expLabourStats(data) {
+  const A = expAllData(data), D = A.Drone, M = A.Manual, r = data.rates_set || { worker: true, drone: true }, rs = expGap(D, M, 'cost', 'ha');
+  const ratio = D.uh > 0 && M.uh > 0 && D.ha > 0 && M.ha > 0 ? (D.ha / D.uh) / (M.ha / M.uh) : null;                    // area per drone-hour / area per man-hour
+  const rt = ratio === null ? expNoTile('spray events by both methods') : expTile(ratio, '1 drone = ' + (ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10) + ' workers', 'in area covered per hour', ratio >= 1 ? 'good' : 'bad');
+  return [rt, !(r.worker && r.drone) ? expWaitTile('The cost of a man-hour and of a drone-hour') : (expSignedTile(rs, 'Rs', 'labour cost saved by the drones', 'more labour cost with the drones') || expNoTile('spray events by both methods'))];
+}
+function expYieldStats(data) {
+  const A = expAllData(data), r = data.rates_set || { leaf: true }, kg = expGap(A.Drone, A.Manual, 'leaf_kg', 'leaf_ha'), rs = expGap(A.Drone, A.Manual, 'leaf_rev', 'leaf_ha');    // a gap is manual minus drone: the gain is its opposite
+  return [expSignedTile(kg === null ? null : -kg, 'kg', 'more green leaf from the drone parts', 'less green leaf from the drone parts') || expNoTile('plucking records from both methods'),
+    !r.leaf ? expWaitTile('The price of one kg of green leaf') : (expSignedTile(rs === null ? null : -rs, 'Rs', 'more revenue from the drone parts', 'less revenue from the drone parts') || expNoTile('plucking records from both methods'))];
+}
+const EXP_GROUPS = [
+  { key: 'material', name: 'Material', icon: 'flask', sub: 'Foliar saving and Material cost saving', kpis: ['eff', 'mat'], stats: expMaterialStats,
+    help: 'Over all the data, how much foliar and how many rupees of foliar the drones saved compared with manual spraying: (manual kg per ha minus drone kg per ha) times the hectares the drones sprayed, and the same with the cost of the foliar. A red number means the drones used more. Open the card for the two KPIs.' },
+  { key: 'labour', name: 'Labour', icon: 'users', sub: 'Work speed and Labour cost saving', kpis: ['speed', 'cost'], stats: expLabourStats,
+    help: '1 drone = N workers compares the area covered per hour: the hectares sprayed divided by the man-hours (manual) and by the drone-hours (drone). If a man covers 1 ha an hour and a drone 2.5 ha an hour, one drone does the work of 2.5 workers. The second number is the labour cost the drones saved: (manual labour cost per ha minus drone labour cost per ha) times the hectares the drones sprayed; red means the drones cost more. Open the card for the two KPIs.' },
+  { key: 'yield', name: 'Yield', icon: 'leaf', sub: 'Leaf yield and Yield revenue', kpis: ['leaf', 'rev'], stats: expYieldStats,
+    help: 'Over all the data, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' }
+];
+
+/** The net margin pieces of one method over a range of days (null = the whole history): revenue, labour + foliar cost, its land and the days observed. Days before both
+ *  spraying and plucking are on record, and days after today, are not counted. */
+function expNetCell(data, m, a, b) {
+  const c = { rev: 0, cost: 0, land: (data.land && data.land[m]) || 0, obs: 0 };
+  if (!data.first_net) return c;
+  const s = dayNo(data.first_net), e = dayNo(data.today), lo = Math.max(s, a === null ? s : a), hi = Math.min(e, b === null ? e : b);
+  if (hi < lo) return c;
+  c.obs = hi - lo + 1;
+  data.days.forEach(function (d) { const n = dayNo(d.date); if (n < lo || n > hi) return; const x = d[m]; c.rev += x.leaf_rev; c.cost += x.cost + x.mat_cost; });
+  return c;
+}
+/** The points of the net margin: Daily = a rolling window of 30 days ending that day; Monthly / Yearly = the sums of that month / year over the days observed in it. */
+function expNetSeries(data, M, period) {
+  const out = { keys: {}, dots: {}, lines: {} };
+  const keyOf = function (t, label) { return out.keys[t] || (out.keys[t] = { t: t, label: label }); };
+  EXP_METHODS.forEach(function (m) {
+    out.dots[m] = []; out.lines[m] = [];
+    if (!data.first_net) return;
+    const s = dayNo(data.first_net), e = dayNo(data.today), seg = [];
+    if (period === 'day') {
+      for (let n = s + EXP_NET_WIN - 1; n <= e; n++) { const c = expNetCell(data, m, n - EXP_NET_WIN + 1, n), v = M.value(c); if (v === null) continue; seg.push({ t: n, v: v }); keyOf(n, shortDate(isoOf(n)))[m] = { v: v, c: c }; }
+    } else {
+      const a = new Date(s * 86400000); let y = a.getUTCFullYear(), mo = period === 'month' ? a.getUTCMonth() : 0;
+      for (;;) {
+        const from = Math.floor((period === 'month' ? Date.UTC(y, mo, 1) : Date.UTC(y, 0, 1)) / 86400000), to = Math.floor((period === 'month' ? Date.UTC(y, mo + 1, 1) : Date.UTC(y + 1, 0, 1)) / 86400000) - 1;
+        if (from > e) break;
+        const c = expNetCell(data, m, from, to), v = c.obs >= EXP_NET_MIN[period] ? M.value(c) : null;
+        if (v !== null) {
+          const k = period === 'month' ? y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1) : String(y), t = period === 'month' ? dayNo(k + '-15') : dayNo(k + '-07-01'), label = period === 'month' ? MON3[mo] + ' ' + y : k;
+          seg.push({ t: t, v: v }); out.dots[m].push({ t: t, v: v }); keyOf(t, label)[m] = { v: v, c: c };
+        }
+        if (period === 'month') { mo++; if (mo > 11) { mo = 0; y++; } } else y++;
+      }
+    }
+    if (seg.length) out.lines[m].push(seg);
+  });
+  return out;
 }
 function expFmt(v) { return v >= 1000 ? num(v, 0) : Number(v).toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2)); }
 
@@ -2636,6 +2759,7 @@ function expFmt(v) { return v >= 1000 ? num(v, 0) : Number(v).toFixed(v >= 100 ?
 /** The points of one KPI over the whole history, per method. Daily: one dot per day with events (that day's total / total) and a moving-average line (the last
  *  14 days, total / total; the line breaks where more than a month passed without events). Monthly / yearly: one point per month / year, joined. */
 function expSeries(data, mode, period) {
+  if (EXP_MODES[mode].net) return expNetSeries(data, EXP_MODES[mode], period);
   const M = EXP_MODES[mode], out = { keys: {}, dots: {}, lines: {} };
   EXP_METHODS.forEach(function (m) {
     const cells = {};                                                                        // day number -> that day's totals
@@ -2761,7 +2885,7 @@ function expLineChart(data, mode, period, W, tip) {
  *  two methods drawn as bars against each other. Clicking it unfolds its graph (see experimentScreen). */
 function expHeadline(data, mode) {
   const M = EXP_MODES[mode], all = {};
-  EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); });
+  EXP_METHODS.forEach(function (m) { all[m] = M.net ? expNetCell(data, m, null, null) : expSum(data.days, '0000-01-01', '9999-12-31', m); });
   const dv = M.value(all.Drone), mv = M.value(all.Manual), top = Math.max(dv || 0, mv || 0);
   const bars = h('div', { class: 'eh-cmp' }, EXP_METHODS.map(function (m) {
     const v = m === 'Drone' ? dv : mv;
@@ -2770,16 +2894,16 @@ function expHeadline(data, mode) {
       h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + M.unit));
   }));
   if (M.waits && data.rates_set && M.waits(data.rates_set)) {                                                      // the Admin has not entered the rates this KPI needs yet
-    return h('div', { class: 'exp-head none waiting' }, h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name)),
+    return h('div', { class: 'exp-head none waiting' }, h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name)), M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null,
       h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Waiting for the rates')), h('div', { class: 'eh-sub' }, M.waitText));
   }
   const topRow = h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name), h('i', { class: 'chev', 'aria-hidden': 'true' }));
   if (dv === null || mv === null || mv === 0) {
-    return h('div', { class: 'exp-head none' }, topRow, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs ' + M.needs + '.'), bars);
+    return h('div', { class: 'exp-head none' }, topRow, M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs ' + M.needs + '.'), bars);
   }
   const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct), up = pct > 0;
   const num1 = (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '%';
-  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, topRow,
+  return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, topRow, M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null,
     h('div', { class: 'eh-bigrow' }, same ? h('span', { class: 'eh-num small' }, 'About the same') : [h('i', { class: 'eh-arrow ' + (up ? 'up' : 'down'), 'aria-hidden': 'true' }), h('span', { class: 'eh-num' }, num1), h('span', { class: 'eh-word' }, w[0])]),
     h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), bars);
 }
@@ -2787,6 +2911,7 @@ function expHeadline(data, mode) {
 function experimentScreen(host) {
   let period = EXP_PERIODS.some(function (p) { return p[0] === S.expPeriod; }) ? S.expPeriod : 'day', data = null;
   S.expOpen = S.expOpen || {};                                                   // which KPI card has its graph unfolded (all folded to begin with)
+  S.expGroupOpen = S.expGroupOpen || {};                                         // which of the Material / Labour / Yield cards is opened (all folded to begin with)
   const body = h('div');
   host.appendChild(body);
   clear(body).appendChild(skeleton(3));
@@ -2804,10 +2929,10 @@ function experimentScreen(host) {
     const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(data, mode, period, W, tip)); plot.appendChild(tip); };
     setTimeout(render, 0);
     if (window.ResizeObserver) { const ro = new ResizeObserver(function () { if (!plot.isConnected) { ro.disconnect(); return; } const w = Math.floor(plot.clientWidth); if (w && w !== plot._w) render(); }); ro.observe(plot); }
-    const f0 = data[M.first] || data.first, sub = period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(data.today));
+    const f0 = data[M.first] || data.first, sub = M.net && period === 'day' ? 'Each point is the net margin of the ' + EXP_NET_WIN + ' days ending that day, from ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ' to ' + fullDate(data.today) : period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(data.today));
     return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
       h('div', { class: 'mon-ctl' }, periodBar()),
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, M.net ? 'The whole history is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above always uses all the data.' : 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, sub),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
       plot);
@@ -2821,11 +2946,22 @@ function experimentScreen(host) {
     if (open) card.classList.add('open');
     return h('div', { class: 'kpi-unit' + (open ? ' open wide' : ''), 'data-kpi': mode }, card, open ? graph(mode) : null);
   }
+  /** One of the cards that hold KPIs: the title, the two numbers, and (opened) the KPI cards. The numbers shrink to one line when it is opened. */
+  function groupCard(g) {
+    const open = !!S.expGroupOpen[g.key], toggle = function () { S.expGroupOpen[g.key] = !open; draw(); };
+    const head = h('div', { class: 'grp-head', role: 'button', tabindex: '0', 'aria-expanded': open ? 'true' : 'false', title: open ? 'Click to fold' : 'Click to see the KPIs' },
+      h('div', { class: 'grp-top' }, h('span', { class: 'grp-ico' }, icon(g.icon)), h('div', { class: 'grp-title' }, h('div', { class: 'grp-name' }, g.name), h('div', { class: 'grp-sub' }, g.sub)), h('i', { class: 'grp-chev', 'aria-hidden': 'true' })),
+      h('div', { class: 'grp-stats' }, g.stats(data).map(function (t) { return h('div', { class: 'grp-stat ' + t.tone }, h('div', { class: 'gs-num', 'data-val': t.raw === null ? '' : String(t.raw) }, t.num), h('div', { class: 'gs-lab' }, t.lab)); })));
+    head.addEventListener('click', toggle); head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    return h('section', { class: 'exp-group' + (open ? ' open' : ''), 'data-group': g.key }, head,
+      h('div', { class: 'titlerow grp-foot' }, h('span', null, 'How these numbers are worked out'), help(g.help, 'How these numbers are worked out')),
+      open ? h('div', { class: 'grp-body' }, h('div', { class: 'exp-heads' }, g.kpis.map(kpiCard))) : null);
+  }
   function draw() {
     if (!data) return;
     clear(body);
     if (!data.days.length) { body.appendChild(h('div', { class: 'card' }, emptyState('No spray events yet.', 'droplet'))); return; }
-    body.appendChild(h('div', { class: 'exp-heads' }, kpiCard('eff'), kpiCard('mat'), kpiCard('cost'), kpiCard('total'), kpiCard('speed'), kpiCard('leaf'), kpiCard('rev')));
+    body.appendChild(h('div', { class: 'exp-groups' }, EXP_GROUPS.map(groupCard), h('div', { class: 'exp-heads solo' }, kpiCard('net'))));
   }
 }
 
