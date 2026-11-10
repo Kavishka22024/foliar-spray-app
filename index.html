@@ -1240,9 +1240,10 @@ function fieldStrip(ctx) {
 
 /** Coverage slider for one field (or one method's part of it): 0 to 100%. What earlier events already covered (beforePct) is locked; you can only go above it.
  *  ctx (a field with two methods): {method, fieldHa, partHa, other:{method, ha, done_pct}} shows the other method's part beside this one. */
-function coverSlider(areaHa, beforePct, pct, onChange, ctx) {
-  const lo = beforePct >= 99.5 ? 100 : Math.floor(beforePct + 1e-9) + 1;       // at least 1% more than before
-  let v = Math.max(lo, Math.min(100, Math.round(pct)));
+function coverSlider(areaHa, beforePct, pct, onChange, ctx, maxPct) {
+  const hi = maxPct === undefined || maxPct === null ? 100 : Math.max(0, Math.min(100, maxPct));            // an earlier event cannot go past what the later events on the field already use
+  const lo = Math.min(beforePct >= 99.5 ? 100 : Math.floor(beforePct + 1e-9) + 1, hi);       // at least 1% more than before
+  let v = Math.max(lo, Math.min(hi, Math.round(pct)));
   const what = ctx ? ctx.method.toLowerCase() + ' part' : 'field';
   const range = h('input', { type: 'range', min: '0', max: '100', step: '1', value: String(v), 'aria-label': 'Percent of the ' + what + ' covered by this event' });
   const track = h('div', { class: 'rtrack' + (beforePct > 0 ? ' has-frozen' : '') }, h('div', { class: 'rt-bg' }), h('div', { class: 'rt-fill' }), h('div', { class: 'rt-frozen' }), range);
@@ -1250,20 +1251,21 @@ function coverSlider(areaHa, beforePct, pct, onChange, ctx) {
   const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' });
   const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v - 5); } }, '- 5%');
   const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v + 5); } }, '+ 5%');
-  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(100); } }, '100%');
+  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(hi); } }, hi < 100 ? 'Up to ' + hi + '%' : '100%');
   function show() {
     track.style.setProperty('--q', String(v / 100)); track.style.setProperty('--p', String(beforePct / 100));
     head.textContent = v + '% of the ' + what + ' = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
     sub.textContent = 'This event covers ' + r2(areaHa * (v - beforePct) / 100) + ' ha';
     if (strip) strip.set(beforePct, v);
-    minus.disabled = v <= lo; plus.disabled = v >= 100;
+    minus.disabled = v <= lo; plus.disabled = v >= hi;
     if (onChange) onChange(v);
   }
-  function set(x) { v = Math.max(lo, Math.min(100, Math.round(x))); range.value = String(v); show(); }
+  function set(x) { v = Math.max(lo, Math.min(hi, Math.round(x))); range.value = String(v); show(); }
   range.addEventListener('input', function () { set(parseFloat(range.value)); });
   show();
   return { node: h('div', { class: 'slider' }, head, sub, strip ? strip.node : null, track,
     beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% ' + (ctx ? 'of the ' + what + ' ' : '') + 'was sprayed earlier (locked, you can only go forward)') : null,
+    hi < 100 ? h('div', { class: 'sl-note' }, icon('lock'), 'A later spray event on this ' + (ctx ? 'part' : 'field') + ' already covers the rest, so this event can go up to ' + hi + '%. To go higher, lower that later event first.') : null,
     h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full)), get: function () { return v; } };
 }
 
@@ -1282,8 +1284,9 @@ function crewText(method, men, drones) { return method === 'Drone' ? drones + (d
 function openSprayEvent(o) {
   const st = o.st, fields = o.fields, byId = {}; fields.forEach(function (f) { byId[f.field_id] = f; });
   const origMethod = o.existing ? o.existing.method : '';
-  const members = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; });
+  const members = {}, maxes = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; maxes[l.field_id] = l.max_pct; });
   const isMember = function (id) { return members[id] !== undefined && st.method === origMethod; };      // a field of the event being changed (its earlier % is what came before THIS event)
+  const maxOf = function (id) { return isMember(id) && maxes[id] !== undefined ? maxes[id] : 100; };
   const beforeOf = function (id) { return isMember(id) ? members[id] : sprayPart(byId[id], st.method).done_pct; };
   // the methods this person may record and that some field offers; a field sprayed partly by drone and partly by hand offers both
   const methods = SPRAY_METHODS.filter(function (m) { return (!o.methods || o.methods.indexOf(m) >= 0) && fields.some(function (f) { return sprayPart(f, m).ha > 0; }); });
@@ -1381,7 +1384,7 @@ function openSprayEvent(o) {
       h('button', { type: 'button', class: 'cov-x', 'aria-label': 'Remove ' + f.code, onclick: function () { toggle(f); } }, icon('x'))));
     if (openId === id) {
       const ctx = mixed ? { method: st.method, fieldHa: f.area_ha, partHa: part.ha, other: { method: om, ha: op.ha, done_pct: op.done_pct } } : null;
-      const sl = coverSlider(part.ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); }, ctx);
+      const sl = coverSlider(part.ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); }, ctx, maxOf(id));
       card.appendChild(h('div', { class: 'cov-slider' }, sl.node, h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:8px' }, h('button', { type: 'button', class: 'btn primary small', onclick: function () { openId = null; renderCover(); } }, 'Done'))));
     }
     return card;
