@@ -414,6 +414,30 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .swatch.mixed { background: linear-gradient(90deg, var(--drone-solid) 0 55%, var(--manual-solid) 55% 100%); }
 .rd.mixed { background: linear-gradient(90deg, var(--drone-solid) 0 var(--dp, 50%), var(--manual-solid) var(--dp, 50%) 100%); }
 .rd.open.mixed { border-color: var(--mixed-solid); background: var(--surface) repeating-linear-gradient(135deg, var(--mixed-solid) 0 4px, transparent 4px 9px); }
+
+/* ---- plucking a field that is partly drone and partly manual: two sides ---- */
+.ftile.split { grid-column: span 2; background: var(--surface); color: var(--ink); border: 1.5px solid var(--line-strong); overflow: hidden; padding-bottom: 0; min-height: 0; }
+.ftile.split:hover { background: var(--surface-2); } .ftile.split .t-mark { background: var(--primary); }
+.ftile.split.on, .ftile.split.on:hover { background: var(--surface); color: var(--ink); border-color: var(--primary); box-shadow: 0 8px 20px rgba(0,0,0,.12); filter: none; }
+.ftile.split.done, .ftile.split.done:hover { background: var(--surface); color: var(--ink); border-color: color-mix(in srgb, var(--good) 50%, transparent); } .ftile.split.done .t-mark { background: var(--good); }
+.halves { display: grid; grid-template-columns: 1fr 1fr; margin: 10px -14px 0; }
+.half { display: flex; flex-direction: column; gap: 1px; padding: 9px 13px 11px; text-align: left; min-width: 0; }
+.half.drone { background: var(--drone-soft); color: var(--drone); border-top: 3px solid var(--drone-solid); }
+.half.manual { background: var(--manual-soft); color: var(--manual); border-top: 3px solid var(--manual-solid); }
+.half.has.drone { background: var(--drone-solid); color: #fff; } .half.has.manual { background: var(--manual-solid); color: #fff; }
+.half .h-t { font-weight: 700; font-size: 13.5px; } .half .h-ha { font-size: 11.5px; opacity: .85; } .half .h-s { font-size: 12px; font-weight: 600; margin-top: 5px; line-height: 1.3; overflow-wrap: anywhere; }
+.modal:has(.pluckparts) { max-width: 780px; }
+.pluckparts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.pluckpart { border-radius: 16px; padding: 13px 13px 14px; border: 1.5px solid; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.pluckpart.drone { background: var(--drone-soft); border-color: var(--drone-solid); } .pluckpart.manual { background: var(--manual-soft); border-color: var(--manual-solid); }
+.pp-head { display: flex; align-items: center; gap: 8px; font-weight: 700; } .pp-head .pp-ha { margin-left: auto; font-size: 12.5px; font-weight: 600; opacity: .85; }
+.pluckpart.drone .pp-head { color: var(--drone); } .pluckpart.manual .pp-head { color: var(--manual); }
+.pp-note { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.pp-locked { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--muted); } .pp-locked svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+.pluckpart .bignum { font-size: 22px; } .pluckpart .live { font-size: 12.5px; }
+.pluckpart .slider { padding: 0; border: 0; background: none; box-shadow: none; }
+.pluckpart .sl-head { flex-direction: column; align-items: flex-start; gap: 2px; } .pluckpart .sl-val { font-size: 15px; } .pluckpart .sl-btns { flex-wrap: wrap; gap: 6px; } .pluckpart .sl-btns .btn { padding: 6px 10px; min-height: 36px; }
+@media (max-width: 860px) { .halves { margin: 10px -12px 0; } .half { padding: 8px 10px 10px; } .pluckparts { gap: 8px; } .pluckpart { padding: 10px 9px 12px; } }
 </style>
 
 </head>
@@ -990,7 +1014,10 @@ function askVoid(type, r, done) {
     h('div', { class: 'muted small' }, type === 'spray' ? 'This voids the whole spray event this record belongs to (all its fields). It is kept for audit but no longer counts in any total.' : 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Void record', kind: 'danger', onclick: function (m, btn) {
-      run(btn, function () { return api('api_voidRecord', type, r.record_id, why.value).then(function () { m.close(); toast('Record voided'); done(); }); });
+      run(btn, function () {
+        const ids = r.record_ids || [r.record_id];                       // a field plucked in a drone part and a manual part has two records
+        return ids.reduce(function (p, id) { return p.then(function () { return api('api_voidRecord', type, id, why.value); }); }, Promise.resolve()).then(function () { m.close(); toast('Record voided'); done(); });
+      });
     } }
   ]);
 }
@@ -1056,17 +1083,23 @@ function entryScreen(root, cfg) {
     clear(tilesBox).appendChild(skeleton(3));
     const date = dateIn.value;
     return Promise.all([api('api_entryFields', type, date), api('api_dayRecords', type, date)]).then(function (res) {
-      fields = res[0].fields; recs = {}; res[1].forEach(function (r) { recs[r.field_id] = r; });
+      fields = res[0].fields; recs = indexRecs(res[1]);
       offlineInfo = ''; Cache.set('fields:' + type, { fields: fields, saved: new Date().toISOString() }); Cache.set('day:' + type + ':' + date, res[1]);
       afterLoad();
     }).catch(function (e) {
       if (!e.network) { clear(tilesBox).appendChild(msgBox('err', e.message)); return; }
       const cf = Cache.get('fields:' + type);   // no signal: show what this phone last saw
       if (!cf) { clear(tilesBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
-      fields = cf.fields; recs = {}; (Cache.get('day:' + type + ':' + date) || []).forEach(function (r) { recs[r.field_id] = r; });
+      fields = cf.fields; recs = indexRecs(Cache.get('day:' + type + ':' + date) || []);
       offlineInfo = 'No signal. Showing the list saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Everything you enter is kept on this phone and uploads when you have signal.';
       afterLoad();
     });
+  }
+  /** The records of the day by field. A field plucked in two parts (drone and manual) has two records: cfg.mergeRec joins them into one. */
+  function indexRecs(list) {
+    const m = {}, byId = {}; fields.forEach(function (f) { byId[f.field_id] = f; });
+    list.forEach(function (r) { m[r.field_id] = cfg.mergeRec ? cfg.mergeRec(m[r.field_id], r, byId[r.field_id]) : r; });
+    return m;
   }
   function afterLoad() {
     sel = {};
@@ -1139,7 +1172,8 @@ function entryScreen(root, cfg) {
     if (kind === 'done') state = 'Recorded: ' + cfg.recorded(rec) + (rec.round ? '  |  round ' + rec.round.no + ', day ' + rec.round.day + (rec.round.complete ? ' (complete)' : '') : '');
     else if (kind === 'idle') state = cfg.idle(f);
     else state = cfg.summary(f, data) + (data.complete ? '  |  round complete' : '');
-    const t = h('button', { type: 'button', 'data-code': f.code, 'data-kind': kind, class: 'ftile ' + f.method.toLowerCase() + (kind === 'done' ? ' done' : (kind === 'idle' ? '' : ' on')) + (ro && kind === 'idle' ? ' ro' : ''),
+    const halves = cfg.halves ? cfg.halves(f, kind, data, rec) : null;          // a field with a drone part and a manual part is one wide card, left half drone, right half manual
+    const t = h('button', { type: 'button', 'data-code': f.code, 'data-kind': kind, class: 'ftile ' + f.method.toLowerCase() + (halves ? ' split' : '') + (kind === 'done' ? ' done' : (kind === 'idle' ? '' : ' on')) + (ro && kind === 'idle' ? ' ro' : ''),
       'aria-label': f.code + ' ' + kind,
       onclick: function () {
         if (ro) { if (rec) openRecorded(f, rec, t, true); return; }
@@ -1149,8 +1183,8 @@ function entryScreen(root, cfg) {
       h('span', { class: 't-code' }, f.code),
       f.name ? h('span', { class: 't-name' }, f.name) : null,
       h('span', { class: 't-meta' }, h('span', { class: 'dot ' + f.method.toLowerCase() }), f.method + '  |  ' + r2(f.area_ha) + ' ha'),
-      pct !== null ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + pct + '%' })) : null,
-      h('span', { class: 't-state' }, state),
+      halves ? halves : (pct !== null ? h('span', { class: 't-bar' }, h('i', { style: 'width:' + pct + '%' })) : null),
+      halves ? null : h('span', { class: 't-state' }, state),
       kind === 'draft' ? h('span', { class: 't-tag' }, 'Not submitted yet') : (kind === 'queued' ? h('span', { class: 't-tag' }, 'Waiting to upload') : null));
     return t;
   }
@@ -1601,18 +1635,111 @@ VIEWS['spray.entry'] = function (root) {
 };
 
 // ---------------------------------------------------------------- Plucking
+// A field sprayed partly by drone and partly by hand is plucked in TWO PARTS, entered side by side: left = the drone part (blue), right = the manual
+// part (orange). Each part has its own green leaf weight and its own slider (hectares of that part). Data for such a field: {parts: {Drone: {kg, area_ha,
+// complete}, Manual: {...}}}; the line sent to the server: {field_id, parts: [{part, kg, area_ha, complete}]}. A field with one method is as before.
+const PLUCK_PARTS = ['Drone', 'Manual'];
+/** One part of what was entered for a field (a draft's data has parts as an object, a queued line as a list). */
+function plotPart(d, part) {
+  if (!d || !d.parts) return null;
+  if (Array.isArray(d.parts)) return d.parts.filter(function (x) { return x.part === part; })[0] || null;
+  return d.parts[part] || null;
+}
+function plotParts(f) { return PLUCK_PARTS.filter(function (p) { return f.parts && f.parts[p] && f.parts[p].ha > 0; }); }
+function partIdle(pp) { return pp.done ? 'Done this round' : (pp.done_ha > 0 ? r2(pp.done_ha) + ' of ' + r2(pp.ha) + ' ha done' : 'Not started'); }
+
+/** The popup of a field with two parts. */
+function mixedPluckPopup(f, existing, ctl) {
+  const panels = {}, err = h('div'), row = h('div', { class: 'pluckparts' });
+  plotParts(f).forEach(function (part) {
+    const pp = f.parts[part], cls = part.toLowerCase(), e = plotPart(existing, part);
+    const head = h('div', { class: 'pp-head' }, h('i', { class: 'dot ' + cls }), part + ' part', h('span', { class: 'pp-ha' }, r2(pp.ha) + ' ha'));
+    if (pp.done && !e) {
+      panels[part] = { locked: true };
+      row.appendChild(h('div', { class: 'pluckpart ' + cls + ' locked', 'data-part': part }, head, h('div', { class: 'pp-locked' }, icon('lock'), 'The ' + part.toLowerCase() + ' part of this round is done (' + r2(pp.ha) + ' ha). It can be plucked again in the next round.')));
+      return;
+    }
+    const kg = numInput(e ? e.kg : '', { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Green leaf kg, ' + part.toLowerCase() + ' part' });
+    const sl = roundSlider(pp.ha, pp.done_ha, e ? e.area_ha : 0);
+    const live = h('div', { class: 'live' });
+    function upd() { const v = Number(kg.value), a = sl.get().area; live.textContent = v > 0 && a > 0 ? r2(v / a) + ' kg per plucked ha' : 'Enter the weight and move the slider.'; }
+    kg.addEventListener('input', upd); sl.onChange(upd); upd();
+    panels[part] = { kg: kg, sl: sl };
+    row.appendChild(h('div', { class: 'pluckpart ' + cls, 'data-part': part }, head,
+      h('div', { class: 'pp-note' }, pp.done_ha > 0 ? 'Earlier days of this round: ' + r2(pp.done_ha) + ' of ' + r2(pp.ha) + ' ha' : 'Round ' + f.progress.round + ': not started'),
+      field('Green leaf (kg)', kg), field('Area plucked', sl.node), live));
+  });
+  const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
+  modal(popTitle(f), h('div', { class: 'stack' },
+    h('div', { class: 'callout' }, 'This field is sprayed partly by drone and partly by hand, so its green leaf is entered in two parts. Enter either part, or both. ' + roundNote(f.progress, f, 'plucked')),
+    row, err), left.concat([
+    { label: 'Cancel', onclick: function (m) { m.close(); } },
+    { label: 'Save details', kind: 'primary', onclick: function (m) {
+      clear(err);
+      const out = {}, errs = [];
+      Object.keys(panels).forEach(function (part) {
+        const pn = panels[part]; if (pn.locked) return;
+        const v = Number(pn.kg.value), g = pn.sl.get();
+        if (!(v > 0) && g.area < 0.0001) return;                                         // this part was not plucked today
+        if (!(v > 0)) errs.push('The ' + part.toLowerCase() + ' part: enter the green leaf weight in kg.');
+        else if (g.area < 0.05) errs.push('The ' + part.toLowerCase() + ' part: move the slider forward to show how much of it you plucked today.');
+        else out[part] = { kg: v, area_ha: g.area, complete: g.complete };
+      });
+      if (errs.length) { err.appendChild(msgBox('err', errs[0])); return; }
+      if (!Object.keys(out).length) { err.appendChild(msgBox('err', 'Enter the weight and the area for the drone part, the manual part, or both.')); return; }
+      m.close(); ctl.done({ parts: out });
+    } }]), { from: ctl.from, onClose: ctl.closed });
+}
+
 VIEWS['pluck.entry'] = function (root) {
   entryScreen(root, {
     type: 'pluck', title: 'Plucking',
-    intro: 'Tap a field card to enter the green leaf weight and how much of the field was plucked. Press 100% when the round is finished.',
+    intro: 'Tap a field card to enter the green leaf weight and how much of the field was plucked. Press 100% when the round is finished. A field sprayed partly by drone and partly by hand has two sides: drone on the left, manual on the right.',
     idle: function (f) { const p = f.progress; return 'Round ' + p.round + (p.done_ha > 0 ? ', day ' + p.day_no + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha done' : ': not started'); },
     bar: function (f) { const p = f.progress; return p.done_ha > 0 ? Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) : null; },
-    summary: function (f, d) { return d.kg + ' kg  |  ' + r2(d.area_ha) + ' ha  |  ' + r2(d.kg / d.area_ha) + ' kg/ha'; },
-    recorded: function (r) { return r.kg + ' kg from ' + r2(r.area_ha) + ' ha (' + r.kg_per_ha + ' kg/ha)'; },
-    facts: function (r) { return [['Green leaf', r.kg + ' kg'], ['Area plucked that day', r2(r.area_ha) + ' ha'], ['Per plucked ha', r.kg_per_ha + ' kg/ha']]; },
-    toData: function (r) { return { kg: r.kg, area_ha: r.area_ha, complete: !!(r.round && r.round.complete) }; },
-    line: function (f, d) { return { field_id: f.field_id, kg: d.kg, area_ha: d.area_ha, complete: !!d.complete }; },
+    summary: function (f, d) {
+      if (d.parts) { const ps = plotParts(f).map(function (p) { return plotPart(d, p) ? p + ' ' + plotPart(d, p).kg + ' kg' : null; }).filter(Boolean); return ps.join('  |  '); }
+      return d.kg + ' kg  |  ' + r2(d.area_ha) + ' ha  |  ' + r2(d.kg / d.area_ha) + ' kg/ha';
+    },
+    recorded: function (r) {
+      if (r.parts) return PLUCK_PARTS.filter(function (p) { return r.parts[p]; }).map(function (p) { return p + ' ' + r.parts[p].kg + ' kg from ' + r2(r.parts[p].area_ha) + ' ha'; }).join(', ');
+      return r.kg + ' kg from ' + r2(r.area_ha) + ' ha (' + r.kg_per_ha + ' kg/ha)';
+    },
+    facts: function (r) {
+      if (r.parts) { const out = []; PLUCK_PARTS.forEach(function (p) { const x = r.parts[p]; if (x) out.push([p + ' part', x.kg + ' kg from ' + r2(x.area_ha) + ' ha (' + x.kg_per_ha + ' kg/ha)']); }); return out; }
+      return [['Green leaf', r.kg + ' kg'], ['Area plucked that day', r2(r.area_ha) + ' ha'], ['Per plucked ha', r.kg_per_ha + ' kg/ha']];
+    },
+    /** A field with two parts has two records for the day: join them into one entry with .parts */
+    mergeRec: function (prev, r, f) {
+      if (!f || f.method !== 'Mixed') return r;
+      const c = prev || { field_id: r.field_id, parts: {}, record_ids: [], kg: 0, area_ha: 0, kg_per_ha: '', can_void: true, flags: '', entered_by: r.entered_by, entered_at: r.entered_at, date: r.date, round: r.round, division: r.division, field_code: r.field_code };
+      c.parts[r.method] = r; c.record_ids.push(r.record_id); c.record_id = c.record_ids[0];
+      c.kg = Math.round((c.kg + r.kg) * 1000) / 1000; c.area_ha = Math.round((c.area_ha + r.area_ha) * 1000) / 1000; c.kg_per_ha = c.area_ha ? r2(c.kg / c.area_ha) : '';
+      c.can_void = c.can_void && r.can_void; if (r.flags) c.flags = (c.flags ? c.flags + '; ' : '') + r.flags;
+      if (r.round && (!c.round || r.round.complete)) c.round = r.round;
+      return c;
+    },
+    toData: function (r) {
+      if (r.parts) { const o = {}; PLUCK_PARTS.forEach(function (p) { if (r.parts[p]) o[p] = { kg: r.parts[p].kg, area_ha: r.parts[p].area_ha, complete: !!(r.parts[p].round && r.parts[p].round.complete) }; }); return { parts: o }; }
+      return { kg: r.kg, area_ha: r.area_ha, complete: !!(r.round && r.round.complete) };
+    },
+    line: function (f, d) {
+      if (f.method === 'Mixed') return { field_id: f.field_id, parts: PLUCK_PARTS.filter(function (p) { return plotPart(d, p); }).map(function (p) { const x = plotPart(d, p); return { part: p, kg: x.kg, area_ha: x.area_ha, complete: !!x.complete }; }) };
+      return { field_id: f.field_id, kg: d.kg, area_ha: d.area_ha, complete: !!d.complete };
+    },
+    /** The card of a field with two parts: drone on the left, manual on the right, each in its own colour. */
+    halves: function (f, kind, data, rec) {
+      if (f.method !== 'Mixed') return null;
+      return h('div', { class: 'halves' }, plotParts(f).map(function (part) {
+        const pp = f.parts[part];
+        let e = null;
+        if (kind === 'draft' || kind === 'queued') e = plotPart(data, part); else if (kind === 'done' && rec && rec.parts) e = rec.parts[part] || null;
+        return h('div', { class: 'half ' + part.toLowerCase() + (e ? ' has' : ''), 'data-part': part }, h('span', { class: 'h-t' }, part), h('span', { class: 'h-ha' }, r2(pp.ha) + ' ha'),
+          h('span', { class: 'h-s' }, e ? r2(e.kg) + ' kg  |  ' + r2(e.area_ha) + ' ha' : partIdle(pp)));
+      }));
+    },
     popup: function (f, existing, ctl) {
+      if (f.method === 'Mixed') return mixedPluckPopup(f, existing, ctl);
       const p = f.progress;
       const kg = numInput(existing ? existing.kg : '', { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Green leaf kg' });
       const sl = roundSlider(f.area_ha, p.done_ha, existing ? existing.area_ha : 0);
