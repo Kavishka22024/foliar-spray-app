@@ -438,6 +438,21 @@ thead .mon-field { font-size: 12px; font-weight: 700; color: var(--muted); text-
 .pluckpart .slider { padding: 0; border: 0; background: none; box-shadow: none; }
 .pluckpart .sl-head { flex-direction: column; align-items: flex-start; gap: 2px; } .pluckpart .sl-val { font-size: 15px; } .pluckpart .sl-btns { flex-wrap: wrap; gap: 6px; } .pluckpart .sl-btns .btn { padding: 6px 10px; min-height: 36px; }
 @media (max-width: 860px) { .halves { margin: 10px -12px 0; } .half { padding: 8px 10px 10px; } .pluckparts { gap: 8px; } .pluckpart { padding: 10px 9px 12px; } }
+
+/* ---- slider marks (0 25 50 75 100) ---- */
+.rt-ticks { position: relative; height: 20px; margin: -2px 0 4px; }
+.rt-ticks span { position: absolute; top: 0; left: calc(17px + (100% - 34px) * var(--k)); transform: translateX(-50%); font-size: 11px; color: var(--muted); padding-top: 6px; font-variant-numeric: tabular-nums; }
+.rt-ticks span::before { content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 5px; margin-left: -1px; border-radius: 1px; background: var(--line-strong); }
+
+/* ---- explanations in a dropper: a small (i), the text opens when tapped ---- */
+.titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .titlerow h1 { margin: 0; }
+.drop { display: inline-block; vertical-align: middle; font-weight: 400; font-size: 13px; text-transform: none; letter-spacing: 0; }
+.drop > summary { list-style: none; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; color: var(--muted); user-select: none; }
+.drop > summary::-webkit-details-marker { display: none; }
+.drop > summary:hover, .drop[open] > summary { color: var(--primary); background: var(--primary-soft); } .drop > summary:focus-visible { outline: 3px solid var(--ring); }
+.drop > summary svg { width: 18px; height: 18px; }
+.drop[open] { display: block; flex-basis: 100%; } .drop-body { margin: 6px 0 4px; padding: 10px 12px; max-width: 62ch; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; color: var(--ink-2); line-height: 1.45; text-align: left; }
+.sl-btns .drop[open] { flex-basis: 100%; }
 </style>
 
 </head>
@@ -502,7 +517,8 @@ const ICONS = {
   trend: ['M22 7l-8.5 8.5-5-5L2 17', 'M16 7h6v6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
-  upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12']
+  upload: ['M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4', 'M17 8l-5-5-5 5', 'M12 3v12'],
+  info: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M12 16v-4', 'M12 8h.01']
 };
 function icon(name, cls) {
   const NS = 'http://www.w3.org/2000/svg';
@@ -615,7 +631,11 @@ function table(cols, rows, rowClass, opts) {
 }
 function badge(text, kind) { return h('span', { class: 'badge ' + (kind || '') }, text); }
 function methodBadge(m) { return m ? h('span', { class: 'badge ' + (m === 'Drone' ? 'drone' : (m === 'Mixed' ? 'mixed' : 'manual')) }, m) : badge('Unassigned', 'bad'); }
-function pageHead(title, sub, actions) { return h('div', { class: 'pagehead' }, h('div', null, h('h1', null, title), sub ? h('p', { class: 'muted' }, sub) : null), actions || null); }
+/** An explanation nobody has to read: a small (i) button; the text opens only when it is tapped. */
+function help(text, label) {
+  return h('details', { class: 'drop' }, h('summary', { 'aria-label': label || 'More information', title: label || 'More information' }, icon('info')), h('div', { class: 'drop-body' }, text));
+}
+function pageHead(title, sub, actions) { return h('div', { class: 'pagehead' }, h('div', null, h('div', { class: 'titlerow' }, h('h1', null, title), sub ? help(sub) : null)), actions || null); }
 
 // ---------- login / password screens
 function app() { return clear(document.getElementById('app')); }
@@ -623,7 +643,6 @@ function authScreen(inner) {
   const hero = h('div', { class: 'auth-hero' },
     h('div', { class: 'brand' }, h('div', { class: 'brand-mark' }, icon('leaf')), h('div', { class: 'brand-text', style: 'color:#fff' }, 'Foliar Spray Experiment')),
     h('div', null, h('h2', null, 'Drone vs manual foliar spraying, measured field by field.'),
-      h('p', null, 'Record spraying and plucking from the field and follow the results in one place.'),
       h('ul', null, h('li', null, icon('droplet'), 'Foliar spray records for every field'), h('li', null, icon('basket'), 'Daily green leaf plucking records'), h('li', null, icon('dashboard'), 'Drone vs manual comparison dashboard'))),
     h('div', { class: 'small', style: 'color:rgba(255,255,255,.7)' }, 'Authorised users only. Your activity is recorded.'));
   app().appendChild(h('div', { class: 'auth' }, hero, h('div', { class: 'auth-pane' }, h('div', { class: 'login' },
@@ -648,7 +667,7 @@ function showLogin(message) {
       }).catch(function (e) { box.appendChild(msgBox('err', e.message)); });
     });
   } },
-    h('div', null, h('h1', null, 'Welcome back'), h('div', { class: 'muted' }, 'Sign in to record and review field data.')),
+    h('div', null, h('h1', null, 'Welcome back')),
     message ? msgBox('warn', message) : null,
     field('Username', user), field('Password or PIN', pw), box, btn);
   authScreen(form);
@@ -675,7 +694,7 @@ function showForcedChange() {
         .catch(function (e) { box.appendChild(msgBox('err', e.message)); });
     });
   } },
-    h('div', null, h('h1', null, 'Choose a new password'), h('div', { class: 'muted' }, 'You are using a temporary password. Choose your own (at least ' + min + ' characters) to continue.')),
+    h('div', null, h('h1', null, 'Choose a new password'), h('div', { class: 'muted' }, 'Choose your own password (at least ' + min + ' characters).')),
     field('Temporary password', old), field('New password', n1), field('Repeat new password', n2), box, btn);
   authScreen(form);
   old.focus();
@@ -910,7 +929,7 @@ function openSyncPanel() {
     const s = Sync.status(), items = Sync.items();
     body.appendChild(h('div', { class: 'msg ' + (s.kind === 'ok' ? 'ok' : (s.kind === 'problem' ? 'err' : 'warn')), style: 'margin:0' }, icon(s.kind === 'ok' ? 'check' : 'alert'),
       h('div', null, s.kind === 'ok' ? 'Everything is uploaded.' : s.text + '.', Sync.lastOk ? h('div', { class: 'small' }, 'Last upload: ' + Sync.lastOk.replace('T', ' ').slice(0, 16)) : null)));
-    if (!items.length) { body.appendChild(h('p', { class: 'muted' }, 'Nothing is waiting. Entries you submit are saved on this phone first and uploaded as soon as there is signal.')); return; }
+    if (!items.length) { body.appendChild(h('p', { class: 'muted' }, 'Nothing is waiting. ', help('Entries you submit are saved on this phone first and uploaded as soon as there is signal.'))); return; }
     items.forEach(function (it) {
       const src = it.event ? it.event.lines : it.lines;
       const codes = src.map(function (l) { return (it.names && it.names[l.field_id]) || '?'; });
@@ -970,7 +989,21 @@ function hoursBetween(start, end) {
 function r2(v) { return Math.round(v * 100) / 100; }
 function shortDate(s) { if (!s) return ''; const d = new Date(s + 'T00:00:00Z'); return d.getUTCDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]; }
 
-/** Slider = running total for the round. Earlier days (doneHa) are frozen; today's work is what you add. 100% completes the round. */
+/** Magnetic slider: dragging near 0, 25, 50, 75 or 100% of the range snaps to that point (within MAGNET percentage points). Points outside [lo, hi] are skipped;
+ *  `extra` adds more points (e.g. the highest value an earlier event may have). Only dragging snaps: the +/- buttons move freely. */
+const SLIDER_POINTS = [0, 25, 50, 75, 100], MAGNET = 3;
+function magnet(pct, lo, hi, extra) {
+  let best = null;
+  SLIDER_POINTS.concat(extra || []).forEach(function (d) {
+    if (d < lo - 1e-9 || d > hi + 1e-9) return;
+    if (Math.abs(pct - d) <= MAGNET && (best === null || Math.abs(pct - d) < Math.abs(pct - best))) best = d;
+  });
+  return best === null ? pct : best;
+}
+/** The marks under a slider track: 0 25 50 75 100. */
+function sliderTicks() { return h('div', { class: 'rt-ticks', 'aria-hidden': 'true' }, SLIDER_POINTS.map(function (d) { return h('span', { style: '--k:' + d / 100 }, d === 100 ? '100%' : String(d)); })); }
+
+/** Slider = running total for the round. Earlier days (doneHa) are frozen; today's work is what you add. The right end (100%) completes the round. */
 function roundSlider(maxHa, doneHa, startToday) {
   const step = 0.05;
   const snap = function (v) { v = Math.round(v / step) * step; if (maxHa - v < step / 2 + 1e-9) v = maxHa; if (v < doneHa) v = doneHa; return Math.min(maxHa, Math.round(v * 1000) / 1000); };
@@ -981,7 +1014,6 @@ function roundSlider(maxHa, doneHa, startToday) {
   const listeners = [];
   const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos - 0.1); } }, '- 0.1');
   const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos + 0.1); } }, '+ 0.1');
-  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(maxHa); } }, '100%');
   function show() {
     track.style.setProperty('--q', String(maxHa ? pos / maxHa : 0)); track.style.setProperty('--p', String(maxHa ? doneHa / maxHa : 0));
     today.textContent = (pos - doneHa > 0.0001 ? '+' : '') + r2(pos - doneHa).toFixed(2) + ' ha today';
@@ -991,11 +1023,14 @@ function roundSlider(maxHa, doneHa, startToday) {
     listeners.forEach(function (f) { f(); });
   }
   function set(v) { pos = snap(v); range.value = String(pos); show(); }
-  range.addEventListener('input', function () { pos = snap(parseFloat(range.value)); range.value = String(pos); show(); });
+  range.addEventListener('input', function () {                                   // dragging: snap to 0 / 25 / 50 / 75 / 100% of the part when close
+    const lo = maxHa ? doneHa / maxHa * 100 : 0, raw = parseFloat(range.value);
+    pos = snap(maxHa ? magnet(raw / maxHa * 100, lo, 100) / 100 * maxHa : raw); range.value = String(pos); show();
+  });
   show();
-  const node = h('div', { class: 'slider' }, h('div', { class: 'sl-head' }, today, total), h('div', { class: 'sl-tag' }, tag), track,
-    doneHa > 0 ? h('div', { class: 'sl-note' }, icon('lock'), 'Earlier days: ' + r2(doneHa) + ' ha (locked, you can only move forward)') : null,
-    h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full));
+  const node = h('div', { class: 'slider' }, h('div', { class: 'sl-head' }, today, total), h('div', { class: 'sl-tag' }, tag), track, sliderTicks(),
+    doneHa > 0 ? h('div', { class: 'sl-note' }, icon('lock'), 'Earlier days: ' + r2(doneHa) + ' ha (locked)') : null,
+    h('div', { class: 'sl-btns' }, minus, plus, help('Slide all the way to the right when the round is finished. Earlier days are locked: you can only move forward.')));
   return { node: node, get: function () { return { area: Math.max(0, r2(pos - doneHa)), pos: pos, complete: pos >= maxHa - 0.0049 }; }, onChange: function (f) { listeners.push(f); } };
 }
 
@@ -1011,7 +1046,7 @@ function askVoid(type, r, done) {
   const why = h('input', { type: 'text', maxlength: '200', placeholder: 'e.g. wrong field, entered twice' });
   modal('Void this record?', h('div', { class: 'stack' },
     h('div', null, r.date + '  ' + (r.division ? r.division + ' ' : '') + r.field_code),
-    h('div', { class: 'muted small' }, type === 'spray' ? 'This voids the whole spray event this record belongs to (all its fields). It is kept for audit but no longer counts in any total.' : 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
+    help(type === 'spray' ? 'This voids the whole spray event this record belongs to (all its fields). It is kept for audit but no longer counts in any total.' : 'The record is kept for audit but no longer counts in any total.'), field('Reason (required)', why)), [
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Void record', kind: 'danger', onclick: function (m, btn) {
       run(btn, function () {
@@ -1268,7 +1303,7 @@ function fieldStrip(ctx) {
   const other = h('div', { class: 'fs-seg other ' + o.method.toLowerCase(), style: 'flex:' + o.ha + ' 1 0' }, h('i', { class: 'fs-fill', style: 'width:' + Math.min(100, o.done_pct) + '%' }),
     h('span', { class: 'fs-t' }, h('b', null, r2(o.ha) + ' ha'), o.method + (o.done_pct >= 99.9 ? ', done' : (o.done_pct > 0 ? ', ' + Math.round(o.done_pct) + '% done' : ', not done')), h('span', { class: 'fs-lock' }, icon('lock'))));
   return { node: h('div', { class: 'fieldstrip', 'aria-label': 'The whole field: ' + r2(ctx.fieldHa) + ' ha, ' + r2(ctx.partHa) + ' ha ' + t.toLowerCase() + ' and ' + r2(o.ha) + ' ha ' + o.method.toLowerCase() },
-    h('div', { class: 'fs-bar' }, mine, other), h('div', { class: 'muted small fs-cap' }, 'Whole field ' + r2(ctx.fieldHa) + ' ha. The ' + o.method.toLowerCase() + ' part is sprayed in a separate ' + o.method + ' event, so it cannot be changed here.')),
+    h('div', { class: 'fs-bar' }, mine, other), h('div', { class: 'muted small fs-cap' }, 'Whole field ' + r2(ctx.fieldHa) + ' ha ', help('The ' + o.method.toLowerCase() + ' part is sprayed in a separate ' + o.method + ' event, so it cannot be changed here.'))),
     set: function (before, v) { mineFrozen.style.width = before + '%'; mineFill.style.width = v + '%'; } };
 }
 
@@ -1285,7 +1320,6 @@ function coverSlider(areaHa, beforePct, pct, onChange, ctx, maxPct) {
   const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' });
   const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v - 5); } }, '- 5%');
   const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v + 5); } }, '+ 5%');
-  const full = h('button', { type: 'button', class: 'btn pct', onclick: function () { set(hi); } }, hi < 100 ? 'Up to ' + hi + '%' : '100%');
   function show() {
     track.style.setProperty('--q', String(v / 100)); track.style.setProperty('--p', String(beforePct / 100));
     head.textContent = v + '% of the ' + what + ' = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
@@ -1295,12 +1329,12 @@ function coverSlider(areaHa, beforePct, pct, onChange, ctx, maxPct) {
     if (onChange) onChange(v);
   }
   function set(x) { v = Math.max(lo, Math.min(hi, Math.round(x))); range.value = String(v); show(); }
-  range.addEventListener('input', function () { set(parseFloat(range.value)); });
+  range.addEventListener('input', function () { set(magnet(parseFloat(range.value), lo, hi, hi < 100 ? [hi] : [])); });          // dragging snaps to 0 / 25 / 50 / 75 / 100% (and to the highest allowed value)
   show();
-  return { node: h('div', { class: 'slider' }, head, sub, strip ? strip.node : null, track,
-    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% ' + (ctx ? 'of the ' + what + ' ' : '') + 'was sprayed earlier (locked, you can only go forward)') : null,
-    hi < 100 ? h('div', { class: 'sl-note' }, icon('lock'), 'A later spray event on this ' + (ctx ? 'part' : 'field') + ' already covers the rest, so this event can go up to ' + hi + '%. To go higher, lower that later event first.') : null,
-    h('div', { class: 'sl-btns' }, minus, plus, h('span', { style: 'flex:1' }), full)), get: function () { return v; } };
+  return { node: h('div', { class: 'slider' }, head, sub, strip ? strip.node : null, track, sliderTicks(),
+    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% ' + (ctx ? 'of the ' + what + ' ' : '') + 'done earlier (locked)') : null,
+    hi < 100 ? h('div', { class: 'sl-note' }, icon('lock'), 'Up to ' + hi + '%: a later spray event covers the rest', help('A later spray event on this ' + (ctx ? 'part' : 'field') + ' already covers the rest, so this event can go up to ' + hi + '%. To go higher, lower that later event first.')) : null,
+    h('div', { class: 'sl-btns' }, minus, plus)), get: function () { return v; } };
 }
 
 function newEventState(date, method) {
@@ -1402,7 +1436,7 @@ function openSprayEvent(o) {
   function renderCover() {
     clear(covBox);
     const ids = Object.keys(st.pct);
-    if (!ids.length) { covBox.appendChild(h('div', { class: 'covempty' }, icon('droplet'), h('div', null, 'Tap the field cards above. Each field you add appears here at 100%. Tap its ring if only part of it was sprayed.'))); return; }
+    if (!ids.length) { covBox.appendChild(h('div', { class: 'covempty' }, icon('droplet'), h('div', null, 'Selected fields appear here ', help('Each field you add appears here at 100%. Tap its ring if only part of it was sprayed.')))); return; }
     const grid = h('div', { class: 'covgrid' });
     fields.filter(function (f) { return st.pct[f.field_id] !== undefined; }).forEach(function (f) { grid.appendChild(covCard(f)); });
     covBox.appendChild(grid);
@@ -1440,7 +1474,7 @@ function openSprayEvent(o) {
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The mix and the crew'), methodBox,
       h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), h('div', null, menField, dronesField)),
       h('div', { class: 'pair' }, field('Start time', start), field('End time', end))),
-    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?'), h('div', { class: 'muted small', style: 'margin:-4px 0 10px' }, 'Tap a field card to add it. Tap it again to remove it.'), pickBox),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?', help('Tap a field card to add it. Tap it again to remove it.')), pickBox),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How much of each field was covered?'), covBox),
     err);
   const choice = h('div', { class: 'methodchoice' }), body = h('div', { class: 'evform' }, choice, formBox);
@@ -1448,8 +1482,7 @@ function openSprayEvent(o) {
   /** Before anything else the person says how it was sprayed; then only that method's fields are shown. */
   function renderChoice() {
     clear(choice);
-    choice.appendChild(h('div', { class: 'evsec-h' }, 'How was the foliar sprayed?'));
-    choice.appendChild(h('div', { class: 'muted small', style: 'margin:-4px 0 12px' }, 'Choose first. You will then see only the fields reserved for that way of spraying.'));
+    choice.appendChild(h('div', { class: 'evsec-h' }, 'How was the foliar sprayed?', help('Choose first. You will then see only the fields reserved for that way of spraying.')));
     choice.appendChild(h('div', { class: 'mc-grid' }, methods.map(function (m) {
       const list = fields.filter(function (f) { return sprayPart(f, m).ha > 0; }), n = list.length, part = list.filter(function (f) { return f.method === 'Mixed'; }).length;
       return h('button', { type: 'button', class: 'mc ' + m.toLowerCase(), 'data-method': m, onclick: function () { choose(m); } },
@@ -1570,7 +1603,7 @@ VIEWS['spray.entry'] = function (root) {
     const btn = h('button', { type: 'button', class: 'evcreate' + (draft ? ' has-draft' : ''), 'data-role': 'create-event', onclick: function () { openNew(btn); } },
       h('span', { class: 'ec-ic' }, icon('plus')),
       h('span', { class: 'ec-t' }, draft ? 'Continue the unfinished spray event' : 'Create spray event'),
-      h('span', { class: 'ec-s' }, draft ? n + (n === 1 ? ' field' : ' fields') + (draft.kg ? ', ' + draft.kg + ' kg' : '') + '. Saved on this phone.' : 'Enter the kg applied and the men used, then tap the fields that were sprayed.'));
+      draft ? h('span', { class: 'ec-s' }, n + (n === 1 ? ' field' : ' fields') + (draft.kg ? ', ' + draft.kg + ' kg' : '') + '. Saved on this phone.') : null);
     createBox.appendChild(btn);
   }
   function openNew(from) {
@@ -1622,7 +1655,7 @@ VIEWS['spray.entry'] = function (root) {
 
   function askDelete(c) {
     modal('Delete this spray event?', h('div', { class: 'stack' }, h('div', null, 'Spray event' + (c.no ? ' ' + c.no : '') + ': ' + r2(c.total_ha).toFixed(2) + ' ha, ' + r2(c.kg) + ' kg, ' + c.lines.length + (c.lines.length === 1 ? ' field' : ' fields') + '.'),
-      h('div', { class: 'muted small' }, c.kind === 'queued' && !c.server ? 'It has not been uploaded yet. It will simply be removed from this phone.' : 'It no longer counts in any total. The fields go back to how much was sprayed before it. A record of the deletion is kept.')), [
+      help(c.kind === 'queued' && !c.server ? 'It has not been uploaded yet. It will simply be removed from this phone.' : 'It no longer counts in any total. The fields go back to how much was sprayed before it. A record of the deletion is kept.')), [
       { label: 'Keep it', onclick: function (m) { m.close(); } },
       { label: 'Delete event', kind: 'danger', onclick: function (m, btn) {
         const item = Sync.items().filter(function (i) { return i.event && i.event.event_id === c.event_id; })[0];
@@ -1671,7 +1704,7 @@ function mixedPluckPopup(f, existing, ctl) {
   });
   const left = ctl.voidRec ? [{ label: 'Void record', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.voidRec(); } }] : (ctl.canRemove ? [{ label: 'Remove', kind: 'danger', left: true, onclick: function (m) { m.close(); ctl.remove(); } }] : []);
   modal(popTitle(f), h('div', { class: 'stack' },
-    h('div', { class: 'callout' }, 'This field is sprayed partly by drone and partly by hand, so its green leaf is entered in two parts. Enter either part, or both. ' + roundNote(f.progress, f, 'plucked')),
+    h('div', { class: 'callout' }, roundNote(f.progress, f, 'plucked'), ' ', help('This field is sprayed partly by drone and partly by hand, so its green leaf is entered in two parts. Enter either part, or both.')),
     row, err), left.concat([
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Save details', kind: 'primary', onclick: function (m) {
@@ -1694,7 +1727,7 @@ function mixedPluckPopup(f, existing, ctl) {
 VIEWS['pluck.entry'] = function (root) {
   entryScreen(root, {
     type: 'pluck', title: 'Plucking',
-    intro: 'Tap a field card to enter the green leaf weight and how much of the field was plucked. Press 100% when the round is finished. A field sprayed partly by drone and partly by hand has two sides: drone on the left, manual on the right.',
+    intro: 'Tap a field card to enter the green leaf weight and how much of the field was plucked. Slide to the right end when the round is finished. A field sprayed partly by drone and partly by hand has two sides: drone on the left, manual on the right.',
     idle: function (f) { const p = f.progress; return 'Round ' + p.round + (p.done_ha > 0 ? ', day ' + p.day_no + ': ' + p.done_ha + ' of ' + r2(f.area_ha) + ' ha done' : ': not started'); },
     bar: function (f) { const p = f.progress; return p.done_ha > 0 ? Math.min(100, Math.round(p.done_ha / f.area_ha * 100)) : null; },
     summary: function (f, d) {
@@ -1819,7 +1852,7 @@ VIEWS['records.manage'] = function (root) {
       body = h('div', { class: 'grid' }, field('Green leaf (kg)', f.kg), field('Area plucked (ha)', f.area_ha));
     }
     const err = h('div');
-    modal('Edit record: ' + r.date + ' / ' + r.division + ' ' + r.field_code, h('div', { class: 'stack' }, h('div', { class: 'muted small' }, 'Date and field cannot be changed. Void the record and enter it again for that. The change is logged.'), body, err), [
+    modal('Edit record: ' + r.date + ' / ' + r.division + ' ' + r.field_code, h('div', { class: 'stack' }, help('Date and field cannot be changed. Void the record and enter it again for that. The change is logged.'), body, err), [
       { label: 'Cancel', onclick: function (m) { m.close(); } },
       { label: 'Save changes', kind: 'primary', onclick: function (m, btn) {
         const patch = {}; Object.keys(f).forEach(function (k) { patch[k] = f[k].value; }); clear(err);
@@ -1885,7 +1918,7 @@ VIEWS['estate.manage'] = function (root) {
     const n = numInput('', { step: '1', min: '1', max: '30', placeholder: 'e.g. 5' });
     const msg = h('div');
     out.appendChild(h('div', { class: 'card stack' }, h('h2', null, 'Create the estate'),
-      h('div', { class: 'muted' }, 'Enter the estate name and how many divisions it has. The divisions are created for you; you then add the fields to each.'),
+      help('Enter the estate name and how many divisions it has. The divisions are created for you; you then add the fields to each.'),
       h('div', { class: 'row' }, h('div', { class: 'grow' }, field('Estate name', name)), h('div', { class: 'grow' }, field('Number of divisions', n))), msg,
       h('div', null, h('button', { class: 'btn primary', onclick: function (ev) {
         run(ev.currentTarget, function () { return api('api_createEstate', { name: name.value, division_count: n.value }).then(function () { toast('Estate created'); return refresh(); }).catch(function (e) { clear(msg).appendChild(msgBox('err', e.message)); }); });
@@ -1973,7 +2006,7 @@ VIEWS['estate.manage'] = function (root) {
     out.appendChild(h('div', { class: 'card' },
       h('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, h('h2', { style: 'margin:0' }, dv.name + ': fields'),
         h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openDiv = null; refresh(); } }, 'Back to divisions'), saveBtn)),
-      h('div', { class: 'muted small', style: 'margin:6px 0' }, 'For every field enter the area, the drone area, the last pruning date and the tea type. The drone area is the part of the field that the drone sprays; the rest is sprayed by hand. Enter 0 if the whole field is sprayed by hand, or the whole area if it is all by drone. Fields that are not complete cannot be used for data entry.'),
+      help('For every field enter the area, the drone area, the last pruning date and the tea type. The drone area is the part of the field that the drone sprays; the rest is sprayed by hand. Enter 0 if the whole field is sprayed by hand, or the whole area if it is all by drone. Fields that are not complete cannot be used for data entry.'),
       h('div', { class: 'row fillbar' }, h('strong', { class: 'small' }, 'Fill empty cells in all rows:'), fillTea, fillMeth, fillPrune, fillArea,
         h('button', { class: 'btn small', onclick: function () {
           rows.forEach(function (r) {
@@ -2061,7 +2094,7 @@ VIEWS['users.manage'] = function (root) {
     function renderFields() {
       clear(fieldsBox);
       const r = roleOf();
-      if (!r || r.is_admin || r.field_scope !== 'assigned') { if (r) fieldsBox.appendChild(h('div', { class: 'muted small' }, 'Field scope for this role: ' + (SCOPE_TEXT[r.field_scope] || '') + '. No fields need to be assigned.')); return; }
+      if (!r || r.is_admin || r.field_scope !== 'assigned') { if (r) fieldsBox.appendChild(h('div', { class: 'muted small' }, 'Field scope: ' + (SCOPE_TEXT[r.field_scope] || ''), help('No fields need to be assigned to this person.'))); return; }
       if (!estate.estate) { fieldsBox.appendChild(msgBox('warn', 'Create the estate and fields first, then assign them here.')); return; }
       fieldsBox.appendChild(h('div', { class: 'row', style: 'justify-content:space-between' }, h('strong', null, 'Fields this person is responsible for'), countLbl));
       groupBy(estate.fields.filter(function (f) { return f.active; }), function (f) { return f.division; }).forEach(function (g) {
@@ -2115,7 +2148,7 @@ VIEWS['roles.manage'] = function (root) {
       clear(out);
       tasksCache = tasks; newRoleBtn.disabled = false;
       out.appendChild(h('div', { class: 'card flush' },
-        table([{ label: 'Role', render: function (r) { return [h('strong', null, r.role_name), r.description ? h('div', { class: 'muted small' }, r.description) : null]; } },
+        table([{ label: 'Role', render: function (r) { return [h('strong', null, r.role_name), ' ', r.description ? help(r.description) : null]; } },
           { label: 'Tasks (tabs)', render: function (r) { return r.is_admin ? badge('Everything', 'warn') : (r.tasks.length ? r.tasks.map(function (t) { return [badge(label[t] || t), ' ']; }) : h('span', { class: 'muted' }, 'None')); } },
           { label: 'Can record on', cls: 'hide-sm', render: function (r) { return SCOPE_TEXT[r.field_scope]; } },
           { label: 'Users', cls: 'num', key: 'user_count' }, { label: 'Status', render: function (r) { return r.active ? badge('Active', 'good') : badge('Inactive', 'bad'); } },
@@ -2135,7 +2168,7 @@ VIEWS['roles.manage'] = function (root) {
       g.items.forEach(function (t) {
         const cb = h('input', { type: 'checkbox', id: 'tk-' + t.id, checked: r.tasks.indexOf(t.id) >= 0 });
         boxes[t.id] = cb;
-        gd.appendChild(h('div', { class: 'taskrow' }, cb, h('label', { for: 'tk-' + t.id }, h('strong', null, t.label), ' ', t.sensitive ? badge('Admin-level', 'bad') : null, h('div', { class: 'muted small' }, t.desc))));
+        gd.appendChild(h('div', { class: 'taskrow' }, cb, h('label', { for: 'tk-' + t.id }, h('strong', null, t.label), ' ', t.sensitive ? badge('Admin-level', 'bad') : null, ' ', help(t.desc))));
       });
       groups.appendChild(gd);
     });
@@ -2169,7 +2202,7 @@ VIEWS['params.manage'] = function (root) {
       clear(out);
       groupBy(list, function (p) { return p.group; }).forEach(function (g) {
         out.appendChild(h('div', { class: 'card' }, h('h2', null, g.key), table([
-          { label: 'Parameter', render: function (p) { return [h('div', null, p.label), p.help ? h('div', { class: 'muted small' }, p.help) : null]; } },
+          { label: 'Parameter', render: function (p) { return [h('div', null, p.label, ' ', p.help ? help(p.help) : null)]; } },
           { label: 'Current value', render: function (p) { return [h('strong', null, show(p)), p.is_default ? h('span', { class: 'muted small' }, '  default') : null]; } },
           { label: 'Since', cls: 'nowrap hide-sm', render: function (p) { return p.dated && p.effective_from ? p.effective_from : ''; } },
           { label: '', cls: 'nowrap', render: function (p) { return [h('button', { class: 'btn small', onclick: function () { change(p); } }, 'Change'), ' ',
@@ -2300,7 +2333,7 @@ function roundsCard(r) {
   }
   paint();
   return h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:6px' }, h('h2', { style: 'margin:0' }, 'Rounds'), seg),
-    h('p', { class: 'muted small', style: 'margin:0 0 12px' }, 'A round is finished when the whole field has been covered, which can take several days. Days to complete counts from the first day of the round to the day it was finished. The gap is the number of days between the first day of a round and the first day of the round before it.'), box);
+    help('A round is finished when the whole field has been covered, which can take several days. Days to complete counts from the first day of the round to the day it was finished. The gap is the number of days between the first day of a round and the first day of the round before it.'), box);
 }
 
 /** The earlier plain summary (daily totals, by years since prune, rounds). Kept inside Experiment monitoring until that part is designed. */
@@ -2355,12 +2388,11 @@ function legacyDashboard(root, noHead) {
           { label: 'Sprayed ha (D / M)', cls: 'num hide-sm', render: function (r) { return (r.spray.Drone.ha || r.spray.Manual.ha) ? num(r.spray.Drone.ha, 1) + ' / ' + num(r.spray.Manual.ha, 1) : ''; } }], d.daily.slice().reverse(), null, { scroll: true })));
 
       out.appendChild(h('div', { class: 'card' }, h('h2', null, 'By years since last prune'),
-        h('div', { class: 'muted small', style: 'margin:-6px 0 10px' }, 'Age is measured from the field\'s last pruning date to the day of plucking.'),
+        help('Age is measured from the field\'s last pruning date to the day of plucking.'),
         table([{ label: 'Years since prune', render: function (r) { return h('strong', null, r.band); } },
           { label: 'Drone kg', cls: 'num', render: function (r) { return cell(r.Drone.kg, 0); } }, { label: 'Drone ha', cls: 'num', render: function (r) { return cell(r.Drone.ha, 1); } }, { label: 'Drone kg/ha', cls: 'num', render: function (r) { return cell(r.Drone.kg_per_ha); } },
           { label: 'Manual kg', cls: 'num', render: function (r) { return cell(r.Manual.kg, 0); } }, { label: 'Manual ha', cls: 'num', render: function (r) { return cell(r.Manual.ha, 1); } }, { label: 'Manual kg/ha', cls: 'num', render: function (r) { return cell(r.Manual.kg_per_ha); } }], d.byPrune, null, { scroll: true })));
       out.appendChild(roundsCard(d.rounds));
-      out.appendChild(h('p', { class: 'muted small' }, 'This first dashboard shows that everything entered arrives in one place. The KPI and cost views are added once data collection is running.'));
     }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
   }
 }
@@ -2480,7 +2512,7 @@ function roundsScreen(host, kind, load) {
       h('li', null, h('i', { class: 'swatch drone' }), 'Drone field'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual field'), h('li', null, h('i', { class: 'swatch mixed' }), 'Part drone, part manual (the blue share is the drone share)'), h('li', null, h('i', { class: 'swatch open' }), 'Round not finished'),
       h('li', null, h('em', { class: 'pill ok' }, data.target_gap + 'd'), 'Days between round starts, within the target'), h('li', null, h('em', { class: 'pill late' }, (data.target_gap + 4) + 'd +4'), 'Later than the target, with the days beyond it'),
       h('li', null, h('b', { class: 'chip' }, '3 rounds'), 'Rounds that started in that month')));
-    body.appendChild(h('p', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + ' between the first days of two rounds (the Admin sets it under Parameters). Showing ' + shortDate(data.from) + ' to ' + shortDate(data.to) + '. Hover a round or a gap for the details.'));
+    body.appendChild(h('div', { class: 'muted small', style: 'margin:6px 0 10px' }, 'Target gap: ' + daysWord(data.target_gap) + '  |  ' + shortDate(data.from) + ' to ' + shortDate(data.to) + ' ', help('The target gap is the number of days between the first days of two rounds (the Admin sets it under Parameters). Hover a round or a gap for the details.')));
     if (!shown.fields.length) { body.appendChild(emptyState('No fields are set up yet.', 'map')); return; }
     tl = roundsTimeline(shown, zoom, MON_WORDS[kind]);
     body.appendChild(tl.node);
