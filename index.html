@@ -681,6 +681,29 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .hm-none { padding: 14px 4px 4px; color: var(--muted); font-size: 14px; }
 @media (max-width: 760px) { .hm-fgrid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); } .hm-rows { grid-template-columns: 1fr; } .hm-pop-big { font-size: 26px; } }
 @media (prefers-reduced-motion: reduce) { .hm-card, .hm-go { transition: none; } .hm-card:hover { transform: none; } }
+/* ---- Home: the entered-today cards (a mini version of the entry windows) ---- */
+.hm-ecgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.hm-ec { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 12px 14px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.hm-ec-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .hm-ec-head b { font-size: 17px; } .hm-ec-head .nm { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.hm-ec-head .tag { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); } .hm-ec-head .tag.drone { color: var(--drone); } .hm-ec-head .tag.manual { color: var(--manual); } .hm-ec-head .tag.mixed { color: var(--mixed); }
+.hm-ec-head .fha { margin-left: auto; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.hm-ec-parts { display: flex; flex-direction: column; gap: 8px; }
+.hm-pt { --pc: var(--line-strong); display: flex; flex-direction: column; gap: 7px; padding: 9px 11px 9px; border-radius: 12px; border-left: 4px solid var(--pc); background: color-mix(in srgb, var(--pc) 8%, var(--surface)); }
+.hm-pt.drone { --pc: var(--drone-solid); } .hm-pt.manual { --pc: var(--manual-solid); }
+.hm-pt-top { display: flex; align-items: center; gap: 12px; } .hm-donut { flex: none; line-height: 0; }
+.hm-pt-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.hm-pt-lab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--pc); } .hm-pt-lab .rd { font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); font-size: 11.5px; }
+.hm-done { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px 1px 6px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--good); background: var(--good-soft); } .hm-done svg { width: 12px; height: 12px; stroke-width: 3; }
+.hm-pt-big { font-size: 23px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--ink); } .hm-pt-big small { margin-left: 5px; font-size: 12.5px; font-weight: 600; letter-spacing: 0; color: var(--ink-2); }
+.hm-pt-sub { font-size: 12.5px; color: var(--ink-2); }
+.hm-sl { position: relative; height: 8px; border-radius: 6px; margin: 3px 7px 0 0; background: color-mix(in srgb, var(--pc) 16%, var(--surface)); }
+.hm-sl i { position: absolute; top: 0; bottom: 0; display: block; } .hm-sl .before { left: 0; border-radius: 6px 0 0 6px; background: color-mix(in srgb, var(--pc) 45%, var(--surface)); } .hm-sl .today { background: var(--pc); border-radius: 0 6px 6px 0; }
+.hm-sl .knob { position: absolute; top: 50%; width: 14px; height: 14px; margin-left: -7px; transform: translateY(-50%); border-radius: 50%; background: var(--surface); border: 3px solid var(--pc); box-shadow: 0 1px 3px rgba(19,34,26,.3); }
+.hm-sl-cap { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--ink-2); }
+.hm-pt.miss { flex-direction: row; align-items: center; gap: 10px; padding: 9px 11px; border-left-style: dashed; background: transparent; font-size: 13px; color: var(--muted); } .hm-pt.miss .hm-pt-lab { font-size: 11px; }
+.hm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.hm-foot .hm-by { margin-left: 0; } .hm-foot .hm-by .t { font-style: normal; color: var(--muted); font-size: 12px; }
+@media (max-width: 760px) { .hm-ecgrid { grid-template-columns: 1fr; } }
 </style>
 
 </head>
@@ -2559,29 +2582,57 @@ function hmDrop(ic, title, sub, content, open) {
   head.addEventListener('click', toggle); head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   return wrap;
 }
-/** The entries of a day field by field, under their divisions. chips(items) draws what each entry says; the names are the people who entered them. */
-function hmTodayList(d, recs, chips) {
+/** The position of an entry in its round, drawn like the slider of the entry windows: what was done earlier (light), what was entered today (solid) and the knob where it stands. */
+function hmSlider(r) {
+  const before = Math.min(r.before || 0, r.pct || 0), pct = r.pct || 0;
+  return h('div', { class: 'hm-sl', role: 'img', 'aria-label': Math.round(pct) + '% of the part done' + (before > 0 ? ', ' + Math.round(before) + '% of it earlier' : '') },
+    h('i', { class: 'before', style: 'width:' + before + '%' }), h('i', { class: 'today', style: 'left:' + before + '%;width:' + Math.max(pct - before, 0) + '%' }), h('b', { class: 'knob', style: 'left:' + pct + '%' }));
+}
+/** One part of a field as a mini entry window: the ring, the weight (or foliar kg), the area, the slider and the round. */
+function hmPart(kind, r, mixed) {
+  const m = HM_KIND[r.method] || 'none', d = donut(r.pct || 0, r.method, 56), pluck = kind === 'pluck';
+  const sub = pluck ? num(r.ha, 2) + ' ha plucked today' + (r.ha > 0 ? '  |  ' + num(r.kg / r.ha, 0) + ' kg/ha' : '') : num(r.ha, 2) + ' ha sprayed' + (r.start && r.end ? '  |  ' + r.start + ' to ' + r.end : '');
+  return h('div', { class: 'hm-pt ' + m, 'data-part': r.method },
+    h('div', { class: 'hm-pt-top' }, h('span', { class: 'hm-donut' }, d.node),
+      h('div', { class: 'hm-pt-txt' },
+        h('div', { class: 'hm-pt-lab' }, h('span', null, r.method), r.complete ? h('span', { class: 'hm-done' }, icon('check'), 'Round finished') : (r.round_no ? h('span', { class: 'rd' }, 'Round ' + r.round_no + ', day ' + r.round_day) : null)),
+        h('div', { class: 'hm-pt-big' }, num(r.kg, 1), h('small', null, pluck ? 'kg green leaf' : 'kg foliar used')),
+        h('div', { class: 'hm-pt-sub' }, sub))),
+    hmSlider(r),
+    h('div', { class: 'hm-sl-cap' }, h('span', null, Math.round(r.pct || 0) + '% of ' + (mixed ? 'the ' + r.method.toLowerCase() + ' part' : 'the field') + ' (' + num(r.ext, 1) + ' ha)'), r.before > 0 ? h('span', null, Math.round(r.before) + '% done earlier') : null));
+}
+/** A field's entries of the day as a mini version of the entry window: each part (drone, manual) with ring, kg, extent and slider, and who entered it and when. */
+function hmEntryCard(f, items, kind) {
+  const byM = {}; items.forEach(function (r) { (byM[r.method] = byM[r.method] || []).push(r); });
+  const mixed = f.method === 'Mixed', order = mixed ? ['Drone', 'Manual'] : Object.keys(byM).sort().reverse(), rows = [];
+  order.forEach(function (m) {
+    if (byM[m]) byM[m].forEach(function (r) { rows.push(hmPart(kind, r, mixed)); });
+    else if (kind === 'pluck') rows.push(h('div', { class: 'hm-pt miss ' + (HM_KIND[m] || ''), 'data-part': m }, h('span', { class: 'hm-pt-lab' }, m), h('span', null, 'Plucking not entered yet')));    // a mixed field is plucked on both sides: a missing side is worth a look
+  });
+  const seen = {}; items.forEach(function (r) { if (r.by && (!seen[r.by] || (r.at && r.at < seen[r.by]))) seen[r.by] = r.at || ''; });
+  return h('div', { class: 'hm-ec', 'data-code': f.code },
+    h('div', { class: 'hm-ec-head' }, h('b', null, f.code), f.name ? h('span', { class: 'nm' }, f.name) : null, h('span', { class: 'tag ' + (HM_KIND[f.method] || '') }, f.method || ''), h('span', { class: 'fha' }, num(f.area_ha, 1) + ' ha')),
+    h('div', { class: 'hm-ec-parts' }, rows),
+    h('div', { class: 'hm-foot' }, Object.keys(seen).map(function (n) { return h('span', { class: 'hm-by', title: 'Entered by ' + n }, h('i', { class: 'av' }, initials(n)), h('span', null, 'Entered by ' + n), seen[n] ? h('em', { class: 't' }, seen[n]) : null); })));
+}
+/** The entries of a day field by field, under their divisions, as mini entry cards. */
+function hmTodayList(d, recs, kind) {
   const byField = {}, out = h('div'); recs.forEach(function (r) { (byField[r.field_id] = byField[r.field_id] || []).push(r); });
   let any = false;
   d.divisions.forEach(function (dv) {
     const rows = dv.fields.filter(function (f) { return byField[f.field_id]; });
     if (!rows.length) return;
     any = true;
-    out.appendChild(h('section', { class: 'hm-div' }, h('div', { class: 'hm-divhead' }, h('b', null, dv.name), h('span', null, rows.length + (rows.length === 1 ? ' field' : ' fields'))),
-      h('div', { class: 'hm-rows' }, rows.map(function (f) {
-        const items = byField[f.field_id].slice().sort(function (a, b) { return a.method < b.method ? 1 : -1; }), names = [];
-        items.forEach(function (r) { if (r.by && names.indexOf(r.by) < 0) names.push(r.by); });
-        return h('div', { class: 'hm-row', 'data-code': f.code }, h('div', { class: 'r1' }, h('b', null, f.code), f.name ? h('span', { class: 'nm' }, f.name) : null, names.length ? hmWho(names) : null), h('div', { class: 'r2' }, chips(items)));
-      }))));
+    const kg = rows.reduce(function (t, f) { return t + byField[f.field_id].reduce(function (u, r) { return u + (r.kg || 0); }, 0); }, 0);
+    out.appendChild(h('section', { class: 'hm-div' }, h('div', { class: 'hm-divhead' }, h('b', null, dv.name), h('span', { class: 'grow' }, rows.length + ' of ' + dv.fields.length + (kind === 'pluck' ? ' fields plucked' : ' fields sprayed')), h('b', { class: 'hm-divha' }, num(kg, 0) + ' kg')),
+      h('div', { class: 'hm-ecgrid' }, rows.map(function (f) { return hmEntryCard(f, byField[f.field_id], kind); }))));
   });
   return any ? out : h('div', { class: 'hm-none' }, 'Nothing entered yet today.');
 }
 function hmOpenToday(d, from) {
   const st = d.stats, body = h('div');
-  const chipsP = function (items) { return items.map(function (r) { return h('span', { class: 'hm-chip ' + (HM_KIND[r.method] || '') }, r.method, h('b', null, num(r.kg, 1) + ' kg')); }); };
-  const chipsS = function (items) { return items.map(function (r) { return h('span', { class: 'hm-chip ' + (HM_KIND[r.method] || ''), title: r.start && r.end ? r.start + ' to ' + r.end : '' }, r.method, h('b', null, num(r.ha, 1) + ' ha'), h('em', null, num(r.kg, 1) + ' kg')); }); };
-  body.appendChild(hmDrop('basket', 'Plucking entered today', st.plucked_fields ? st.plucked_fields + ' of ' + st.fields + ' fields | ' + num(st.kg_today, 0) + ' kg' : 'nothing yet', hmTodayList(d, d.pluck_today, chipsP), true));
-  body.appendChild(hmDrop('droplet', 'Spray events entered today', st.spray_events ? st.spray_events + (st.spray_events === 1 ? ' event' : ' events') + ' | ' + st.spray_fields + ' fields | ' + num(st.spray_ha, 1) + ' ha' : 'nothing yet', hmTodayList(d, d.spray_today, chipsS), false));
+  body.appendChild(hmDrop('basket', 'Plucking entered today', st.plucked_fields ? st.plucked_fields + ' of ' + st.fields + ' fields | ' + num(st.kg_today, 0) + ' kg' : 'nothing yet', hmTodayList(d, d.pluck_today, 'pluck'), true));
+  body.appendChild(hmDrop('droplet', 'Spray events entered today', st.spray_events ? st.spray_events + (st.spray_events === 1 ? ' event' : ' events') + ' | ' + st.spray_fields + ' fields | ' + num(st.spray_ha, 1) + ' ha' : 'nothing yet', hmTodayList(d, d.spray_today, 'spray'), false));
   modal(hmTitle('clock', 'Entered today', 'Today so far, ' + fullDate(d.today)), body, hmClose(), { from: from, wide: true });
 }
 
