@@ -269,6 +269,8 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .ftile .t-tag { align-self: flex-start; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: rgba(255,255,255,.24); margin-top: 7px; }
 .ftile.ro { cursor: default; } .ftile.ro:not(.done):hover { background: var(--tile); }
 .syncpill { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: rgba(255,255,255,.08); color: #fff; font: inherit; font-size: 12.5px; font-weight: 600; padding: 9px 11px; border-radius: 10px; cursor: pointer; margin-bottom: 10px; text-align: left; }
+.stalebar { display: flex; align-items: center; gap: 9px; padding: 7px 18px; background: #fbf3df; color: #6b4e0a; border-bottom: 1px solid #efdcae; font-size: 12.5px; font-weight: 600; }
+.stalebar[hidden] { display: none; } .stalebar .sdot { width: 8px; height: 8px; border-radius: 50%; background: #e0a82e; flex: none; }
 .syncpill:hover { background: rgba(255,255,255,.16); }
 .syncpill .sdot { width: 9px; height: 9px; border-radius: 50%; background: #6fd9a4; flex: none; }
 .syncpill.offline .sdot { background: #f2c66d; } .syncpill.wait .sdot, .syncpill.busy .sdot { background: #7cc4ff; animation: pulse 1s ease-in-out infinite; } .syncpill.problem .sdot { background: #ff8a80; }
@@ -840,22 +842,32 @@ function transport(name, args, ok, fail) {
     .then(function (r) { return r.json(); }).then(ok).catch(fail);
 }
 function callServer(name, args) {
+  const readable = typeof Offline !== 'undefined' && Offline.canCache(name, args), ck = readable ? Offline.key(name, args.slice(1)) : '';
   return new Promise(function (resolve, reject) {
     function netFail(msg) { const e = new Error(msg); e.network = true; if (typeof Sync !== 'undefined') Sync.noteOnline(false); reject(e); }
-    if (typeof navigator !== 'undefined' && navigator.onLine === false) { netFail('No signal. Anything you enter is saved on this phone.'); return; }
+    /** No signal (or too slow): a window is built from what this phone saved the last time it loaded it with signal. */
+    function fallback() {
+      if (!readable || !Offline.has(ck)) { netFail(typeof Offline !== 'undefined' ? Offline.message(name, readable) : 'No signal.'); return; }
+      Offline.read(ck).then(function (rec) {
+        if (!rec) { netFail(Offline.message(name, readable)); return; }
+        if (typeof Sync !== 'undefined') Sync.noteOnline(false);
+        Offline.stale(rec.at); resolve(rec.data);
+      });
+    }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) { fallback(); return; }
     let finished = false;
-    const timer = setTimeout(function () { if (finished) return; finished = true; netFail('The connection is too slow. Anything you enter is saved on this phone.'); }, 45000);
+    const timer = setTimeout(function () { if (finished) return; finished = true; fallback(); }, readable && Offline.has(ck) ? 15000 : 45000);
     function onOk(r) {
       if (finished) return; finished = true; clearTimeout(timer);
       if (typeof Sync !== 'undefined') Sync.noteOnline(true);
-      if (r && r.ok) return resolve(r.data);
+      if (r && r.ok) { if (readable) Offline.write(ck, r.data); return resolve(r.data); }
       const err = new Error((r && r.error) || 'Request failed');
       err.code = r && r.code;
       if (err.code === 'SESSION_EXPIRED' || err.code === 'NO_SESSION') sessionEnded(err.message);
       else if (err.code === 'PASSWORD_CHANGE_REQUIRED') showForcedChange();
       reject(err);
     }
-    function onFail() { if (finished) return; finished = true; clearTimeout(timer); netFail('Could not reach the server. Anything you enter is saved on this phone.'); }
+    function onFail() { if (finished) return; finished = true; clearTimeout(timer); fallback(); }
     transport(name, args, onOk, onFail);
   });
 }
@@ -917,10 +929,18 @@ function showLogin(message) {
     ev.preventDefault();
     clear(box);
     run(btn, function () {
-      return apiPublic('api_login', user.value, pw.value).then(function (d) {
+      const typedName = user.value, typedPw = pw.value;
+      return apiPublic('api_login', typedName, typedPw).then(function (d) {
         S.token = d.token; S.me = d.me;
+        OfflineAuth.remember(typedName, typedPw, d.token, d.me);              // so the same password also works without signal
         pw.value = '';
         return enterApp();
+      }, function (e) {
+        if (!e.network) throw e;
+        return OfflineAuth.login(typedName, typedPw).then(function (acct) {   // no signal: the phone checks the password itself
+          S.token = acct.token; S.me = acct.me; pw.value = '';
+          return enterApp();
+        });
       }).catch(function (e) { box.appendChild(msgBox('err', e.message)); });
     });
   } },
@@ -932,6 +952,7 @@ function showLogin(message) {
 }
 function sessionEnded(message) {
   if (document.getElementById('app').querySelector('.login')) return; // already on the login screen
+  if (S.me && typeof Sync !== 'undefined' && Sync.items().some(function (i) { return !i.failed; })) { OfflineAuth.reauth(message); return; }   // entries are waiting: log in again right here, nothing is lost
   showLogin(message || 'Your session has ended. Please log in again.');
 }
 
@@ -947,7 +968,7 @@ function showForcedChange() {
     ev.preventDefault(); clear(box);
     if (n1.value !== n2.value) { box.appendChild(msgBox('err', 'The two new passwords do not match.')); return; }
     run(btn, function () {
-      return api('api_changePassword', old.value, n1.value).then(function (me) { S.me = me; return enterApp(); })
+      return api('api_changePassword', old.value, n1.value).then(function (me) { S.me = me; OfflineAuth.remember(me.username, n1.value, S.token, me); return enterApp(); })
         .catch(function (e) { box.appendChild(msgBox('err', e.message)); });
     });
   } },
@@ -968,7 +989,7 @@ function openChangePassword() {
     { label: 'Save', kind: 'primary', onclick: function (m, btn) {
       clear(box);
       if (n1.value !== n2.value) { box.appendChild(msgBox('err', 'The two new passwords do not match.')); return; }
-      run(btn, function () { return api('api_changePassword', old.value, n1.value).then(function () { m.close(); toast('Password changed'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
+      run(btn, function () { return api('api_changePassword', old.value, n1.value).then(function () { OfflineAuth.remember(S.me.username, n1.value, S.token, S.me); m.close(); toast('Password changed'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
     } }
   ]);
 }
@@ -983,7 +1004,7 @@ function openChangeUsername() {
     { label: 'Cancel', onclick: function (m) { m.close(); } },
     { label: 'Save', kind: 'primary', onclick: function (m, btn) {
       clear(box);
-      run(btn, function () { return api('api_changeUsername', nu.value, pw.value).then(function (me) { S.me = me; saveSession(); m.close(); toast('Username changed. Use it the next time you log in.'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
+      run(btn, function () { return api('api_changeUsername', nu.value, pw.value).then(function (me) { const old = S.me.username; S.me = me; saveSession(); OfflineAuth.forget(old); OfflineAuth.remember(me.username, pw.value, S.token, me); m.close(); toast('Username changed. Use it the next time you log in.'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
     } }]);
 }
 
@@ -995,7 +1016,7 @@ function enterApp() {
   S.today = Local.today();   // the phone's own date: entry is for today only
   saveSession();             // remembered on the phone so the app opens even without signal
   renderShell();
-  Sync.start();
+  Sync.start(); Offline.start(); setTimeout(function () { Offline.warm(); }, 3000);
   return Promise.resolve();
 }
 
@@ -1015,6 +1036,7 @@ function renderShell() {
     clear(title); add(title, [h('span', { class: 'estate' }, me.estate || 'Foliar spray'), labels[id]]);
     closeNav();
     clear(main);
+    Offline.resetStale();
     try { VIEWS[id](main); } catch (e) { main.appendChild(msgBox('err', 'This screen could not be shown: ' + e.message)); }
     if (typeof syncMonNav === 'function') syncMonNav();
     window.scrollTo(0, 0);
@@ -1043,7 +1065,7 @@ function renderShell() {
   const top = h('header', { class: 'top' },
     h('button', { type: 'button', class: 'btn ghost iconbtn', 'aria-label': 'Open menu', onclick: function () { document.body.classList.add('nav-open'); } }, icon('menu')),
     title, syncPill('compact'), h('div', { class: 'avatar' }, initials(me.display_name)));
-  app().appendChild(h('div', { class: 'app' }, h('div', { class: 'shell' }, sidebar, h('div', { class: 'scrim', onclick: closeNav }), h('div', { class: 'maincol' }, top, main))));
+  app().appendChild(h('div', { class: 'app' }, h('div', { class: 'shell' }, sidebar, h('div', { class: 'scrim', onclick: closeNav }), h('div', { class: 'maincol' }, top, Offline.bar(), main))));
   const saved = load('tab');
   go(me.is_admin ? (saved && tabs.indexOf(saved) >= 0 ? saved : tabs[0]) : 'home');      // everybody else always opens on Home
 }
@@ -1052,7 +1074,8 @@ function boot() {
   const sess = Local.get('fsx:session', null);
   if (!sess || !sess.token || !sess.me) { showLogin(); return; }
   S.token = sess.token; S.me = sess.me; S.today = Local.today();
-  renderShell(); Sync.start();                       // opens straight away from what the phone remembers, even offline
+  renderShell(); Sync.start(); Offline.start();      // opens straight away from what the phone remembers, even offline
+  setTimeout(function () { Offline.warm(); }, 3000);
   api('api_me').then(function (me) { S.me = me; saveSession(); })   // when there is signal, check the login is still valid
     .catch(function () { /* offline: stay in the app. An expired login is handled by callServer (back to the login screen). */ });
 }
@@ -1077,7 +1100,7 @@ const Local = {
   key: function (name) { return 'fsx:' + this.user() + ':' + name; },
   today: function () { const d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
 };
-function saveSession() { if (S.token && S.me && !S.me.must_change) Local.set('fsx:session', { token: S.token, me: S.me, saved: new Date().toISOString() }); }
+function saveSession() { if (S.token && S.me && !S.me.must_change) { Local.set('fsx:session', { token: S.token, me: S.me, saved: new Date().toISOString() }); if (typeof OfflineAuth !== 'undefined') OfflineAuth.keep(S.token, S.me); } }
 
 const Draft = {
   all: function (type) { return Local.get(Local.key('draft:' + type), {}); },
@@ -1239,6 +1262,235 @@ function openSyncPanel() {
   Sync.onChange(function () { if (!body.isConnected) return false; paint(); });
   panel = modal('Upload status', body, [{ label: 'Close', onclick: function (m) { m.close(); } }, { label: 'Try now', kind: 'primary', onclick: function () { Sync.run(); } }]);
 }
+</script>
+
+<script>
+'use strict';
+/* ===== Working without signal =====
+ *  The app is meant to feel the same with or without signal:
+ *   - Every window's data is saved on the phone each time it is loaded with signal (Offline.write). Without signal (or on a very slow connection) the window is built from
+ *     that saved copy and a quiet bar says when it was last updated. When signal returns the window refreshes itself.
+ *   - After logging in with signal the app loads every window the person may open in the background (Offline.warm), so even a window never opened is available later.
+ *   - Logging in without signal: the phone remembers a salted, slow hash (PBKDF2) of the password of everyone who logged in on it with signal; the same password opens the
+ *     same account offline. The password itself is never stored.
+ *   - Entries (plucking, foliar spray events) are saved in the outbox (JsSync.html) and uploaded when signal returns. If the login has expired by then, the person types the
+ *     password again on top of the open window and everything waiting is uploaded; nothing is lost.
+ *  What cannot work without signal is changing settings of the estate (users, rates, roles ...): those say so and change nothing.
+ */
+const Offline = {
+  /** Windows' read-only server calls whose answers are kept on the phone. */
+  READS: ['api_me', 'api_homeSummary', 'api_setupStatus', 'api_entryFields', 'api_dayRecords', 'api_sprayDay', 'api_listRecords', 'api_historyFields', 'api_fieldHistory',
+    'api_expCharts', 'api_pluckRounds', 'api_sprayRounds', 'api_getEstate', 'api_listUsers', 'api_listRoles', 'api_listTasks', 'api_listParams', 'api_paramHistory', 'api_listAudit'],
+  /** Calls that wait in the outbox when there is no signal (see JsSync.html). */
+  QUEUED: ['api_savePluck', 'api_saveSprayEvent'],
+  MAX_KEYS: 500,
+
+  canCache: function (name, args) { return this.READS.indexOf(name) >= 0 && !!S.me && args.length >= 1 && typeof args[0] === 'string'; },
+  key: function (name, rest) { return (S.me ? S.me.username : '') + '|' + name + '|' + JSON.stringify(rest); },
+  message: function (name, readable) {
+    if (this.QUEUED.indexOf(name) >= 0) return 'No signal. Anything you enter is saved on this phone.';
+    if (readable) return 'No signal, and this window has not been opened on this phone with signal yet. Open it once with signal; after that it works without signal.';
+    return 'No signal. This change needs signal, so nothing was changed. Try again when you are online.';
+  },
+
+  // ----- storage: IndexedDB (room for big monitoring data); the same API on top of localStorage / memory when the browser has no IndexedDB (or blocks it)
+  _db: null,
+  _open: function () {
+    const self = this;
+    if (self._db) return self._db;
+    self._db = new Promise(function (resolve) {
+      try {
+        if (typeof indexedDB === 'undefined' || !indexedDB) { resolve(null); return; }
+        const rq = indexedDB.open('fsx', 1);
+        rq.onupgradeneeded = function () { try { rq.result.createObjectStore('cache', { keyPath: 'k' }); } catch (e) { /* exists */ } };
+        rq.onsuccess = function () { resolve(rq.result); };
+        rq.onerror = function () { resolve(null); }; rq.onblocked = function () { resolve(null); };
+      } catch (e) { resolve(null); }
+    });
+    return self._db;
+  },
+  _idx: null,
+  index: function () { if (!this._idx) this._idx = Local.get('fsx:cidx', {}); return this._idx; },
+  _saveIdx: function () { const self = this; clearTimeout(self._t); self._t = setTimeout(function () { Local.set('fsx:cidx', self.index()); }, 400); },
+  has: function (k) { return !!this.index()[k]; },
+  read: function (k) {
+    const self = this;
+    return self._open().then(function (db) {
+      if (!db) return Local.get('fsx:c:' + k, null);
+      return new Promise(function (resolve) {
+        try { const rq = db.transaction('cache', 'readonly').objectStore('cache').get(k); rq.onsuccess = function () { resolve(rq.result || Local.get('fsx:c:' + k, null)); }; rq.onerror = function () { resolve(Local.get('fsx:c:' + k, null)); }; }
+        catch (e) { resolve(Local.get('fsx:c:' + k, null)); }
+      });
+    });
+  },
+  write: function (k, data) {
+    const self = this, rec = { k: k, at: new Date().toISOString(), data: data };
+    self.index()[k] = rec.at; self._saveIdx();
+    self._prune();
+    return self._open().then(function (db) {
+      if (!db) { Local.set('fsx:c:' + k, rec); return; }
+      return new Promise(function (resolve) {
+        try { const tx = db.transaction('cache', 'readwrite'); tx.objectStore('cache').put(rec); tx.oncomplete = function () { resolve(); }; tx.onerror = tx.onabort = function () { Local.set('fsx:c:' + k, rec); resolve(); }; }
+        catch (e) { Local.set('fsx:c:' + k, rec); resolve(); }
+      });
+    });
+  },
+  /** Keep the newest MAX_KEYS saved answers (old dates pile up otherwise). */
+  _prune: function () {
+    const self = this, idx = self.index(), keys = Object.keys(idx);
+    if (keys.length <= self.MAX_KEYS) return;
+    keys.sort(function (a, b) { return idx[a] < idx[b] ? -1 : 1; }).slice(0, keys.length - self.MAX_KEYS + 50).forEach(function (k) {
+      delete idx[k]; Local.del('fsx:c:' + k);
+      self._open().then(function (db) { if (db) try { db.transaction('cache', 'readwrite').objectStore('cache').delete(k); } catch (e) { /* ignore */ } });
+    });
+  },
+
+  // ----- the quiet "last updated" bar
+  staleAt: '',
+  stale: function (at) { if (!this.staleAt || at < this.staleAt) this.staleAt = at; this.paint(); },
+  resetStale: function () { this.staleAt = ''; this.paint(); },
+  when: function (iso) {
+    const d = new Date(iso), p = function (n) { return (n < 10 ? '0' : '') + n; }, t = p(d.getHours()) + ':' + p(d.getMinutes());
+    const day = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    if (day === Local.today()) return 'today at ' + t;
+    return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ' at ' + t;
+  },
+  bar: function () { return h('div', { class: 'stalebar', role: 'status', hidden: true }); },
+  paint: function () {
+    const self = this;
+    Array.prototype.forEach.call(document.querySelectorAll('.stalebar'), function (el) {
+      clear(el);
+      if (!self.staleAt) { el.hidden = true; return; }
+      add(el, [h('span', { class: 'sdot' }), h('span', null, 'No signal. Showing what this phone saved ' + self.when(self.staleAt) + '.')]);
+      el.hidden = false;
+    });
+  },
+
+  // ----- when signal returns: the open window refreshes itself, waiting entries upload (JsSync), saved windows are refreshed in the background
+  _started: false,
+  start: function () {
+    const self = this;
+    if (self._started) return; self._started = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* the browser decides */ }       // ask the phone not to clear the saved windows
+    function tryRefresh() {
+      if (!self.staleAt || !S.me || !S.go || !S.tab) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      if (document.querySelector('.overlay') || document.querySelector('input:focus,textarea:focus,select:focus')) return;      // never interrupt typing
+      self.resetStale(); S.go(S.tab);                                                                                         // shows fresh data, or the saved copy again (and the bar) when still no signal
+    }
+    window.addEventListener('online', function () { setTimeout(tryRefresh, 1200); setTimeout(function () { self.warm(true); }, 4000); });
+    setInterval(tryRefresh, 45000);
+  },
+
+  /** Load, in the background, every window this person may open, so each is available later without signal. */
+  warm: function (force) {
+    const self = this;
+    if (!S.me || !S.token || self._warming) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    const last = Local.get(Local.key('warmed'), 0);
+    if (!force && last && Date.now() - last < 2 * 3600 * 1000) return;
+    const tasks = (S.me.tasks || []).map(function (t) { return t.id; }), has = function (id) { return tasks.indexOf(id) >= 0; }, today = Local.today(), list = [['api_homeSummary', []]];
+    if (S.me.is_admin) list.push(['api_setupStatus', []]);
+    if (has('spray.entry')) list.push(['api_sprayDay', [today]]);
+    if (has('pluck.entry')) list.push(['api_entryFields', ['pluck', today]], ['api_dayRecords', ['pluck', today]]);
+    if (has('dashboard.view')) list.push(['api_expCharts', [{}]], ['api_pluckRounds', [{}]], ['api_sprayRounds', [{}]]);
+    if (has('estate.manage') || has('users.manage')) list.push(['api_getEstate', []]);
+    if (has('users.manage')) list.push(['api_listUsers', []], ['api_listRoles', []]);
+    if (has('roles.manage')) list.push(['api_listRoles', []], ['api_listTasks', []]);
+    if (has('params.manage')) list.push(['api_listParams', []]);
+    if (has('audit.view')) list.push(['api_listAudit', [300]]);
+    if (has('history.view')) list.push(['api_historyFields', []]);
+    self._warming = true;
+    const who = S.me.username;
+    function next(i) {
+      if (i >= list.length || !S.me || S.me.username !== who || (typeof navigator !== 'undefined' && navigator.onLine === false)) return Promise.resolve();
+      const it = list[i];
+      return callServer(it[0], [S.token].concat(it[1])).then(function (d) {
+        // every field's history, so a field can be opened without signal
+        if (it[0] === 'api_historyFields' && d && d.fields) d.fields.slice(0, 150).forEach(function (f) { list.push(['api_fieldHistory', [f.field_id]]); });
+      }, function (e) { if (e && e.network) throw e; })
+        .then(function () { return new Promise(function (r) { setTimeout(r, 250); }); }).then(function () { return next(i + 1); });
+    }
+    next(0).catch(function () { /* no signal: try again later */ }).then(function () { self._warming = false; if (!self.staleAt) Local.set(Local.key('warmed'), Date.now()); });
+  }
+};
+
+/* ----- Login without signal */
+const OfflineAuth = {
+  ITER: 100000,
+  supported: function () { return typeof crypto !== 'undefined' && !!crypto.subtle && typeof TextEncoder !== 'undefined'; },
+  _b64: function (buf) { let s = ''; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); },
+  _unb64: function (s) { const b = atob(s), a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; },
+  derive: function (user, pw, saltB64, iter) {
+    const self = this, enc = new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(user + '\n' + pw), 'PBKDF2', false, ['deriveBits'])
+      .then(function (k) { return crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: self._unb64(saltB64), iterations: iter }, k, 256); })
+      .then(function (bits) { return self._b64(bits); });
+  },
+  accounts: function () { return Local.get('fsx:accts', {}); },
+  norm: function (u) { return String(u || '').trim().toLowerCase(); },
+  /** After a login WITH signal: keep what is needed to log this person in without signal. */
+  remember: function (typedName, password, token, me) {
+    const self = this;
+    if (!self.supported() || !token || !me) return Promise.resolve();
+    const u = self.norm(typedName), salt = self._b64(crypto.getRandomValues(new Uint8Array(16)));
+    return self.derive(u, password, salt, self.ITER).then(function (hash) {
+      const a = self.accounts(); a[u] = { salt: salt, iter: self.ITER, hash: hash, token: token, me: me, saved: new Date().toISOString() };
+      const names = Object.keys(a); if (names.length > 8) names.sort(function (x, y) { return a[x].saved < a[y].saved ? -1 : 1; }).slice(0, names.length - 8).forEach(function (n) { delete a[n]; });   // a shared phone: the 8 latest people
+      Local.set('fsx:accts', a);
+    }).catch(function () { /* cannot store: offline login just will not be offered */ });
+  },
+  /** The session (token, profile) of everyone is kept up to date so an offline login opens the latest profile. */
+  keep: function (token, me) {
+    const a = this.accounts(); let hit = false;
+    Object.keys(a).forEach(function (u) { if (a[u].me && me && a[u].me.username === me.username) { a[u].token = token; a[u].me = me; hit = true; } });
+    if (hit) Local.set('fsx:accts', a);
+  },
+  forget: function (typedName) { const a = this.accounts(); delete a[this.norm(typedName)]; Local.set('fsx:accts', a); },
+  /** No signal: check the password against what the phone remembers. Resolves to the remembered account or rejects with a message. */
+  login: function (typedName, password) {
+    const self = this, u = self.norm(typedName);
+    const fail = function (msg, code) { const e = new Error(msg); e.code = code || 'LOGIN'; return Promise.reject(e); };
+    if (!u || !password) return fail('Invalid username or password.');
+    const lock = Local.get('fsx:oafail', { n: 0, until: 0 });
+    if (lock.until > Date.now()) return fail('Too many wrong tries. Wait ' + Math.ceil((lock.until - Date.now()) / 60000) + ' minute(s), or log in with signal.');
+    const acct = self.accounts()[u];
+    if (!self.supported() || !acct) return fail('No signal. This phone has not logged in as this user before, so it cannot check the password. Log in once with signal; after that it works without signal.', 'NO_OFFLINE_ACCOUNT');
+    return self.derive(u, password, acct.salt, acct.iter).then(function (hash) {
+      let same = hash.length === acct.hash.length, r = 0; for (let i = 0; i < hash.length && i < acct.hash.length; i++) r |= hash.charCodeAt(i) ^ acct.hash.charCodeAt(i);
+      if (!same || r !== 0) {
+        const n = (lock.n || 0) + 1; Local.set('fsx:oafail', { n: n >= 5 ? 0 : n, until: n >= 5 ? Date.now() + 5 * 60000 : 0 });
+        return fail('Invalid username or password.');
+      }
+      Local.del('fsx:oafail');
+      return acct;
+    });
+  },
+
+  /** The login ended (it lasts a few hours) while entries are waiting: ask for the password on top of the open window, upload, carry on. Nothing is lost. */
+  reauth: function (message) {
+    const self = this;
+    if (document.querySelector('.reauth')) return;
+    const me = S.me, n = Sync.items().filter(function (i) { return !i.failed; }).length;
+    const pw = h('input', { type: 'password', autocomplete: 'current-password', maxlength: '100', placeholder: 'Password or PIN' }), box = h('div');
+    modal('Log in again', h('div', { class: 'stack reauth' },
+      h('div', { class: 'muted' }, (message || 'Your login has ended.') + ' ' + (n ? 'Your ' + n + ' waiting entr' + (n === 1 ? 'y is' : 'ies are') + ' safe on this phone. Type your password to upload ' + (n === 1 ? 'it' : 'them') + '.' : '')),
+      h('div', null, 'Logging in as ', h('b', null, me.username)), field('Password', pw), box), [
+      { label: 'Use another account', onclick: function (m) { m.close(); showLogin(); } },
+      { label: 'Log in', kind: 'primary', onclick: function (m, btn) {
+        clear(box);
+        run(btn, function () {
+          const typed = pw.value;
+          return apiPublic('api_login', me.username, typed).then(function (d) {
+            if (d.me.username !== me.username) throw new Error('That is a different account.');
+            S.token = d.token; S.me = d.me; saveSession(); OfflineAuth.remember(me.username, typed, d.token, d.me);
+            m.close(); toast('Logged in. Uploading...'); Sync.run(); if (S.go && S.tab) S.go(S.tab);
+          }).catch(function (e) { box.appendChild(msgBox('err', e.network ? 'Still no signal. Try again when you are online; your entries stay on this phone.' : e.message)); });
+        });
+      } }]);
+    setTimeout(function () { try { pw.focus(); } catch (e) { /* ignore */ } }, 50);
+  }
+};
 </script>
 
 <script>
