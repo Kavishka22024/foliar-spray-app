@@ -575,6 +575,21 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .exp-head .eh-num { font-size: clamp(32px, 2.8vw, 56px); } .exp-head .eh-bigrow { flex-wrap: nowrap; } .exp-head .eh-num.small { font-size: 22px; line-height: 1.25; white-space: normal; }
 @media (max-width: 900px) { .exp-head .eh-num { font-size: 48px; } .exp-head .eh-bigrow { flex-wrap: wrap; } }
 .exp-heads { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }   /* five cards: three, then two, at full width; one under the other on a phone */
+/* ---- Experiment monitoring: the period filter ---- */
+.exp-filter { padding: 16px 20px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; border-radius: 20px; }
+.exp-filter-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.exp-filter-lab { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.exp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.exp-chip { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink-2); cursor: pointer; transition: background .15s, border-color .15s; }
+.exp-chip:hover { background: var(--hover); } .exp-chip:focus-visible { outline: 3px solid var(--ring); outline-offset: 1px; }
+.exp-chip.on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.exp-custom { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px; }
+.exp-date { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); } .exp-date input { min-width: 160px; }
+.exp-custom-note { padding-bottom: 10px; }
+.exp-filter-msg { font-size: 14px; font-weight: 600; color: var(--bad); } .exp-filter-msg:empty { display: none; }
+.exp-filter-info { font-size: 14px; color: var(--ink-2); }
+@media (max-width: 760px) { .exp-filter { padding: 14px 16px; } .exp-chip { padding: 8px 14px; } .exp-date { flex: 1 1 140px; } .exp-date input { min-width: 0; width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .exp-chip { transition: none; } }
 /* ---- Experiment monitoring: the Material / Labour / Yield cards, stacked, and the Net gain card on its own ---- */
 .exp-groups { display: flex; flex-direction: column; gap: 20px; margin-bottom: 18px; }
 .exp-group { border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; min-width: 0; }
@@ -2662,6 +2677,37 @@ EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'Th
 const EXP_MONTH = 365.25 / 12;                                                              // days in an average month: the unit of the net margin
 const EXP_NET_WIN = 30;                                                                     // the Daily view of the net margin is a rolling window of this many days
 const EXP_NET_MIN = { month: 15, year: 90 };                                                // days observed before a month / year gets a point (fewer would be too lumpy to be fair)
+/* ===== The period filter at the top of Experiment monitoring =====
+ *  Last month / 3 / 6 / 12 months, All time, or a custom period of at least one month. The server still sends every day; the screen CUTS the data to the chosen period
+ *  (expInRange) and then runs exactly the same calculations and graphs on what is left, so every number, percentage and graph is for the chosen period only. */
+const EXP_RANGES = [['1', 'Last month'], ['3', '3 months'], ['6', '6 months'], ['12', '12 months'], ['all', 'All time'], ['custom', 'Custom']];
+function expAddDays(iso, n) { return isoOf(dayNo(iso) + n); }
+/** A date n months later (earlier when n is negative); a day that does not exist in that month (31 Apr) becomes its last day. */
+function expAddMonths(iso, n) {
+  const t = Number(iso.slice(5, 7)) - 1 + n, y = Number(iso.slice(0, 4)) + Math.floor(t / 12), mo = ((t % 12) + 12) % 12, last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+  return isoOf(Math.floor(Date.UTC(y, mo, Math.min(Number(iso.slice(8)), last)) / 86400000));
+}
+/** The chosen period as {from, to, label}; null = all the data. A preset ends today and covers N whole months back from it ('3 months' on 11 Nov starts on 12 Aug). */
+function expResolveRange(sel, today) {
+  if (!sel || sel.kind === 'all') return null;
+  if (sel.kind === 'custom') return { from: sel.from, to: sel.to, label: fullDate(sel.from) + ' to ' + fullDate(sel.to) };
+  const n = Number(sel.kind);
+  return { from: expAddDays(expAddMonths(today, -n), 1), to: today, label: n === 1 ? 'the last month' : 'the last ' + n + ' months' };
+}
+/** Why a custom period cannot be used ('' = fine): it must have both dates, run forwards, end no later than today and cover at least one month. */
+function expCustomError(from, to, today) {
+  if (!from || !to) return 'Pick both dates.';
+  if (from > to) return 'The first date must come before the last date.';
+  if (to > today) return 'The last date cannot be after today (' + fullDate(today) + ').';
+  if (to < expAddDays(expAddMonths(from, 1), -1)) return 'The period must be at least one month: from ' + fullDate(from) + ' it must reach at least ' + fullDate(expAddDays(expAddMonths(from, 1), -1)) + '.';
+  return '';
+}
+/** The data as the screen uses it: only the days inside the period, "today" moved back to the end of the period, and the first-day markers moved up to its start. */
+function expInRange(data, range) {
+  if (!range) return Object.assign({}, data, { range_label: 'all time' });
+  const hi = range.to < data.today ? range.to : data.today, up = function (iso) { return iso ? (iso > range.from ? iso : range.from) : ''; };
+  return Object.assign({}, data, { days: data.days.filter(function (d) { return d.date >= range.from && d.date <= hi; }), today: hi, first: up(data.first), first_spray: up(data.first_spray), first_leaf: up(data.first_leaf), first_net: up(data.first_net), range_label: range.label });
+}
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
 const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2678,7 +2724,7 @@ function expSum(days, from, to, m) {
   return c;
 }
 /* ===== The cards that hold the KPIs: Material, Labour, Yield and Money =====
- *  Folded, a card shows two plain numbers about the whole experiment (all the data): what the drones saved or gained compared with manual spraying, over the area THE DRONES
+ *  Folded, a card shows two plain numbers about the whole experiment (the chosen period): what the drones saved or gained compared with manual spraying, over the area THE DRONES
  *  covered ((manual per ha - drone per ha) x the ha of the drones). Opened, those numbers shrink to one line and the KPI cards of the group appear under them. */
 function expGap(D, M, a, ha) { return D[ha] > 0 && M[ha] > 0 ? (M[a] / M[ha] - D[a] / D[ha]) * D[ha] : null; }
 function expTile(raw, num, lab, tone) { return { raw: raw, num: num, lab: lab, tone: tone }; }
@@ -2715,13 +2761,13 @@ function expMoneyStats(data) {
 }
 const EXP_GROUPS = [
   { key: 'material', name: 'Material', icon: 'flask', sub: 'Foliar saving and Material cost saving', kpis: ['eff', 'mat'], stats: expMaterialStats,
-    help: 'Over all the data, how much foliar and how many rupees of foliar the drones saved compared with manual spraying: (manual kg per ha minus drone kg per ha) times the hectares the drones sprayed, and the same with the cost of the foliar. A red number means the drones used more. Open the card for the two KPIs.' },
+    help: 'Over the chosen period, how much foliar and how many rupees of foliar the drones saved compared with manual spraying: (manual kg per ha minus drone kg per ha) times the hectares the drones sprayed, and the same with the cost of the foliar. A red number means the drones used more. Open the card for the two KPIs.' },
   { key: 'labour', name: 'Labour', icon: 'users', sub: 'Work speed and Labour cost saving', kpis: ['speed', 'cost'], stats: expLabourStats,
     help: '1 drone = N workers compares the area covered per hour: the hectares sprayed divided by the man-hours (manual) and by the drone-hours (drone). If a man covers 1 ha an hour and a drone 2.5 ha an hour, one drone does the work of 2.5 workers. The second number is the labour cost the drones saved: (manual labour cost per ha minus drone labour cost per ha) times the hectares the drones sprayed; red means the drones cost more. Open the card for the two KPIs.' },
   { key: 'yield', name: 'Yield', icon: 'leaf', sub: 'Leaf yield and Yield revenue', kpis: ['leaf', 'rev'], stats: expYieldStats,
-    help: 'Over all the data, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' },
+    help: 'Over the chosen period, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' },
   { key: 'money', name: 'Money', icon: 'wallet', sub: 'Total cost saving and Net gain', kpis: ['total', 'net'], stats: expMoneyStats,
-    help: 'The first number is the labour cost and the foliar cost the drones saved together: (manual labour + foliar cost per ha minus drone labour + foliar cost per ha) times the hectares the drones sprayed. The second is the money the drones made or lost over manual spraying: what the drone-sprayed land earned (green leaf revenue minus spraying cost) minus what the same land would have earned at the rate of the manually sprayed land, over all the days on record. A red number means a loss. It does not correct for the age since pruning. Open the card for the two KPIs.' }
+    help: 'The first number is the labour cost and the foliar cost the drones saved together: (manual labour + foliar cost per ha minus drone labour + foliar cost per ha) times the hectares the drones sprayed. The second is the money the drones made or lost over manual spraying: what the drone-sprayed land earned (green leaf revenue minus spraying cost) minus what the same land would have earned at the rate of the manually sprayed land, over the days on record in the chosen period. A red number means a loss. It does not correct for the age since pruning. Open the card for the two KPIs.' }
 ];
 
 /** The net margin pieces of one method over a range of days (null = the whole history): revenue, labour + foliar cost, its land and the days observed. Days before both
@@ -2914,17 +2960,56 @@ function expHeadline(data, mode) {
   const num1 = (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '%';
   return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, topRow, M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null,
     h('div', { class: 'eh-bigrow' }, same ? h('span', { class: 'eh-num small' }, 'About the same') : [h('i', { class: 'eh-arrow ' + (up ? 'up' : 'down'), 'aria-hidden': 'true' }), h('span', { class: 'eh-num' }, num1), h('span', { class: 'eh-word' }, w[0])]),
-    h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', all time'), bars);
+    h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', ' + (data.range_label || 'all time')), bars);
 }
 
 function experimentScreen(host) {
   let period = EXP_PERIODS.some(function (p) { return p[0] === S.expPeriod; }) ? S.expPeriod : 'day', data = null;
   S.expOpen = S.expOpen || {};                                                   // which KPI card has its graph unfolded (all folded to begin with)
   S.expGroupOpen = S.expGroupOpen || {};                                         // which of the Material / Labour / Yield cards is opened (all folded to begin with)
-  const body = h('div');
-  host.appendChild(body);
+  const bar = h('div', { class: 'card exp-filter' }), body = h('div');
+  let shown = null;                                                              // the data cut to the chosen period (see expInRange); all cards, numbers and graphs read this
+  host.appendChild(bar); host.appendChild(body);
   clear(body).appendChild(skeleton(3));
-  api('api_expCharts', {}).then(function (d) { data = d; draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
+  api('api_expCharts', {}).then(function (d) { data = d; recompute(); drawBar(); draw(); }).catch(function (e) { clear(body).appendChild(msgBox('err', e.message)); });
+
+  const recompute = function () { shown = expInRange(data, expResolveRange(S.expRange, data.today)); };
+  /** The period filter: the chips, the two dates of a custom period (at least one month), and one line saying exactly which days are shown. */
+  function drawBar() {
+    clear(bar);
+    if (!data || !data.days.length) return;
+    const sel = S.expRange || { kind: 'all' }, today = data.today, info = h('div', { class: 'exp-filter-info' }), msg = h('div', { class: 'exp-filter-msg', role: 'alert' });
+    const refreshInfo = function () {
+      const R = expResolveRange(S.expRange, today), from = R ? R.from : data.first, to = R ? (R.to < today ? R.to : today) : today;
+      clear(info).appendChild(document.createTextNode('Showing ' + fullDate(from) + ' to ' + fullDate(to) + '  (' + (dayNo(to) - dayNo(from) + 1) + ' days)' + (shown && !shown.days.length ? '  |  no entries in this period' : '')));
+    };
+    const choose = function (kind) {
+      if (kind === 'custom') {
+        const d0 = S.expCustom || (function () { const R = expResolveRange({ kind: '3' }, today); return { from: R.from, to: R.to }; })();
+        S.expCustom = d0; S.expRange = { kind: 'custom', from: d0.from, to: d0.to };
+      } else S.expRange = { kind: kind };
+      recompute(); drawBar(); draw();
+    };
+    const chips = h('div', { class: 'exp-chips', role: 'group', 'aria-label': 'Period' }, EXP_RANGES.map(function (r) {
+      return h('button', { type: 'button', 'data-range': r[0], 'aria-pressed': sel.kind === r[0] ? 'true' : 'false', class: 'exp-chip' + (sel.kind === r[0] ? ' on' : ''), onclick: function () { choose(r[0]); } }, r[1]);
+    }));
+    bar.appendChild(h('div', { class: 'exp-filter-top' }, h('span', { class: 'exp-filter-lab' }, 'Period'), chips));
+    if (sel.kind === 'custom') {
+      const cd = S.expCustom, fromIn = h('input', { type: 'date', 'data-custom': 'from', value: cd.from, max: today }), toIn = h('input', { type: 'date', 'data-custom': 'to', value: cd.to, max: today });
+      const limits = function () { if (fromIn.value) toIn.min = expAddDays(expAddMonths(fromIn.value, 1), -1); if (toIn.value) fromIn.max = expAddDays(expAddMonths(toIn.value, -1), 1); };
+      const apply = function () {
+        S.expCustom = { from: fromIn.value, to: toIn.value }; limits();
+        const err = expCustomError(fromIn.value, toIn.value, today);
+        msg.textContent = err ? err + '  The earlier period is still shown.' : '';
+        if (err) return;
+        S.expRange = { kind: 'custom', from: fromIn.value, to: toIn.value }; recompute(); refreshInfo(); draw();
+      };
+      fromIn.addEventListener('change', apply); toIn.addEventListener('change', apply); limits();
+      bar.appendChild(h('div', { class: 'exp-custom' }, h('label', { class: 'exp-date' }, h('span', null, 'From'), fromIn), h('label', { class: 'exp-date' }, h('span', null, 'To'), toIn), h('span', { class: 'muted small exp-custom-note' }, 'at least one month')));
+      bar.appendChild(msg);
+    }
+    refreshInfo(); bar.appendChild(info);
+  }
 
   const setPeriod = function (p) { period = p; S.expPeriod = p; draw(); };
   const periodBar = function () {
@@ -2935,20 +3020,20 @@ function experimentScreen(host) {
   /** The graph of one KPI, attached to its card: the period tabs, the title with its (i), the colours, and the whole history in one window. */
   function graph(mode) {
     const M = EXP_MODES[mode], plot = h('div', { class: 'exp-plot' }), tip = h('div', { class: 'exp-tip', style: 'display:none' });
-    const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(data, mode, period, W, tip)); plot.appendChild(tip); };
+    const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(shown, mode, period, W, tip)); plot.appendChild(tip); };
     setTimeout(render, 0);
     if (window.ResizeObserver) { const ro = new ResizeObserver(function () { if (!plot.isConnected) { ro.disconnect(); return; } const w = Math.floor(plot.clientWidth); if (w && w !== plot._w) render(); }); ro.observe(plot); }
-    const f0 = data[M.first] || data.first, sub = M.net && period === 'day' ? 'Each point is the net margin of the ' + EXP_NET_WIN + ' days ending that day, from ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ' to ' + fullDate(data.today) : period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(data.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(data.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(data.today));
+    const f0 = shown[M.first] || shown.first, sub = M.net && period === 'day' ? 'Each point is the net margin of the ' + EXP_NET_WIN + ' days ending that day, from ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ' to ' + fullDate(shown.today) : period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(shown.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(shown.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(shown.today));
     return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
       h('div', { class: 'mon-ctl' }, periodBar()),
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, M.net ? 'The whole history is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above always uses all the data.' : 'The whole history is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above always uses all the data. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, M.net ? 'The whole chosen period is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period.' : 'The whole chosen period is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above uses the same period. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, sub),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
       plot);
   }
   /** A KPI card and, when it is clicked, its graph attached right under it: the card is the header of the graph. Click again to fold. */
   function kpiCard(mode) {
-    const card = expHeadline(data, mode), open = !!S.expOpen[mode], toggle = function () { S.expOpen[mode] = !open; draw(); };
+    const card = expHeadline(shown, mode), open = !!S.expOpen[mode], toggle = function () { S.expOpen[mode] = !open; draw(); };
     if (card.classList.contains('waiting')) return h('div', { class: 'kpi-unit', 'data-kpi': mode }, card);          // nothing to unfold yet
     card.setAttribute('data-kpi', mode); card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0'); card.setAttribute('aria-expanded', open ? 'true' : 'false'); card.setAttribute('title', open ? 'Click to fold the graph' : 'Click to see the graph');
     card.addEventListener('click', toggle); card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
@@ -2960,7 +3045,7 @@ function experimentScreen(host) {
     const open = !!S.expGroupOpen[g.key], toggle = function () { S.expGroupOpen[g.key] = !open; draw(); };
     const head = h('div', { class: 'grp-head', role: 'button', tabindex: '0', 'aria-expanded': open ? 'true' : 'false', title: open ? 'Click to fold' : 'Click to see the KPIs' },
       h('div', { class: 'grp-top' }, h('span', { class: 'grp-ico' }, icon(g.icon)), h('div', { class: 'grp-title' }, h('div', { class: 'grp-name' }, g.name), h('div', { class: 'grp-sub' }, g.sub)), h('i', { class: 'grp-chev', 'aria-hidden': 'true' })),
-      h('div', { class: 'grp-stats' }, g.stats(data).map(function (t) { return h('div', { class: 'grp-stat ' + t.tone }, h('div', { class: 'gs-num', 'data-val': t.raw === null ? '' : String(t.raw) }, t.num), h('div', { class: 'gs-lab' }, t.lab)); })));
+      h('div', { class: 'grp-stats' }, g.stats(shown).map(function (t) { return h('div', { class: 'grp-stat ' + t.tone }, h('div', { class: 'gs-num', 'data-val': t.raw === null ? '' : String(t.raw) }, t.num), h('div', { class: 'gs-lab' }, t.lab)); })));
     head.addEventListener('click', toggle); head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     return h('section', { class: 'exp-group' + (open ? ' open' : ''), 'data-group': g.key }, head,
       h('div', { class: 'titlerow grp-foot' }, h('span', null, 'How these numbers are worked out'), help(g.help, 'How these numbers are worked out')),
@@ -2992,7 +3077,7 @@ VIEWS['dashboard.view'] = function (root) {
 
   function show() {
     tab = S.monTab || 'operation';
-    clear(head); head.appendChild(tab === 'operation' ? pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.') : pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying.'));
+    clear(head); head.appendChild(tab === 'operation' ? pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.') : pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying. Choose the period at the top: every number and graph below is for that period only.'));
     syncMonNav();
     Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
     tabs.style.display = tab === 'operation' ? '' : 'none';
