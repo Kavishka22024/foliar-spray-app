@@ -2900,12 +2900,12 @@ const EXP_MODES = {
     tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
     help: 'Each point is the area covered (ha) divided by the hours worked by that method. A higher point means more area covered per hour.' },
   cost: { name: 'Labour cost saving', icon: 'coin', label: 'Labour cost saving', title: 'Labour cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
-    waits: function (r) { return !(r.worker && r.drone); }, waitText: 'The Admin enters the cost of a man-hour and of a drone-hour under Parameters and rates.',
+    waits: function (r) { return !(r.worker && r.drone); }, waitText: 'The Admin enters the cost of a man-hour and the drone charge under Parameters and rates.',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 && c.cost > 0 ? c.cost / c.ha : null; },
     words: function (pct) { return pct < 0 ? ['saved', 'in labour cost per hectare with drones compared with manual spraying'] : ['dearer', 'labour cost per hectare with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost, 0) + ' for ' + num(c.ha, 2) + ' ha'; },
-    help: 'Each point is the labour cost of the spraying divided by the area covered. The cost is the hours of the spray events times the men (manual spraying, at the cost of a man-hour) or times the drones (drone spraying, at the cost of a drone-hour, pilot included), using the rates the Admin entered under Parameters and rates as they were on that day. The foliar itself is not included: see Material cost saving.' },
+    help: 'Each point is the labour cost of the spraying divided by the area covered. Manual spraying costs the hours of the spray events times the men, at the cost of a man-hour. Drone spraying costs the hectares sprayed times the drone charge per hectare (pilot included; or the hours times the drones at a drone-hour cost, if the Admin chose that). The rates used are the ones the Admin entered under Parameters and rates as they were on that day. The foliar itself is not included: see Material cost saving.' },
   mat: { name: 'Material cost saving', icon: 'flask', label: 'Material cost saving', title: 'Foliar cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
     waits: function (r) { return !r.material; }, waitText: 'The Admin enters the price of one kg of foliar under Parameters and rates.',
     has: function (c) { return c.events > 0; },
@@ -2914,12 +2914,12 @@ const EXP_MODES = {
     tip: function (c) { return 'Rs ' + num(c.mat_cost, 0) + ' of foliar for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the cost of the foliar used divided by the area covered: the kg applied in each spray event times the price of one kg of foliar (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares covered. The labour and the drone are not included: see Labour cost saving.' },
   total: { name: 'Total cost saving', icon: 'wallet', label: 'Total cost saving', title: 'Total cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
-    waits: function (r) { return !(r.worker && r.drone && r.material); }, waitText: 'The Admin enters the cost of a man-hour, of a drone-hour and the price of one kg of foliar under Parameters and rates.',
+    waits: function (r) { return !(r.worker && r.drone && r.material); }, waitText: 'The Admin enters the cost of a man-hour, the drone charge and the price of one kg of foliar under Parameters and rates.',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.ha > 0 && c.cost + c.mat_cost > 0 ? (c.cost + c.mat_cost) / c.ha : null; },
     words: function (pct) { return pct < 0 ? ['saved', 'in total cost per hectare (labour and foliar) with drones compared with manual spraying'] : ['dearer', 'total cost per hectare (labour and foliar) with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost + c.mat_cost, 0) + ' (labour Rs ' + num(c.cost, 0) + ' + foliar Rs ' + num(c.mat_cost, 0) + ') for ' + num(c.ha, 2) + ' ha'; },
-    help: 'Each point is the labour cost and the foliar cost of the spraying added together and divided by the area covered. Labour: the hours of the spray events times the men (manual) or the drones (drone), at the cost of a man-hour or a drone-hour. Foliar: the kg applied times the price of one kg. All rates are the ones the Admin entered under Parameters and rates, as they were on that day.' },
+    help: 'Each point is the labour cost and the foliar cost of the spraying added together and divided by the area covered. Labour: for manual spraying the hours of the spray events times the men, at the cost of a man-hour; for drone spraying the hectares sprayed times the drone charge per hectare. Foliar: the kg applied times the price of one kg. All rates are the ones the Admin entered under Parameters and rates, as they were on that day.' },
   leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
     has: function (c) { return c.leaf_n > 0; },
     value: function (c) { return c.leaf_ha > 0 ? c.leaf_kg / c.leaf_ha : null; },
@@ -2935,7 +2935,7 @@ EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue
     tip: function (c) { return 'Rs ' + num(c.leaf_rev, 0) + ' from ' + num(c.leaf_kg, 0) + ' kg on ' + num(c.leaf_ha, 2) + ' ha plucked'; },
     help: 'Each point is the value of the green leaf plucked divided by the area plucked: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares plucked, from the parts of the fields sprayed by that method. A higher point means more money from the same area. It is the revenue only: the costs are not taken off yet.' };
 EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'The extra profit the drones bring over manual spraying: the green leaf revenue minus the spraying cost.', title: 'Net margin per hectare of land, per month', unit: 'Rs/ha/month', lowerBetter: false, first: 'first_net', net: true, needs: 'spray events and plucking records, and the land of both the drone-sprayed and the manually sprayed parts',
-    waits: function (r) { return !(r.worker && r.drone && r.material && r.leaf); }, waitText: 'The Admin enters the cost of a man-hour, of a drone-hour, the price of one kg of foliar and the price of one kg of green leaf under Parameters and rates.',
+    waits: function (r) { return !(r.worker && r.drone && r.material && r.leaf); }, waitText: 'The Admin enters the cost of a man-hour, the drone charge, the price of one kg of foliar and the price of one kg of green leaf under Parameters and rates.',
     has: function (c) { return c.obs > 0; },
     value: function (c) { return c.land > 0 && c.obs > 0 ? (c.rev - c.cost) / c.land * EXP_MONTH / c.obs : null; },
     words: function (pct) { return pct > 0 ? ['more', 'net margin per hectare of land from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'net margin per hectare of land from the drone-sprayed parts than from the manually sprayed parts']; },
@@ -3010,7 +3010,7 @@ function expLabourStats(data) {
   const A = expAllData(data), D = A.Drone, M = A.Manual, r = data.rates_set || { worker: true, drone: true }, rs = expGap(D, M, 'cost', 'ha');
   const ratio = D.uh > 0 && M.uh > 0 && D.ha > 0 && M.ha > 0 ? (D.ha / D.uh) / (M.ha / M.uh) : null;                    // area per drone-hour / area per man-hour
   const rt = ratio === null ? expNoTile('spray events by both methods') : expTile(ratio, '1 drone = ' + (ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10) + ' workers', 'in area covered per hour', ratio >= 1 ? 'good' : 'bad');
-  return [rt, !(r.worker && r.drone) ? expWaitTile('The cost of a man-hour and of a drone-hour') : (expSignedTile(rs, 'Rs', 'labour cost saved by the drones', 'more labour cost with the drones') || expNoTile('spray events by both methods'))];
+  return [rt, !(r.worker && r.drone) ? expWaitTile('The cost of a man-hour and the drone charge') : (expSignedTile(rs, 'Rs', 'labour cost saved by the drones', 'more labour cost with the drones') || expNoTile('spray events by both methods'))];
 }
 function expYieldStats(data) {
   const A = expAllData(data), r = data.rates_set || { leaf: true }, kg = expGap(A.Drone, A.Manual, 'leaf_kg', 'leaf_ha'), rs = expGap(A.Drone, A.Manual, 'leaf_rev', 'leaf_ha');    // a gap is manual minus drone: the gain is its opposite
@@ -3023,7 +3023,7 @@ function expMoneyStats(data) {
   const saved = D.ha > 0 && M.ha > 0 ? (M2 / M.ha - D2 / D.ha) * D.ha : null;
   const nd = expNetCell(data, 'Drone', null, null), nm = expNetCell(data, 'Manual', null, null);               // what the drone land earned, against what it would have earned at the manual land's rate
   const gain = nd.obs > 0 && nd.land > 0 && nm.land > 0 ? (nd.rev - nd.cost) - (nm.rev - nm.cost) * nd.land / nm.land : null;
-  return [!(r.worker && r.drone && r.material) ? expWaitTile('The cost of a man-hour, of a drone-hour and the price of foliar') : (expSignedTile(saved, 'Rs', 'labour and foliar cost saved by the drones', 'more labour and foliar cost with the drones') || expNoTile('spray events by both methods')),
+  return [!(r.worker && r.drone && r.material) ? expWaitTile('The cost of a man-hour, the drone charge and the price of foliar') : (expSignedTile(saved, 'Rs', 'labour and foliar cost saved by the drones', 'more labour and foliar cost with the drones') || expNoTile('spray events by both methods')),
     !(r.worker && r.drone && r.material && r.leaf) ? expWaitTile('The rates of labour, foliar and green leaf') : (expSignedTile(gain, 'Rs', 'net gain from the drones', 'net loss from the drones') || expNoTile('spray events and plucking records by both methods'))];
 }
 const EXP_GROUPS = [
