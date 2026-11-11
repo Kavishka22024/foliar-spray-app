@@ -75,7 +75,7 @@ nav.tabs button svg.ico { opacity: .9; }
 .sidefoot { padding: 14px 14px 16px; border-top: 1px solid rgba(255,255,255,.1); }
 .side-user { display: flex; align-items: center; gap: 12px; padding: 4px 6px 12px; min-width: 0; }
 .side-user .who { min-width: 0; line-height: 1.25; } .side-user b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .side-user span { font-size: 12px; color: var(--side-muted); }
-.sidefoot .row2 { display: flex; gap: 8px; }
+.sidefoot .row2 { display: flex; flex-direction: column; gap: 6px; } .sidefoot .row2 button { padding: 8px 10px; justify-content: flex-start; }
 .sidefoot button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; background: rgba(255,255,255,.08); border: 0; color: #fff; font: inherit; font-size: 13px; font-weight: 500; padding: 9px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
 .sidefoot button:hover { background: rgba(255,255,255,.16); }
 .sidefoot button svg.ico { width: 16px; height: 16px; }
@@ -626,6 +626,61 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
   .exp-group.open .grp-stat { border-radius: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .grp-head, .grp-chev { transition: none; } }
+/* ---- Home ---- */
+.hm-hero { position: relative; overflow: hidden; border-radius: 24px; padding: 26px 30px; margin-bottom: 20px; color: #fff; background: linear-gradient(120deg, var(--primary-600) 0%, var(--primary) 58%, #2f9468 100%); box-shadow: var(--shadow-md); }
+.hm-hero::before, .hm-hero::after { content: ''; position: absolute; border-radius: 50%; background: rgba(255,255,255,.08); pointer-events: none; }
+.hm-hero::before { width: 260px; height: 260px; right: -70px; top: -110px; } .hm-hero::after { width: 150px; height: 150px; right: 150px; bottom: -90px; }
+.hm-hero-row { position: relative; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 14px 24px; }
+.hm-kicker { font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; opacity: .85; }
+.hm-hero h1 { margin: 4px 0 0; font-size: clamp(22px, 3vw, 32px); letter-spacing: -.02em; color: #fff; } .hm-herosub { margin-top: 6px; font-size: 15px; opacity: .92; }
+.hm-heroact { display: flex; align-items: center; gap: 12px; font-size: 13px; opacity: .95; }
+.hm-refresh { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14); color: #fff; font: inherit; font-size: 14px; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; } .hm-refresh:hover { background: rgba(255,255,255,.26); } .hm-refresh:focus-visible { outline: 3px solid rgba(255,255,255,.6); outline-offset: 2px; } .hm-refresh svg { width: 16px; height: 16px; }
+.hm-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.hm-card { --hc: var(--primary); display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 18px 20px 16px; border: 1px solid var(--line); border-top: 4px solid var(--hc); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.hm-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); } .hm-card:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.hm-card.drone { --hc: var(--drone-solid); } .hm-card.manual { --hc: var(--manual-solid); } .hm-card.today { --hc: #7b5a12; }
+.hm-top { display: flex; align-items: center; gap: 10px; }
+.hm-ico { width: 38px; height: 38px; flex: none; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--hc, var(--primary)) 14%, var(--surface)); color: var(--hc, var(--primary)); } .hm-ico svg { width: 20px; height: 20px; }
+.hm-label { flex: 1; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.hm-go { width: 9px; height: 9px; border-right: 2.5px solid var(--muted); border-top: 2.5px solid var(--muted); transform: rotate(45deg); margin-right: 4px; transition: transform .15s; } .hm-card:hover .hm-go { transform: translateX(3px) rotate(45deg); }
+.hm-big { font-size: clamp(30px, 3.2vw, 44px); line-height: 1.05; font-weight: 800; letter-spacing: -.03em; color: var(--hc); font-variant-numeric: tabular-nums; } .hm-big small { font-size: .42em; font-weight: 700; letter-spacing: 0; margin-left: 6px; color: var(--ink-2); }
+.hm-sub2 { font-size: 14px; line-height: 1.35; color: var(--ink-2); } @media (min-width: 561px) { .hm-sub2 { min-height: 2.7em; } }
+.hm-vis { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.hm-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--ink) 8%, transparent); } .hm-bar i { display: block; height: 100%; }
+.hm-bar i.drone { background: var(--drone-solid); } .hm-bar i.manual { background: var(--manual-solid); } .hm-bar i.mixed { background: var(--mixed-solid); } .hm-bar i.plucked { background: var(--primary); }
+.hm-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); } .hm-leg span { display: inline-flex; align-items: center; gap: 6px; }
+.hm-leg .sw, .hm-divhead .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; background: var(--line-strong); }
+.sw.drone { background: var(--drone-solid); } .sw.manual { background: var(--manual-solid); } .sw.mixed { background: var(--mixed-solid); }
+.hm-hint { margin-top: auto; padding-top: 2px; font-size: 12.5px; color: var(--muted); }
+@media (max-width: 1180px) { .hm-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .hm-hero { padding: 20px 18px; border-radius: 20px; } .hm-cards { gap: 10px; } .hm-card { padding: 14px 14px 12px; border-radius: 16px; } .hm-ico { width: 32px; height: 32px; } .hm-label { font-size: 11.5px; letter-spacing: .05em; } .hm-big { font-size: 28px; } .hm-sub2 { font-size: 12.5px; } .hm-hint { display: none; } }
+/* the windows opened from the cards */
+.modal.wide { max-width: 1000px; }
+.hm-title { display: flex; align-items: center; gap: 12px; } .hm-title h2 { margin: 0; }
+.hm-pop-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-bottom: 10px; } .hm-pop-big { font-size: 30px; font-weight: 800; letter-spacing: -.02em; }
+.hm-pop-sum + .hm-leg, .hm-bar + .hm-leg { margin-top: 8px; }
+.modal .hm-bar { height: 16px; border-radius: 8px; margin-top: 4px; }
+.hm-div { margin-top: 18px; } .hm-divhead { display: flex; align-items: baseline; gap: 10px; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 1px solid var(--line); } .hm-divhead b { font-size: 15px; } .hm-divhead span { font-size: 13px; color: var(--muted); } .hm-divhead .grow { flex: 1; } .hm-divhead .hm-divha { font-size: 15px; color: var(--ink); } .hm-divhead .sw { align-self: center; }
+.hm-fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.hm-fc { --fc: var(--line-strong); display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 6px 10px 7px; border: 1px solid var(--line); border-left: 4px solid var(--fc); border-radius: 12px; background: var(--surface-2); }
+.hm-fc.drone { --fc: var(--drone-solid); } .hm-fc.manual { --fc: var(--manual-solid); } .hm-fc.mixed { --fc: var(--mixed-solid); }
+.hm-fc .r1 { display: flex; align-items: center; gap: 6px; } .hm-fc .r1 b { font-size: 14px; } .hm-fc .tag { margin-left: auto; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--fc); }
+.hm-fc .r2 { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 12.5px; color: var(--ink-2); } .hm-fc .ha { font-weight: 700; color: var(--ink); white-space: nowrap; } .hm-fc .of { color: var(--muted); white-space: nowrap; } .hm-fc .nm { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.hm-drop { border: 1px solid var(--line); border-radius: 16px; margin-bottom: 12px; overflow: hidden; background: var(--surface); }
+.hm-drop-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; background: var(--surface-2); } .hm-drop-head:hover { background: var(--hover); } .hm-drop-head:focus-visible { outline: 3px solid var(--ring); outline-offset: -3px; }
+.hm-drop-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .hm-drop-t b { font-size: 15px; } .hm-drop-t small { color: var(--ink-2); font-size: 13px; }
+.hm-drop.open .grp-chev { transform: rotate(-135deg) translate(-2px, -2px); } .hm-drop:not(.open) .hm-drop-body { display: none; } .hm-drop-body { padding: 2px 16px 16px; border-top: 1px solid var(--line); }
+.hm-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.hm-row { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.hm-row .r1 { display: flex; align-items: center; gap: 8px; min-width: 0; } .hm-row .r1 b { font-size: 14px; } .hm-row .nm { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.hm-row .r2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.hm-by { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; color: var(--ink-2); } .hm-by span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-by .av { width: 22px; height: 22px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 10px; font-weight: 800; font-style: normal; }
+.hm-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--tile); color: var(--tile-ink); } .hm-chip b { font-weight: 800; } .hm-chip em { font-style: normal; font-weight: 500; opacity: .85; }
+.hm-chip.drone { background: var(--drone-soft); color: var(--drone); } .hm-chip.manual { background: var(--manual-soft); color: var(--manual); }
+.hm-none { padding: 14px 4px 4px; color: var(--muted); font-size: 14px; }
+@media (max-width: 760px) { .hm-fgrid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); } .hm-rows { grid-template-columns: 1fr; } .hm-pop-big { font-size: 26px; } }
+@media (prefers-reduced-motion: reduce) { .hm-card, .hm-go { transition: none; } .hm-card:hover { transform: none; } }
 </style>
 
 </head>
@@ -692,6 +747,7 @@ const ICONS = {
   wallet: ['M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1', 'M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
   banknote: ['M2 6h20v12H2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M6 12h.01', 'M18 12h.01'],
   scale: ['M12 3v18', 'M7 21h10', 'M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2', 'm16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z', 'm2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z'],
+  refresh: ['M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8', 'M21 3v5h-5'],
   coin: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z', 'M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8', 'M12 18V6'],
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   lock: ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'],
@@ -725,7 +781,7 @@ function modal(title, body, buttons, opts) {
   opts = opts || {};
   const overlay = h('div', { class: 'overlay' });
   const api = { close: function () { overlay.remove(); document.removeEventListener('keydown', onKey); if (opts.onClose) opts.onClose(); } };
-  const box = h('div', { class: 'modal' + (opts.from ? '' : ' pop'), role: 'dialog', 'aria-modal': 'true', 'aria-label': typeof title === 'string' ? title : 'Details' },
+  const box = h('div', { class: 'modal' + (opts.wide ? ' wide' : '') + (opts.from ? '' : ' pop'), role: 'dialog', 'aria-modal': 'true', 'aria-label': typeof title === 'string' ? title : 'Details' },
     h('div', { class: 'modal-head' }, typeof title === 'string' ? h('h2', null, title) : title, h('button', { type: 'button', class: 'btn ghost iconbtn', 'aria-label': 'Close', onclick: api.close }, icon('x'))), body);
   api.box = box;
   const actions = h('div', { class: 'actions' });
@@ -894,6 +950,20 @@ function openChangePassword() {
   ]);
 }
 
+/** A person changes their own username (their password confirms it). Earlier entries stay theirs; the Admin can always put the original one back. */
+function openChangeUsername() {
+  const nu = h('input', { type: 'text', value: S.me.username, maxlength: '30', autocapitalize: 'none', autocomplete: 'username', spellcheck: 'false' });
+  const pw = h('input', { type: 'password', autocomplete: 'current-password' });
+  const box = h('div');
+  modal('Change username', h('div', { class: 'stack' }, h('div', { class: 'muted' }, 'Your username now: ', h('b', null, S.me.username)),
+    field('New username', nu, '3-30 characters: lowercase letters, digits, dot, dash, underscore.'), field('Your password', pw, 'To confirm that it is you.'), box), [
+    { label: 'Cancel', onclick: function (m) { m.close(); } },
+    { label: 'Save', kind: 'primary', onclick: function (m, btn) {
+      clear(box);
+      run(btn, function () { return api('api_changeUsername', nu.value, pw.value).then(function (me) { S.me = me; saveSession(); m.close(); toast('Username changed. Use it the next time you log in.'); }).catch(function (e) { box.appendChild(msgBox('err', e.message)); }); });
+    } }]);
+}
+
 // ---------- app shell: top bar, side navigation (bottom bar on phones), content
 const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'history.view', 'dashboard.view', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
 
@@ -911,7 +981,7 @@ function renderShell() {
   document.body.classList.remove('nav-open');
   const labels = { home: 'Home' };
   me.tasks.forEach(function (t) { labels[t.id] = t.label; });
-  const tabs = TAB_ORDER.filter(function (id) { return (id === 'home' && me.is_admin) || (id !== 'home' && labels[id] && VIEWS[id]); });
+  const tabs = TAB_ORDER.filter(function (id) { return id === 'home' || (labels[id] && VIEWS[id]); });
   const nav = h('nav', { class: 'tabs', 'aria-label': 'Main' });
   const main = h('main', { class: 'content' });
   const title = h('div', { class: 'title' });
@@ -945,13 +1015,14 @@ function renderShell() {
       h('div', { class: 'side-user' }, h('div', { class: 'avatar' }, initials(me.display_name)), h('div', { class: 'who' }, h('b', null, me.display_name), h('span', null, me.role_name))),
       h('div', { class: 'row2' },
         h('button', { type: 'button', onclick: function () { closeNav(); openChangePassword(); } }, icon('key'), 'Change password'),
+        h('button', { type: 'button', onclick: function () { closeNav(); openChangeUsername(); } }, icon('edit'), 'Change username'),
         h('button', { type: 'button', onclick: function () { api('api_logout').catch(function () {}).then(function () { showLogin('You have been logged out.'); }); } }, icon('logout'), 'Log out'))));
   const top = h('header', { class: 'top' },
     h('button', { type: 'button', class: 'btn ghost iconbtn', 'aria-label': 'Open menu', onclick: function () { document.body.classList.add('nav-open'); } }, icon('menu')),
     title, syncPill('compact'), h('div', { class: 'avatar' }, initials(me.display_name)));
   app().appendChild(h('div', { class: 'app' }, h('div', { class: 'shell' }, sidebar, h('div', { class: 'scrim', onclick: closeNav }), h('div', { class: 'maincol' }, top, main))));
   const saved = load('tab');
-  go(saved && tabs.indexOf(saved) >= 0 ? saved : tabs[0]);
+  go(me.is_admin ? (saved && tabs.indexOf(saved) >= 0 ? saved : tabs[0]) : 'home');      // everybody else always opens on Home
 }
 
 function boot() {
@@ -2050,31 +2121,7 @@ VIEWS['records.manage'] = function (root) {
 
 const SCOPE_TEXT = { assigned: 'Only the fields assigned to the person', drone: 'Every field that has a drone part (Drone events only)', all: 'All fields' };
 
-// ---------------------------------------------------------------- Home (admin)
-VIEWS['home'] = function (root) {
-  root.appendChild(pageHead('Welcome, ' + S.me.display_name, 'Your estate at a glance, and what is left to set up.'));
-  const box = h('div'); root.appendChild(box);
-  box.appendChild(skeleton(4));
-  api('api_setupStatus').then(function (s) {
-    clear(box);
-    if (!s.admin) return;
-    const st = s.stats;
-    box.appendChild(h('div', { class: 'kpis four' },
-      kpi('neutral', 'Fields', st.fields, st.complete + ' filled in, ' + num(st.ha, 1) + ' ha', 'map'),
-      kpi('drone', 'Drone spraying', num(st.drone_ha, 1) + ' ha', st.drone + ' fields have a drone part', 'wind'),
-      kpi('manual', 'Manual spraying', num(st.manual_ha, 1) + ' ha', st.manual + ' fields have a manual part (' + st.mixed + ' fields have both)', 'tractor'),
-      kpi('neutral', 'Entered today', st.spray_today + ' sprays', st.pluck_today + ' plucking records, ' + num(st.kg_today, 0) + ' kg', 'droplet')));
-    const done = s.steps.filter(function (x) { return x.done; }).length;
-    const list = h('ul', { class: 'steps' });
-    s.steps.forEach(function (x) {
-      list.appendChild(h('li', null, x.done ? badge('Done', 'good') : badge('To do', 'warn'), ' ', h('a', { onclick: function () { S.go(x.task); } }, x.label),
-        x.detail ? h('span', { class: 'muted small' }, '  ' + x.detail) : null));
-    });
-    box.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:10px' }, h('h2', { style: 'margin:0' }, 'Setup checklist'),
-      h('span', { class: 'muted small' }, done + ' of ' + s.steps.length + ' done')),
-      h('div', { class: 'progress', style: 'margin-bottom:14px' }, h('i', { style: 'width:' + Math.round(done / s.steps.length * 100) + '%' })), list));
-  }).catch(function (e) { clear(box).appendChild(msgBox('err', e.message)); });
-};
+// (the Home screen, for everybody, is in JsHome.html; the Admin's setup checklist is shown there)
 
 // ---------------------------------------------------------------- Estate setup
 VIEWS['estate.manage'] = function (root) {
@@ -2246,12 +2293,13 @@ VIEWS['users.manage'] = function (root) {
     const users = state.users.filter(function (u) { return (!q || (u.display_name + ' ' + u.username).toLowerCase().indexOf(q) >= 0) && (!roleF.value || u.role_id === roleF.value); });
     clear(listBox).appendChild(table([
       { label: 'Name', render: function (u) { return h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:center;gap:10px' }, h('div', { class: 'avatar' }, initials(u.display_name)), h('span', null, u.display_name)); } },
-      { label: 'Username', key: 'username', cls: 'nowrap' }, { label: 'Job role', cls: 'nowrap', render: function (u) { return u.is_admin ? badge(u.role_name, 'warn') : u.role_name; } },
+      { label: 'Username', cls: 'nowrap', render: function (u) { return [u.username, u.renamed ? h('div', { class: 'muted small', title: 'The username this account was created with' }, 'original: ' + u.default_username) : null]; } }, { label: 'Job role', cls: 'nowrap', render: function (u) { return u.is_admin ? badge(u.role_name, 'warn') : u.role_name; } },
       { label: 'Fields', cls: 'num nowrap', render: function (u) { return u.field_scope === 'assigned' && !u.is_admin ? u.field_count + ' (' + num(u.field_ha, 1) + ' ha)' : ''; } },
       { label: 'Status', cls: 'nowrap', render: function (u) { return [u.active ? badge('Active', 'good') : badge('Inactive', 'bad'), ' ', u.locked ? badge('Locked', 'bad') : null, u.must_change && u.active ? badge('Temp password', 'warn') : null]; } },
       { label: 'Last login', cls: 'hide-sm nowrap', render: function (u) { return u.last_login ? String(u.last_login).replace('T', ' ').slice(0, 16) : 'never'; } },
       { label: '', cls: 'nowrap', render: function (u) { return [h('button', { class: 'btn small', onclick: function () { edit(u, state.roles, state.estate); } }, 'Edit'), ' ',
         h('button', { class: 'btn small', onclick: function () { reset(u); } }, 'Reset password'), ' ',
+        u.renamed ? h('button', { class: 'btn small', onclick: function () { resetName(u); } }, 'Reset username') : null, u.renamed ? ' ' : null,
         u.locked ? h('button', { class: 'btn small', onclick: function () { api('api_unlockUser', u.user_id).then(function () { toast('Unlocked'); refresh(); }).catch(function (e) { toast(e.message, true); }); } }, 'Unlock') : null]; } }], users, function (u) { return u.active ? '' : 'void'; }));
   }
 
@@ -2297,7 +2345,7 @@ VIEWS['users.manage'] = function (root) {
       updCount();
     }
     roleSel.addEventListener('change', renderFields); renderFields();
-    modal(isNew ? 'New user' : 'Edit ' + u.username, h('div', { class: 'stack' }, field('Full name', name), field('Username', uname, isNew ? 'Lowercase letters, digits, dot, dash, underscore. Cannot be changed later.' : ''),
+    modal(isNew ? 'New user' : 'Edit ' + u.username, h('div', { class: 'stack' }, field('Full name', name), field('Username', uname, isNew ? 'Lowercase letters, digits, dot, dash, underscore. The person can change it later; you can always put this one back.' : ''),
       field('Job role', roleSel), isNew ? null : field('Status', act), fieldsBox, err), [
       { label: 'Cancel', onclick: function (m) { m.close(); } },
       { label: isNew ? 'Create user' : 'Save', kind: 'primary', onclick: function (m, btn) {
@@ -2305,6 +2353,11 @@ VIEWS['users.manage'] = function (root) {
         if (isNew) p.username = uname.value; else { p.user_id = u.user_id; p.active = act.value === 'true'; }
         run(btn, function () { return api('api_saveUser', p).then(function (r) { m.close(); refresh(); if (r.temp_password) showTemp(name.value, r.username, r.temp_password); else toast('Saved'); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
       } }]);
+  }
+  function resetName(u) {
+    modal('Reset username?', h('div', null, 'Put the username of ' + u.display_name + ' back to the one the account was created with (', h('b', null, u.default_username), ')? The username ', h('b', null, u.username), ' stops working and they sign in with the original one. Their password and their earlier entries are not touched.'), [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: 'Reset username', kind: 'danger', onclick: function (m, btn) { run(btn, function () { return api('api_resetUsername', u.user_id).then(function (r) { m.close(); refresh(); toast('Username is now ' + r.username); }).catch(function (e) { toast(e.message, true); }); }); } }]);
   }
   function reset(u) {
     modal('Reset password?', h('div', null, 'Set the password of ' + u.display_name + ' (' + u.username + ') back to the standard starting password (1111)? Their current password stops working immediately and they must choose a new one at their next login.'), [
@@ -2435,6 +2488,169 @@ VIEWS['audit.view'] = function (root) {
       { label: 'Details', render: function (r) { return h('span', { class: 'small' }, r.details); } }], list));
   }
 };
+</script>
+
+<script>
+'use strict';
+/* ===== Home: the estate at a glance, for everyone who is signed in =====
+ *  Four cards (Fields, Drone spraying, Manual spraying, Entered today). Each opens a window: every field division by division, the drone and the manual area broken down by
+ *  division, and what was entered today (plucking and spraying, field by field, with who entered it). The setup checklist is shown to the Admin only. */
+const HM_TINTS = [100, 76, 56, 40, 30, 22];       // how strong the colour of each division is in the stacked bars of the drone and manual windows
+
+function hmGreeting() { const hr = new Date().getHours(); return hr < 12 ? 'Good morning' : (hr < 17 ? 'Good afternoon' : 'Good evening'); }
+function hmTint(kind, i) { return 'color-mix(in srgb, var(--' + kind + '-solid) ' + HM_TINTS[Math.min(i, HM_TINTS.length - 1)] + '%, var(--surface))'; }
+function hmSum(list, key) { return list.reduce(function (t, f) { return t + (f[key] || 0); }, 0); }
+function hmPct(part, whole) { return whole > 0 ? Math.round(part / whole * 100) : 0; }
+function hmLegend(items) {
+  return h('div', { class: 'hm-leg' }, items.map(function (it) { return h('span', null, h('i', { class: 'sw ' + it[0], style: it[2] ? 'background:' + it[2] : null }), it[1]); }));
+}
+function hmBar(segs) { return h('div', { class: 'hm-bar', role: 'img', 'aria-label': segs.map(function (s) { return s.label; }).join(', ') }, segs.map(function (s) { return h('i', { class: s.cls || '', style: 'width:' + s.pct + '%' + (s.color ? ';background:' + s.color : '') }); })); }
+function hmCardOpen(el, fn) { el.addEventListener('click', function () { fn(el); }); el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(el); } }); }
+function hmWho(names) { return h('span', { class: 'hm-by', title: names.join(', ') }, h('i', { class: 'av' }, initials(names[0])), h('span', null, names.join(', '))); }
+function hmClose() { return [{ label: 'Close', kind: 'primary', onclick: function (m) { m.close(); } }]; }
+function hmTitle(ic, title, sub) { return h('div', { class: 'hm-title' }, h('span', { class: 'hm-ico' }, icon(ic)), h('div', null, h('h2', null, title), sub ? h('div', { class: 'muted small' }, sub) : null)); }
+
+/** One field as a small card: its name, its area and how it is sprayed. kind is the colour; ha the area to show; tag the word on the right. */
+function hmFieldCard(f, kind, ha, tag, extra) {
+  return h('div', { class: 'hm-fc ' + kind, title: f.code + (f.name ? ' - ' + f.name : '') },
+    h('div', { class: 'r1' }, h('b', null, f.code), tag ? h('span', { class: 'tag' }, tag) : null),
+    h('div', { class: 'r2' }, h('span', { class: 'ha' }, num(ha, 1) + ' ha'), extra ? h('span', { class: 'of' }, extra) : null, f.name ? h('span', { class: 'nm' }, f.name) : null));
+}
+const HM_KIND = { Drone: 'drone', Manual: 'manual', Mixed: 'mixed' };
+
+// ---------------------------------------------------------------- window: all the fields
+function hmOpenFields(d, from) {
+  const st = d.stats, drone1 = st.drone - st.mixed, manual1 = st.manual - st.mixed, unset = Math.max(st.fields - (st.drone + st.manual - st.mixed), 0), body = h('div');
+  body.appendChild(h('div', { class: 'hm-pop-sum' }, h('span', { class: 'hm-pop-big' }, num(st.fields, 0) + ' fields'), h('span', { class: 'muted' }, num(st.ha, 1) + ' ha in ' + d.divisions.length + ' divisions')));
+  body.appendChild(hmLegend([['drone', 'Drone ' + drone1], ['mixed', 'Mixed ' + st.mixed], ['manual', 'Manual ' + manual1]].concat(unset ? [['none', 'Not set ' + unset]] : [])));
+  d.divisions.forEach(function (dv) {
+    body.appendChild(h('section', { class: 'hm-div' },
+      h('div', { class: 'hm-divhead' }, h('b', null, dv.name), h('span', null, dv.fields.length + ' fields | ' + num(hmSum(dv.fields, 'area_ha'), 1) + ' ha')),
+      dv.fields.length ? h('div', { class: 'hm-fgrid' }, dv.fields.map(function (f) { return hmFieldCard(f, HM_KIND[f.method] || 'none', f.area_ha, f.method || 'Not set'); })) : h('div', { class: 'muted small' }, 'No fields in this division yet.')));
+  });
+  modal(hmTitle('map', 'Fields in ' + (d.estate || 'the estate'), 'Every field, division by division'), body, hmClose(), { from: from, wide: true });
+}
+
+// ---------------------------------------------------------------- window: the drone (or manual) area, broken down by division
+function hmOpenMethod(d, kind, from) {
+  const key = kind === 'drone' ? 'drone_ha' : 'manual_ha', word = kind === 'drone' ? 'Drone' : 'Manual', total = d.stats[key], body = h('div');
+  const parts = d.divisions.map(function (dv) { const fl = dv.fields.filter(function (f) { return f[key] > 0; }); return { dv: dv, fields: fl, ha: hmSum(fl, key) }; }).filter(function (p) { return p.fields.length; });
+  const sumHa = hmSum(parts, 'ha');
+  body.appendChild(h('div', { class: 'hm-pop-sum' }, h('span', { class: 'hm-pop-big' }, num(total, 1) + ' ha'), h('span', { class: 'muted' }, 'sprayed by ' + word.toLowerCase() + ' on ' + d.stats[kind] + ' fields in ' + parts.length + ' divisions')));
+  if (parts.length) {
+    body.appendChild(hmBar(parts.map(function (p, i) { return { pct: sumHa > 0 ? p.ha / sumHa * 100 : 0, color: hmTint(kind, i), label: p.dv.name + ' ' + num(p.ha, 1) + ' ha' }; })));
+    body.appendChild(hmLegend(parts.map(function (p, i) { return [kind, p.dv.name + ' ' + num(p.ha, 1) + ' ha (' + hmPct(p.ha, sumHa) + '%)', hmTint(kind, i)]; })));
+  }
+  parts.forEach(function (p, i) {
+    body.appendChild(h('section', { class: 'hm-div' },
+      h('div', { class: 'hm-divhead' }, h('i', { class: 'sw ' + kind, style: 'background:' + hmTint(kind, i) }), h('b', null, p.dv.name), h('span', { class: 'grow' }, p.fields.length + ' fields'), h('b', { class: 'hm-divha' }, num(p.ha, 1) + ' ha'), h('span', null, hmPct(p.ha, sumHa) + '%')),
+      h('div', { class: 'hm-fgrid' }, p.fields.map(function (f) { return hmFieldCard(f, kind, f[key], f.method === 'Mixed' ? 'Mixed' : '', f.method === 'Mixed' ? 'of ' + num(f.area_ha, 1) : ''); }))));
+  });
+  if (!parts.length) body.appendChild(emptyState('No field has a ' + word.toLowerCase() + ' part yet.', 'map'));
+  modal(hmTitle(kind === 'drone' ? 'wind' : 'tractor', word + ' spraying', 'Where the ' + num(total, 1) + ' ha comes from, division by division'), body, hmClose(), { from: from, wide: true });
+}
+
+// ---------------------------------------------------------------- window: what was entered today (two dropdowns: plucking, spraying)
+function hmDrop(ic, title, sub, content, open) {
+  const body = h('div', { class: 'hm-drop-body' }, content);
+  const head = h('div', { class: 'hm-drop-head', role: 'button', tabindex: '0', 'aria-expanded': open ? 'true' : 'false' }, h('span', { class: 'hm-ico' }, icon(ic)), h('div', { class: 'hm-drop-t' }, h('b', null, title), h('small', null, sub)), h('i', { class: 'grp-chev', 'aria-hidden': 'true' }));
+  const wrap = h('section', { class: 'hm-drop' + (open ? ' open' : '') }, head, body);
+  const toggle = function () { const o = !wrap.classList.contains('open'); wrap.classList.toggle('open', o); head.setAttribute('aria-expanded', o ? 'true' : 'false'); };
+  head.addEventListener('click', toggle); head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  return wrap;
+}
+/** The entries of a day field by field, under their divisions. chips(items) draws what each entry says; the names are the people who entered them. */
+function hmTodayList(d, recs, chips) {
+  const byField = {}, out = h('div'); recs.forEach(function (r) { (byField[r.field_id] = byField[r.field_id] || []).push(r); });
+  let any = false;
+  d.divisions.forEach(function (dv) {
+    const rows = dv.fields.filter(function (f) { return byField[f.field_id]; });
+    if (!rows.length) return;
+    any = true;
+    out.appendChild(h('section', { class: 'hm-div' }, h('div', { class: 'hm-divhead' }, h('b', null, dv.name), h('span', null, rows.length + (rows.length === 1 ? ' field' : ' fields'))),
+      h('div', { class: 'hm-rows' }, rows.map(function (f) {
+        const items = byField[f.field_id].slice().sort(function (a, b) { return a.method < b.method ? 1 : -1; }), names = [];
+        items.forEach(function (r) { if (r.by && names.indexOf(r.by) < 0) names.push(r.by); });
+        return h('div', { class: 'hm-row', 'data-code': f.code }, h('div', { class: 'r1' }, h('b', null, f.code), f.name ? h('span', { class: 'nm' }, f.name) : null, names.length ? hmWho(names) : null), h('div', { class: 'r2' }, chips(items)));
+      }))));
+  });
+  return any ? out : h('div', { class: 'hm-none' }, 'Nothing entered yet today.');
+}
+function hmOpenToday(d, from) {
+  const st = d.stats, body = h('div');
+  const chipsP = function (items) { return items.map(function (r) { return h('span', { class: 'hm-chip ' + (HM_KIND[r.method] || '') }, r.method, h('b', null, num(r.kg, 1) + ' kg')); }); };
+  const chipsS = function (items) { return items.map(function (r) { return h('span', { class: 'hm-chip ' + (HM_KIND[r.method] || ''), title: r.start && r.end ? r.start + ' to ' + r.end : '' }, r.method, h('b', null, num(r.ha, 1) + ' ha'), h('em', null, num(r.kg, 1) + ' kg')); }); };
+  body.appendChild(hmDrop('basket', 'Plucking entered today', st.plucked_fields ? st.plucked_fields + ' of ' + st.fields + ' fields | ' + num(st.kg_today, 0) + ' kg' : 'nothing yet', hmTodayList(d, d.pluck_today, chipsP), true));
+  body.appendChild(hmDrop('droplet', 'Spray events entered today', st.spray_events ? st.spray_events + (st.spray_events === 1 ? ' event' : ' events') + ' | ' + st.spray_fields + ' fields | ' + num(st.spray_ha, 1) + ' ha' : 'nothing yet', hmTodayList(d, d.spray_today, chipsS), false));
+  modal(hmTitle('clock', 'Entered today', 'Today so far, ' + fullDate(d.today)), body, hmClose(), { from: from, wide: true });
+}
+
+// ---------------------------------------------------------------- the Home screen
+function hmCard(kind, ic, label, big, unit, sub, visual, onOpen) {
+  const c = h('div', { class: 'hm-card ' + kind, role: 'button', tabindex: '0', 'aria-haspopup': 'dialog', 'data-card': kind },
+    h('div', { class: 'hm-top' }, h('span', { class: 'hm-ico' }, icon(ic)), h('span', { class: 'hm-label' }, label), h('i', { class: 'hm-go', 'aria-hidden': 'true' })),
+    h('div', { class: 'hm-big' }, big, unit ? h('small', null, unit) : null), h('div', { class: 'hm-sub2' }, sub), visual || null, h('div', { class: 'hm-hint' }, 'Tap for the details'));
+  hmCardOpen(c, onOpen);
+  return c;
+}
+VIEWS['home'] = function (root) {
+  const hero = h('div', { class: 'hm-hero' }), box = h('div'), adminBox = h('div');
+  let data = null, stamp = '';
+  root.appendChild(hero); root.appendChild(box); root.appendChild(adminBox);
+  const drawHero = function () {
+    const day = data ? new Date(data.today + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' }) + ', ' + fullDate(data.today) : '';
+    clear(hero).appendChild(h('div', { class: 'hm-hero-row' },
+      h('div', null, h('div', { class: 'hm-kicker' }, (data && data.estate) || S.me.estate || 'Foliar spray'), h('h1', null, hmGreeting() + ', ' + S.me.display_name), h('div', { class: 'hm-herosub' }, [day, S.me.role_name].filter(Boolean).join('  |  '))),
+      h('div', { class: 'hm-heroact' }, stamp ? h('span', null, stamp) : null, h('button', { type: 'button', class: 'hm-refresh', onclick: load }, icon('refresh'), 'Refresh'))));
+  };
+  const drawCards = function () {
+    clear(box);
+    const st = data.stats, drone1 = st.drone - st.mixed, manual1 = st.manual - st.mixed, unset = Math.max(st.fields - (st.drone + st.manual - st.mixed), 0), area = st.drone_ha + st.manual_ha;
+    const share = function (ha) { return hmPct(ha, area); };
+    box.appendChild(h('div', { class: 'hm-cards' },
+      hmCard('neutral', 'map', 'Fields', num(st.fields, 0), '', num(st.ha, 1) + ' ha in ' + data.divisions.length + ' divisions',
+        h('div', { class: 'hm-vis' }, hmBar([{ cls: 'drone', pct: hmPct(drone1, st.fields), label: 'Drone ' + drone1 }, { cls: 'mixed', pct: hmPct(st.mixed, st.fields), label: 'Mixed ' + st.mixed }, { cls: 'manual', pct: hmPct(manual1, st.fields), label: 'Manual ' + manual1 }]),
+          hmLegend([['drone', 'Drone ' + drone1], ['mixed', 'Mixed ' + st.mixed], ['manual', 'Manual ' + manual1]].concat(unset ? [['none', 'Not set ' + unset]] : []))),
+        function (el) { hmOpenFields(data, el); }),
+      hmCard('drone', 'wind', 'Drone spraying', num(st.drone_ha, 1), 'ha', st.drone + ' fields have a drone part',
+        h('div', { class: 'hm-vis' }, hmBar([{ cls: 'drone', pct: share(st.drone_ha), label: share(st.drone_ha) + '% of the sprayed area' }]), h('div', { class: 'hm-leg' }, h('span', null, share(st.drone_ha) + '% of the sprayed area'))),
+        function (el) { hmOpenMethod(data, 'drone', el); }),
+      hmCard('manual', 'tractor', 'Manual spraying', num(st.manual_ha, 1), 'ha', st.manual + ' fields have a manual part' + (st.mixed ? ' (' + st.mixed + ' with both)' : ''),
+        h('div', { class: 'hm-vis' }, hmBar([{ cls: 'manual', pct: share(st.manual_ha), label: share(st.manual_ha) + '% of the sprayed area' }]), h('div', { class: 'hm-leg' }, h('span', null, share(st.manual_ha) + '% of the sprayed area'))),
+        function (el) { hmOpenMethod(data, 'manual', el); }),
+      hmCard('today', 'clock', 'Entered today', num(st.kg_today, 0), 'kg', st.plucked_fields + ' of ' + st.fields + ' fields plucked today',
+        h('div', { class: 'hm-vis' }, hmBar([{ cls: 'plucked', pct: hmPct(st.plucked_fields, st.fields), label: st.plucked_fields + ' of ' + st.fields + ' fields' }]),
+          h('div', { class: 'hm-leg' }, h('span', null, st.spray_events + (st.spray_events === 1 ? ' spray event' : ' spray events') + ' | ' + num(st.spray_ha, 1) + ' ha sprayed'))),
+        function (el) { hmOpenToday(data, el); })));
+  };
+  const showData = function (d, note) { data = d; stamp = note; drawHero(); drawCards(); };
+  function load() {
+    clear(box).appendChild(skeleton(4));
+    return api('api_homeSummary').then(function (d) {
+      Cache.set('home:summary', d);
+      const t = new Date(); showData(d, 'Updated ' + (t.getHours() < 10 ? '0' : '') + t.getHours() + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes());
+    }).catch(function (e) {
+      const c = Cache.get('home:summary');
+      if (e.network && c) { showData(c, 'No signal: showing what this phone saw last'); return; }
+      clear(box).appendChild(msgBox('err', e.message));
+    });
+  }
+  drawHero(); load();
+  if (S.me.is_admin) homeChecklist(adminBox);                 // the setup checklist is for the Admin only
+};
+
+/** The Admin's setup checklist (below the cards). */
+function homeChecklist(host) {
+  api('api_setupStatus').then(function (s) {
+    if (!s.admin || !s.steps.length) return;
+    const done = s.steps.filter(function (x) { return x.done; }).length, list = h('ul', { class: 'steps' });
+    s.steps.forEach(function (x) {
+      list.appendChild(h('li', null, x.done ? badge('Done', 'good') : badge('To do', 'warn'), ' ', h('a', { onclick: function () { S.go(x.task); } }, x.label), x.detail ? h('span', { class: 'muted small' }, '  ' + x.detail) : null));
+    });
+    host.appendChild(h('div', { class: 'card' }, h('div', { class: 'row between', style: 'margin-bottom:10px' }, h('h2', { style: 'margin:0' }, 'Setup checklist'), h('span', { class: 'muted small' }, done + ' of ' + s.steps.length + ' done')),
+      h('div', { class: 'progress', style: 'margin-bottom:14px' }, h('i', { style: 'width:' + Math.round(done / s.steps.length * 100) + '%' })), list));
+  }).catch(function () { /* the checklist is a convenience: the cards above are what matters */ });
+}
 </script>
 
 <script>
@@ -3061,13 +3277,13 @@ function experimentScreen(host) {
 
 /** The Monitoring entries in the sidebar (Operation monitoring, Experiment monitoring): highlight the one that is open. */
 function syncMonNav() {
-  const open = S.tab === 'dashboard.view', cur = S.monTab || 'operation';
+  const open = S.tab === 'dashboard.view', cur = S.monTab || 'experiment';
   Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button[data-sub-tab]'), function (b) { b.classList.toggle('on', open && b.getAttribute('data-sub-tab') === cur); });
 }
 
 VIEWS['dashboard.view'] = function (root) {
   // Operation monitoring / Experiment monitoring are chosen in the sidebar (S.monTab); only the Plucking rounds / Foliar rounds switch is on the page
-  let tab = S.monTab || 'operation', sub = S.monSub || 'pluck';
+  let tab = S.monTab || 'experiment', sub = S.monSub || 'pluck';
   const subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), tabs = h('div', { class: 'montabs' }, subBar), head = h('div'), page = h('div');
   [['pluck', 'Plucking rounds'], ['foliar', 'Foliar rounds']].forEach(function (t) {
     subBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-sub': t[0], onclick: function () { sub = t[0]; S.monSub = sub; show(); } }, t[1]));
@@ -3076,7 +3292,7 @@ VIEWS['dashboard.view'] = function (root) {
   show();
 
   function show() {
-    tab = S.monTab || 'operation';
+    tab = S.monTab || 'experiment';
     clear(head); head.appendChild(tab === 'operation' ? pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.') : pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying. Choose the period at the top: every number and graph below is for that period only.'));
     syncMonNav();
     Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
