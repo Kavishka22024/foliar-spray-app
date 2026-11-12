@@ -786,9 +786,9 @@ function icon(name, cls) {
   (ICONS[name] || []).forEach(function (d) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.appendChild(p); });
   return s;
 }
-const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'history.view': 'clock', 'dashboard.view': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
+const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'history.view': 'clock', 'monitor.operation': 'tractor', 'monitor.experiment': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
   'params.manage': 'sliders', 'users.manage': 'users', 'roles.manage': 'shield', 'audit.view': 'clock' };
-const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'dashboard.view': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
+const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'monitor.operation': 'Monitoring', 'monitor.experiment': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
   'params.manage': 'Administration', 'users.manage': 'Administration', 'roles.manage': 'Administration', 'audit.view': 'Administration' };
 
 // ---------- feedback widgets
@@ -1009,7 +1009,7 @@ function openChangeUsername() {
 }
 
 // ---------- app shell: top bar, side navigation (bottom bar on phones), content
-const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'history.view', 'dashboard.view', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
+const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'history.view', 'monitor.operation', 'monitor.experiment', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
 
 function enterApp() {
   if (S.me.must_change) { showForcedChange(); return Promise.resolve(); }
@@ -1038,7 +1038,6 @@ function renderShell() {
     clear(main);
     Offline.resetStale();
     try { VIEWS[id](main); } catch (e) { main.appendChild(msgBox('err', 'This screen could not be shown: ' + e.message)); }
-    if (typeof syncMonNav === 'function') syncMonNav();
     window.scrollTo(0, 0);
   }
   S.go = go;
@@ -1048,9 +1047,6 @@ function renderShell() {
     if (g && g !== lastGroup && tabs.length > 3) nav.appendChild(h('div', { class: 'navgroup' }, g));
     lastGroup = g;
     nav.appendChild(h('button', { type: 'button', 'data-id': id, onclick: function () { go(id); } }, icon(TASK_ICON[id]), h('span', null, labels[id])));
-    if (id === 'dashboard.view') [['operation', 'Operation monitoring'], ['experiment', 'Experiment monitoring']].forEach(function (t) {      // the two parts of Monitoring, one tap away
-      nav.appendChild(h('button', { type: 'button', class: 'sub', 'data-sub-tab': t[0], onclick: function () { S.monTab = t[0]; go('dashboard.view'); } }, h('span', null, t[1])));
-    });
   });
   const sidebar = h('aside', { class: 'sidebar', 'aria-label': 'Navigation' },
     h('div', { class: 'side-brand' }, h('div', { class: 'brand-mark' }, icon('leaf')), h('div', { class: 'brand-text' }, me.estate || 'Foliar Spray', h('small', null, 'Foliar spray experiment'))),
@@ -1393,7 +1389,8 @@ const Offline = {
     if (S.me.is_admin) list.push(['api_setupStatus', []]);
     if (has('spray.entry')) list.push(['api_sprayDay', [today]]);
     if (has('pluck.entry')) list.push(['api_entryFields', ['pluck', today]], ['api_dayRecords', ['pluck', today]]);
-    if (has('dashboard.view')) list.push(['api_expCharts', [{}]], ['api_pluckRounds', [{}]], ['api_sprayRounds', [{}]]);
+    if (has('monitor.experiment')) list.push(['api_expCharts', [{}]]);
+    if (has('monitor.operation')) list.push(['api_pluckRounds', [{}]], ['api_sprayRounds', [{}]]);
     if (has('estate.manage') || has('users.manage')) list.push(['api_getEstate', []]);
     if (has('users.manage')) list.push(['api_listUsers', []], ['api_listRoles', []]);
     if (has('roles.manage')) list.push(['api_listRoles', []], ['api_listTasks', []]);
@@ -3578,33 +3575,28 @@ function experimentScreen(host) {
   }
 }
 
-/** The Monitoring entries in the sidebar (Operation monitoring, Experiment monitoring): highlight the one that is open. */
-function syncMonNav() {
-  const open = S.tab === 'dashboard.view', cur = S.monTab || 'experiment';
-  Array.prototype.forEach.call(document.querySelectorAll('nav.tabs button[data-sub-tab]'), function (b) { b.classList.toggle('on', open && b.getAttribute('data-sub-tab') === cur); });
-}
-
-VIEWS['dashboard.view'] = function (root) {
-  // Operation monitoring / Experiment monitoring are chosen in the sidebar (S.monTab); only the Plucking rounds / Foliar rounds switch is on the page
-  let tab = S.monTab || 'experiment', sub = S.monSub || 'pluck';
-  const subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), tabs = h('div', { class: 'montabs' }, subBar), head = h('div'), page = h('div');
+/** Monitoring has two screens, each its own permission in a job role and its own entry in the sidebar: Operation monitoring and Experiment monitoring. */
+VIEWS['monitor.operation'] = function (root) {
+  let sub = S.monSub || 'pluck';                 // the Plucking rounds / Foliar rounds switch is the only thing on the page
+  const subBar = h('div', { class: 'seg', role: 'tablist', 'aria-label': 'Operation monitoring' }), tabs = h('div', { class: 'montabs' }, subBar), page = h('div');
   [['pluck', 'Plucking rounds'], ['foliar', 'Foliar rounds']].forEach(function (t) {
     subBar.appendChild(h('button', { type: 'button', role: 'tab', 'data-sub': t[0], onclick: function () { sub = t[0]; S.monSub = sub; show(); } }, t[1]));
   });
-  root.appendChild(head); root.appendChild(tabs); root.appendChild(page);
+  root.appendChild(pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.')); root.appendChild(tabs); root.appendChild(page);
   show();
 
   function show() {
-    tab = S.monTab || 'experiment';
-    clear(head); head.appendChild(tab === 'operation' ? pageHead('Operation monitoring', 'Watch how the plucking and the foliar spraying are going on every field.') : pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying. Choose the period at the top: every number and graph below is for that period only.'));
-    syncMonNav();
     Array.prototype.forEach.call(subBar.children, function (b) { const on = b.getAttribute('data-sub') === sub; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-    tabs.style.display = tab === 'operation' ? '' : 'none';
     clear(page);
-    if (tab === 'operation' && sub === 'pluck') { roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); }); return; }
-    if (tab === 'operation') { roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); }); return; }
-    experimentScreen(page);
+    if (sub === 'pluck') roundsScreen(page, 'pluck', function () { return api('api_pluckRounds', {}); });
+    else roundsScreen(page, 'spray', function () { return api('api_sprayRounds', {}); });
   }
+};
+
+VIEWS['monitor.experiment'] = function (root) {
+  root.appendChild(pageHead('Experiment monitoring', 'How the experiment is doing: drones against manual spraying. Choose the period at the top: every number and graph below is for that period only.'));
+  const page = h('div'); root.appendChild(page);
+  experimentScreen(page);
 };
 </script>
 
