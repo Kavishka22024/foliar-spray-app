@@ -3152,12 +3152,12 @@ const EXP_MODES = {
     tip: function (c) { return num(c.kg, 1) + ' kg on ' + num(c.ext, 2) + ' ha of land (' + c.plots + ' field part' + (c.plots === 1 ? '' : 's') + '), ' + c.obs + ' days'; },
     read: function () { return 'The whole chosen period is always shown. Daily: each point is the foliar used in the last ' + EXP_NET_WIN + ' days ending on that day, per hectare of land (a single day cannot show how often a field is sprayed). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period. The bars under the graph show each field part on its own.'; },
     help: 'The foliar a method used, per hectare of land, per month. For one method: add up the kg of foliar applied in the period, and divide by the land it was applied on, then scale to one month. The land is counted once however many times it was sprayed: for each field part (the drone part or the manual part of a field) it is the smaller of the hectares sprayed in the period and the area of that part. So a field sprayed twice uses twice the foliar on the same land, and shows it; a part that was only half covered counts only the half covered; a part not sprayed in the period adds nothing. Each spray event\'s kg is shared between its fields by area. A lower point means less foliar for the same land. A plain comparison: it does not correct for the age since pruning.' },
-  speed: { name: 'Work speed', icon: 'trend', label: 'Work speed', title: 'Area covered per hour', unit: 'ha/hour', lowerBetter: false, first: 'first_spray', needs: 'spray events by both methods',
+  speed: { name: 'Work speed', icon: 'trend', label: 'Work speed', title: 'Area covered per hour by one man or one drone', unit: 'ha/hour', unitBy: { Drone: 'ha per drone hour', Manual: 'ha per man hour' }, lowerBetter: false, first: 'first_spray', needs: 'spray events by both methods',
     has: function (c) { return c.events > 0; },
-    value: function (c) { return c.hours > 0 && c.ha > 0 ? c.ha / c.hours : null; },
-    words: function (pct) { return pct > 0 ? ['faster', 'area covered per hour with drones than with manual spraying'] : ['slower', 'area covered per hour with drones than with manual spraying']; },
-    tip: function (c) { return num(c.ha, 2) + ' ha in ' + num(c.hours, 1) + ' h'; },
-    help: 'Each point is the area covered (ha) divided by the hours worked by that method. A higher point means more area covered per hour.' },
+    value: function (c) { const u = c.uh !== undefined ? c.uh : c.unit_hours; return u > 0 && c.ha > 0 ? c.ha / u : null; },
+    words: function (pct) { return pct > 0 ? ['faster', 'area covered per hour by one drone than by one man'] : ['slower', 'area covered per hour by one drone than by one man']; },
+    tip: function (c) { const u = c.uh !== undefined ? c.uh : c.unit_hours; return num(c.ha, 2) + ' ha in ' + num(u, 1) + ' man or drone hours'; },
+    help: 'How fast one worker covers the ground: for manual spraying the hectares sprayed divided by the man-hours (the hours of each spray event times the men on it), for drone spraying the hectares sprayed divided by the drone-hours (the hours of each event times the drones on it). A higher point means more area covered in one hour by one man, or by one drone. The percentage on the card compares the two: how much faster one drone covers the ground than one man. It is the same comparison as "1 drone = N workers" on the Labour card (N is the drone figure divided by the man figure). Crews that work at the same time are recorded as separate events, so their hours do not get mixed up.' },
   cost: { name: 'Labour cost saving', icon: 'coin', label: 'Labour cost saving', title: 'Labour cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
     waits: function (r) { return !(r.worker && r.drone); }, waitText: 'The Admin enters the cost of a man-hour and the drone charge under Parameters and rates.',
     has: function (c) { return c.events > 0; },
@@ -3375,8 +3375,8 @@ function expSeries(data, mode, period) {
     const cells = {};                                                                        // day number -> that day's totals
     data.days.forEach(function (d) { if (M.has(d[m])) cells[dayNo(d.date)] = d[m]; });
     const nums = Object.keys(cells).map(Number).sort(function (a, b) { return a - b; });
-    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; c.days += 1; return c; };
-    const fresh = function () { return { kg: 0, ha: 0, hours: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 }; };
+    const add = function (c, x) { c.kg += x.kg; c.ha += x.ha; c.hours += x.hours; c.uh += x.unit_hours; c.events += x.events; c.cost += x.cost; c.mat_cost += x.mat_cost; c.leaf_kg += x.leaf_kg; c.leaf_ha += x.leaf_ha; c.leaf_n += x.leaf_n; c.leaf_rev += x.leaf_rev; c.days += 1; return c; };
+    const fresh = function () { return { kg: 0, ha: 0, hours: 0, uh: 0, events: 0, days: 0, cost: 0, mat_cost: 0, leaf_kg: 0, leaf_ha: 0, leaf_n: 0, leaf_rev: 0 }; };
     const keyOf = function (t, label) { const k = out.keys[t] || (out.keys[t] = { t: t, label: label }); return k; };
     out.dots[m] = []; out.lines[m] = [];
     if (period === 'day') {
@@ -3481,7 +3481,7 @@ function expLineChart(data, mode, period, W, tip) {
     clear(tip).appendChild(h('div', { class: 'tt-d' }, best.label));
     EXP_METHODS.forEach(function (m) {
       const p = best[m];
-      tip.appendChild(h('div', { class: 'tt-r' }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', p ? [h('b', null, expFmt(p.v) + ' ' + M.unit), h('div', { class: 'tt-s' }, M.tip(p.c) + (p.trend !== undefined ? '  |  ' + EXP_TREND + '-day line ' + expFmt(p.trend) : ''))] : h('span', { class: 'muted' }, 'no spraying')));
+      tip.appendChild(h('div', { class: 'tt-r' }, h('i', { class: 'dot ' + m.toLowerCase() }), m + '  ', p ? [h('b', null, expFmt(p.v) + ' ' + (M.unitBy ? M.unitBy[m] : M.unit)), h('div', { class: 'tt-s' }, M.tip(p.c) + (p.trend !== undefined ? '  |  ' + EXP_TREND + '-day line ' + expFmt(p.trend) : ''))] : h('span', { class: 'muted' }, 'no spraying')));
     });
     tip.style.display = 'block';
     const tw = tip.offsetWidth || 190, left = Math.min(Math.max(X(best.t) * (r.width / W) + 12, 4), Math.max(r.width - tw - 4, 4));
@@ -3501,7 +3501,7 @@ function expHeadline(data, mode) {
     const v = m === 'Drone' ? dv : mv;
     return h('div', { class: 'cmp-row ' + m.toLowerCase() }, h('span', { class: 'cmp-name' }, m),
       h('span', { class: 'cmp-track' }, v === null ? null : h('i', { class: 'cmp-fill', style: 'width:' + Math.max(4, v / top * 100) + '%' })),
-      h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + M.unit));
+      h('b', { class: 'cmp-val' }, v === null ? 'no data yet' : expFmt(v) + ' ' + (M.unitBy ? M.unitBy[m] : M.unit)));
   }));
   if (M.waits && data.rates_set && M.waits(data.rates_set)) {                                                      // the Admin has not entered the rates this KPI needs yet
     return h('div', { class: 'exp-head none waiting' }, h('div', { class: 'eh-top' }, h('span', { class: 'eh-ico' }, icon(M.icon)), h('span', { class: 'eh-kick' }, M.name)), M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null,
@@ -3512,7 +3512,7 @@ function expHeadline(data, mode) {
     return h('div', { class: 'exp-head none' }, topRow, M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null, h('div', { class: 'eh-bigrow' }, h('span', { class: 'eh-num small' }, 'Not enough data yet')), h('div', { class: 'eh-sub' }, M.title + ' needs ' + M.needs + '.'), bars);
   }
   const pct = (dv - mv) / mv * 100, abs = Math.abs(pct), same = abs < 0.5, good = M.lowerBetter ? pct < 0 : pct > 0, w = M.words(pct), up = pct > 0;
-  const num1 = (abs >= 10 ? Math.round(abs) : num(abs, 1)) + '%';
+  const num1 = (abs >= 10 ? num(Math.round(abs), 0) : num(abs, 1)) + '%';
   return h('div', { class: 'exp-head ' + (same ? 'none' : (good ? 'good' : 'bad')) }, topRow, M.blurb ? h('div', { class: 'eh-blurb' }, M.blurb) : null,
     h('div', { class: 'eh-bigrow' }, same ? h('span', { class: 'eh-num small' }, 'About the same') : [h('i', { class: 'eh-arrow ' + (up ? 'up' : 'down'), 'aria-hidden': 'true' }), h('span', { class: 'eh-num' }, num1), h('span', { class: 'eh-word' }, w[0])]),
     h('div', { class: 'eh-sub' }, same ? M.title + ' is about the same for drones and manual spraying.' : w[1] + ', ' + (data.range_label || 'all time')), bars);
