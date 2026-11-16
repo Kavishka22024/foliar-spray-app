@@ -611,6 +611,15 @@ nav.tabs button.sub::after { content: ''; position: absolute; left: 30px; top: 5
 .grp-stat.good .gs-num { color: var(--good); } .grp-stat.bad .gs-num { color: var(--bad); }
 .grp-stat.none .gs-num, .grp-stat.wait .gs-num { font-size: 22px; line-height: 1.25; color: var(--ink-2); }
 .gs-lab { margin-top: 6px; font-size: 14.5px; line-height: 1.35; color: var(--ink-2); }
+.gs-sub { margin-top: 4px; font-size: 12.5px; line-height: 1.3; color: var(--muted); } .exp-group.open .gs-sub { display: none; }
+/* the bars under the Foliar saving graph: one row per field part */
+.fbars { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.fb-list { margin-top: 8px; display: grid; gap: 5px; max-height: 340px; overflow-y: auto; padding-right: 4px; }
+.fb-row { display: grid; grid-template-columns: minmax(70px, 120px) 1fr 52px 64px; align-items: center; gap: 8px; font-size: 13px; }
+.fb-name { color: var(--ink-2); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-track { height: 12px; border-radius: 7px; background: color-mix(in srgb, var(--ink) 7%, transparent); overflow: hidden; } .fb-fill { display: block; height: 100%; border-radius: 7px; }
+.fb-row.drone .fb-fill { background: var(--drone-solid); } .fb-row.manual .fb-fill { background: var(--manual-solid); }
+.fb-val { font-variant-numeric: tabular-nums; text-align: right; } .fb-sub { color: var(--muted); font-size: 12px; text-align: right; }
 /* opened: the two numbers shrink into one tidy line */
 .exp-group.open .grp-head { padding-bottom: 12px; border-radius: 22px 22px 0 0; }
 .exp-group.open .grp-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -3136,12 +3145,13 @@ function roundsScreen(host, kind, load) {
  *  on top always uses ALL the data, whatever period is chosen below it. */
 const EXP_METHODS = ['Drone', 'Manual'];
 const EXP_MODES = {
-  eff: { name: 'Foliar saving', icon: 'droplet', label: 'Foliar saving', title: 'Foliar used per hectare', unit: 'kg/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
-    has: function (c) { return c.events > 0; },
-    value: function (c) { return c.ha > 0 ? c.kg / c.ha : null; },
+  eff: { name: 'Foliar saving', icon: 'droplet', label: 'Foliar saving', title: 'Foliar used per hectare, per month', unit: 'kg/ha/month', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods', win: true, cell: expFolCell, fields: true,
+    has: function (c) { return c.obs > 0; },
+    value: function (c) { return c.ext > 0 && c.obs > 0 ? c.kg / c.ext * EXP_MONTH / c.obs : null; },
     words: function (pct) { return pct < 0 ? ['less', 'foliar per hectare with drones than with manual spraying'] : ['more', 'foliar per hectare with drones than with manual spraying']; },
-    tip: function (c) { return num(c.kg, 1) + ' kg on ' + num(c.ha, 2) + ' ha'; },
-    help: 'Each point is the foliar applied (kg) divided by the area covered (ha) by that method. A lower point means less foliar is used to cover the same area.' },
+    tip: function (c) { return num(c.kg, 1) + ' kg on ' + num(c.ext, 2) + ' ha of land (' + c.plots + ' field part' + (c.plots === 1 ? '' : 's') + '), ' + c.obs + ' days'; },
+    read: function () { return 'The whole chosen period is always shown. Daily: each point is the foliar used in the last ' + EXP_NET_WIN + ' days ending on that day, per hectare of land (a single day cannot show how often a field is sprayed). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period. The bars under the graph show each field part on its own.'; },
+    help: 'The foliar a method used, per hectare of land, per month. For one method: add up the kg of foliar applied in the period, and divide by the land it was applied on, then scale to one month. The land is counted once however many times it was sprayed: for each field part (the drone part or the manual part of a field) it is the smaller of the hectares sprayed in the period and the area of that part. So a field sprayed twice uses twice the foliar on the same land, and shows it; a part that was only half covered counts only the half covered; a part not sprayed in the period adds nothing. Each spray event\'s kg is shared between its fields by area. A lower point means less foliar for the same land. A plain comparison: it does not correct for the age since pruning.' },
   speed: { name: 'Work speed', icon: 'trend', label: 'Work speed', title: 'Area covered per hour', unit: 'ha/hour', lowerBetter: false, first: 'first_spray', needs: 'spray events by both methods',
     has: function (c) { return c.events > 0; },
     value: function (c) { return c.hours > 0 && c.ha > 0 ? c.ha / c.hours : null; },
@@ -3155,13 +3165,14 @@ const EXP_MODES = {
     words: function (pct) { return pct < 0 ? ['saved', 'in labour cost per hectare with drones compared with manual spraying'] : ['dearer', 'labour cost per hectare with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost, 0) + ' for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the labour cost of the spraying divided by the area covered. Manual spraying costs the hours of the spray events times the men, at the cost of a man-hour. Drone spraying costs the hectares sprayed times the drone charge per hectare (pilot included; or the hours times the drones at a drone-hour cost, if the Admin chose that). The rates used are the ones the Admin entered under Parameters and rates as they were on that day. The foliar itself is not included: see Material cost saving.' },
-  mat: { name: 'Material cost saving', icon: 'flask', label: 'Material cost saving', title: 'Foliar cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
+  mat: { name: 'Material cost saving', icon: 'flask', label: 'Material cost saving', title: 'Foliar cost per hectare, per month', unit: 'Rs/ha/month', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods', win: true, cell: expFolCell, fields: true, money: true,
     waits: function (r) { return !r.material; }, waitText: 'The Admin enters the price of one kg of foliar under Parameters and rates.',
-    has: function (c) { return c.events > 0; },
-    value: function (c) { return c.ha > 0 && c.mat_cost > 0 ? c.mat_cost / c.ha : null; },
+    has: function (c) { return c.obs > 0; },
+    value: function (c) { return c.ext > 0 && c.obs > 0 && c.cost > 0 ? c.cost / c.ext * EXP_MONTH / c.obs : null; },
     words: function (pct) { return pct < 0 ? ['saved', 'in foliar cost per hectare with drones compared with manual spraying'] : ['dearer', 'foliar cost per hectare with drones than with manual spraying']; },
-    tip: function (c) { return 'Rs ' + num(c.mat_cost, 0) + ' of foliar for ' + num(c.ha, 2) + ' ha'; },
-    help: 'Each point is the cost of the foliar used divided by the area covered: the kg applied in each spray event times the price of one kg of foliar (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares covered. The labour and the drone are not included: see Labour cost saving.' },
+    tip: function (c) { return 'Rs ' + num(c.cost, 0) + ' of foliar on ' + num(c.ext, 2) + ' ha of land (' + c.plots + ' field part' + (c.plots === 1 ? '' : 's') + '), ' + c.obs + ' days'; },
+    read: function () { return 'The whole chosen period is always shown. Daily: each point is the foliar cost of the last ' + EXP_NET_WIN + ' days ending on that day, per hectare of land (a single day cannot show how often a field is sprayed). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period. The bars under the graph show each field part on its own.'; },
+    help: 'The cost of the foliar a method used, per hectare of land, per month. It is worked out exactly like Foliar saving, with rupees instead of kg: the kg applied in each spray event times the price of one kg of foliar (the price the Admin entered under Parameters and rates, as it was on that day), added up for the period and divided by the land it was applied on, then scaled to one month. The land is counted once however many times it was sprayed: for each field part (the drone part or the manual part of a field) it is the smaller of the hectares sprayed in the period and the area of that part. So a field sprayed twice costs twice as much on the same land, and shows it. The labour and the drone are not included: see Labour cost saving.' },
   total: { name: 'Total cost saving', icon: 'wallet', label: 'Total cost saving', title: 'Total cost per hectare', unit: 'Rs/ha', lowerBetter: true, first: 'first_spray', needs: 'spray events by both methods',
     waits: function (r) { return !(r.worker && r.drone && r.material); }, waitText: 'The Admin enters the cost of a man-hour, the drone charge and the price of one kg of foliar under Parameters and rates.',
     has: function (c) { return c.events > 0; },
@@ -3183,7 +3194,7 @@ EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue
     words: function (pct) { return pct > 0 ? ['more', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
     tip: function (c) { return 'Rs ' + num(c.leaf_rev, 0) + ' from ' + num(c.leaf_kg, 0) + ' kg on ' + num(c.leaf_ha, 2) + ' ha plucked'; },
     help: 'Each point is the value of the green leaf plucked divided by the area plucked: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares plucked, from the parts of the fields sprayed by that method. A higher point means more money from the same area. It is the revenue only: the costs are not taken off yet.' };
-EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'The extra profit the drones bring over manual spraying: the green leaf revenue minus the spraying cost.', title: 'Net margin per hectare of land, per month', unit: 'Rs/ha/month', lowerBetter: false, first: 'first_net', net: true, needs: 'spray events and plucking records, and the land of both the drone-sprayed and the manually sprayed parts',
+EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'The extra profit the drones bring over manual spraying: the green leaf revenue minus the spraying cost.', title: 'Net margin per hectare of land, per month', unit: 'Rs/ha/month', lowerBetter: false, first: 'first_net', net: true, win: true, cell: expNetCell, read: function () { return 'The whole chosen period is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period.'; }, needs: 'spray events and plucking records, and the land of both the drone-sprayed and the manually sprayed parts',
     waits: function (r) { return !(r.worker && r.drone && r.material && r.leaf); }, waitText: 'The Admin enters the cost of a man-hour, the drone charge, the price of one kg of foliar and the price of one kg of green leaf under Parameters and rates.',
     has: function (c) { return c.obs > 0; },
     value: function (c) { return c.land > 0 && c.obs > 0 ? (c.rev - c.cost) / c.land * EXP_MONTH / c.obs : null; },
@@ -3222,7 +3233,7 @@ function expCustomError(from, to, today) {
 function expInRange(data, range) {
   if (!range) return Object.assign({}, data, { range_label: 'all time' });
   const hi = range.to < data.today ? range.to : data.today, up = function (iso) { return iso ? (iso > range.from ? iso : range.from) : ''; };
-  return Object.assign({}, data, { days: data.days.filter(function (d) { return d.date >= range.from && d.date <= hi; }), today: hi, first: up(data.first), first_spray: up(data.first_spray), first_leaf: up(data.first_leaf), first_net: up(data.first_net), range_label: range.label });
+  return Object.assign({}, data, { days: data.days.filter(function (d) { return d.date >= range.from && d.date <= hi; }), spray: (data.spray || []).filter(function (l) { return l[0] >= range.from && l[0] <= hi; }), _sp: null, today: hi, first: up(data.first), first_spray: up(data.first_spray), first_leaf: up(data.first_leaf), first_net: up(data.first_net), range_label: range.label });
 }
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
@@ -3251,9 +3262,15 @@ function expAmount(v, unit) { return (unit === 'Rs' ? 'Rs ' : '') + expFmt(Math.
 function expSignedTile(v, unit, goodLab, badLab) { return v === null ? null : expTile(v, expAmount(v, unit), v >= 0 ? goodLab : badLab, v >= 0 ? 'good' : 'bad'); }
 function expAllData(data) { const all = {}; EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); }); return all; }
 function expMaterialStats(data) {
-  const A = expAllData(data), r = data.rates_set || { material: true }, kg = expGap(A.Drone, A.Manual, 'kg', 'ha'), rs = expGap(A.Drone, A.Manual, 'mat_cost', 'ha');
-  return [expSignedTile(kg, 'kg', 'of foliar saved by the drones', 'more foliar used by the drones') || expNoTile('spray events by both methods'),
-    !r.material ? expWaitTile('The price of one kg of foliar') : (expSignedTile(rs, 'Rs', 'saved on foliar by the drones', 'more spent on foliar by the drones') || expNoTile('spray events by both methods'))];
+  const r = data.rates_set || { material: true };
+  // both numbers: what the drone land would have used / paid at the manual rate (per ha of land, per month) minus what it really used / paid, over the months of the period
+  const nd = expFolCell(data, 'Drone', null, null), nm = expFolCell(data, 'Manual', null, null), dv = EXP_MODES.eff.value(nd), mv = EXP_MODES.eff.value(nm), cd = EXP_MODES.mat.value(nd), cm = EXP_MODES.mat.value(nm);
+  const rs = cd !== null && cm !== null ? (cm - cd) * nd.ext * nd.obs / EXP_MONTH : null, rsTile = expSignedTile(rs, 'Rs', 'saved on foliar by the drones', 'more spent on foliar by the drones');
+  if (rsTile) rsTile.sub = 'Rs ' + expFmt(Math.abs(cm - cd)) + '/ha/month ' + (cm - cd >= 0 ? 'less' : 'more') + ' than manual';
+  const kg = dv !== null && mv !== null ? (mv - dv) * nd.ext * nd.obs / EXP_MONTH : null, kgTile = expSignedTile(kg, 'kg', 'of foliar saved by the drones', 'more foliar used by the drones');
+  if (kgTile) kgTile.sub = expFmt(Math.abs(mv - dv)) + ' kg/ha/month ' + (mv - dv >= 0 ? 'less' : 'more') + ' than manual';
+  return [kgTile || expNoTile('spray events by both methods'),
+    !r.material ? expWaitTile('The price of one kg of foliar') : (rsTile || expNoTile('spray events by both methods'))];
 }
 function expLabourStats(data) {
   const A = expAllData(data), D = A.Drone, M = A.Manual, r = data.rates_set || { worker: true, drone: true }, rs = expGap(D, M, 'cost', 'ha');
@@ -3277,7 +3294,7 @@ function expMoneyStats(data) {
 }
 const EXP_GROUPS = [
   { key: 'material', name: 'Material', icon: 'flask', sub: 'Foliar saving and Material cost saving', kpis: ['eff', 'mat'], stats: expMaterialStats,
-    help: 'Over the chosen period, how much foliar and how many rupees of foliar the drones saved compared with manual spraying: (manual kg per ha minus drone kg per ha) times the hectares the drones sprayed, and the same with the cost of the foliar. A red number means the drones used more. Open the card for the two KPIs.' },
+    help: 'The first number is the foliar the drones saved over the chosen period: what the drone land would have used at the manual rate (kg per hectare of land per month, each field part\'s land counted once however often it was sprayed) minus what it really used, over the months of the period. The line under it is the same difference per hectare per month. The second number is the same in rupees: the foliar cost the drones saved, with the kg of each day priced at the price per kg of that day; the line under it is the difference per hectare per month. A red number means the drones used or paid more. Open the card for the two KPIs.' },
   { key: 'labour', name: 'Labour', icon: 'users', sub: 'Work speed and Labour cost saving', kpis: ['speed', 'cost'], stats: expLabourStats,
     help: '1 drone = N workers compares the area covered per hour: the hectares sprayed divided by the man-hours (manual) and by the drone-hours (drone). If a man covers 1 ha an hour and a drone 2.5 ha an hour, one drone does the work of 2.5 workers. The second number is the labour cost the drones saved: (manual labour cost per ha minus drone labour cost per ha) times the hectares the drones sprayed; red means the drones cost more. Open the card for the two KPIs.' },
   { key: 'yield', name: 'Yield', icon: 'leaf', sub: 'Leaf yield and Yield revenue', kpis: ['leaf', 'rev'], stats: expYieldStats,
@@ -3297,22 +3314,44 @@ function expNetCell(data, m, a, b) {
   data.days.forEach(function (d) { const n = dayNo(d.date); if (n < lo || n > hi) return; const x = d[m]; c.rev += x.leaf_rev; c.cost += x.cost + x.mat_cost; });
   return c;
 }
-/** The points of the net margin: Daily = a rolling window of 30 days ending that day; Monthly / Yearly = the sums of that month / year over the days observed in it. */
+/** FOLIAR over the days a..b (day numbers; null = the whole shown period, from the first spray to today), for one method, counted per PLOT (the drone or the manual part of a field):
+ *  kg = the foliar applied on the plot's lines (and cost = those kg x the price per kg of each day); the plot's extent = the smaller of the hectares its lines cover in the window and the area of the plot (a plot sprayed twice counts its
+ *  land once, a half-done round counts only what was covered, a plot not sprayed adds nothing). Returns the sums of all plots; value() = kg / extent, scaled to a month of EXP_MONTH days. */
+function expFolPlots(data, m, a, b) {
+  const out = { obs: 0, plots: [] };
+  if (!data.first_spray) return out;
+  const s = dayNo(data.first_spray), e = dayNo(data.today), lo = Math.max(s, a === null ? s : a), hi = Math.min(e, b === null ? e : b);
+  if (hi < lo) return out;
+  out.obs = hi - lo + 1;
+  const L = data._sp || (data._sp = (data.spray || []).map(function (l) { return { n: dayNo(l[0]), f: l[1], m: l[2], kg: l[3], ha: l[4], c: l[5] || 0 }; })), by = {};
+  L.forEach(function (l) { if (l.m !== m || l.n < lo || l.n > hi) return; const p = by[l.f] || (by[l.f] = { f: l.f, kg: 0, ha: 0, cost: 0 }); p.kg += l.kg; p.ha += l.ha; p.cost += l.c; });
+  Object.keys(by).forEach(function (f) {
+    const p = by[f], pl = data.plots && data.plots[f + '|' + m], area = pl ? pl.ha : 0;
+    p.area = area; p.ext = area > 0 ? Math.min(p.ha, area) : p.ha; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.ha / area : 0; out.plots.push(p);
+  });
+  return out;
+}
+function expFolCell(data, m, a, b) {
+  const r = expFolPlots(data, m, a, b), c = { kg: 0, cost: 0, ext: 0, obs: r.obs, plots: r.plots.length };
+  r.plots.forEach(function (p) { c.kg += p.kg; c.cost += p.cost; c.ext += p.ext; });
+  return c;
+}
+/** The points of a KPI worked out over a window of days (the net margin and Foliar saving): Daily = a rolling window of 30 days ending that day; Monthly / Yearly = the days observed in that month / year. */
 function expNetSeries(data, M, period) {
   const out = { keys: {}, dots: {}, lines: {} };
   const keyOf = function (t, label) { return out.keys[t] || (out.keys[t] = { t: t, label: label }); };
   EXP_METHODS.forEach(function (m) {
     out.dots[m] = []; out.lines[m] = [];
-    if (!data.first_net) return;
-    const s = dayNo(data.first_net), e = dayNo(data.today), seg = [];
+    if (!data[M.first]) return;
+    const s = dayNo(data[M.first]), e = dayNo(data.today), seg = [];
     if (period === 'day') {
-      for (let n = s + EXP_NET_WIN - 1; n <= e; n++) { const c = expNetCell(data, m, n - EXP_NET_WIN + 1, n), v = M.value(c); if (v === null) continue; seg.push({ t: n, v: v }); keyOf(n, shortDate(isoOf(n)))[m] = { v: v, c: c }; }
+      for (let n = s + EXP_NET_WIN - 1; n <= e; n++) { const c = M.cell(data, m, n - EXP_NET_WIN + 1, n), v = M.value(c); if (v === null) continue; seg.push({ t: n, v: v }); keyOf(n, shortDate(isoOf(n)))[m] = { v: v, c: c }; }
     } else {
       const a = new Date(s * 86400000); let y = a.getUTCFullYear(), mo = period === 'month' ? a.getUTCMonth() : 0;
       for (;;) {
         const from = Math.floor((period === 'month' ? Date.UTC(y, mo, 1) : Date.UTC(y, 0, 1)) / 86400000), to = Math.floor((period === 'month' ? Date.UTC(y, mo + 1, 1) : Date.UTC(y + 1, 0, 1)) / 86400000) - 1;
         if (from > e) break;
-        const c = expNetCell(data, m, from, to), v = c.obs >= EXP_NET_MIN[period] ? M.value(c) : null;
+        const c = M.cell(data, m, from, to), v = c.obs >= EXP_NET_MIN[period] ? M.value(c) : null;
         if (v !== null) {
           const k = period === 'month' ? y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1) : String(y), t = period === 'month' ? dayNo(k + '-15') : dayNo(k + '-07-01'), label = period === 'month' ? MON3[mo] + ' ' + y : k;
           seg.push({ t: t, v: v }); out.dots[m].push({ t: t, v: v }); keyOf(t, label)[m] = { v: v, c: c };
@@ -3330,7 +3369,7 @@ function expFmt(v) { return v >= 1000 ? num(v, 0) : Number(v).toFixed(v >= 100 ?
 /** The points of one KPI over the whole history, per method. Daily: one dot per day with events (that day's total / total) and a moving-average line (the last
  *  14 days, total / total; the line breaks where more than a month passed without events). Monthly / yearly: one point per month / year, joined. */
 function expSeries(data, mode, period) {
-  if (EXP_MODES[mode].net) return expNetSeries(data, EXP_MODES[mode], period);
+  if (EXP_MODES[mode].win) return expNetSeries(data, EXP_MODES[mode], period);
   const M = EXP_MODES[mode], out = { keys: {}, dots: {}, lines: {} };
   EXP_METHODS.forEach(function (m) {
     const cells = {};                                                                        // day number -> that day's totals
@@ -3456,7 +3495,7 @@ function expLineChart(data, mode, period, W, tip) {
  *  two methods drawn as bars against each other. Clicking it unfolds its graph (see experimentScreen). */
 function expHeadline(data, mode) {
   const M = EXP_MODES[mode], all = {};
-  EXP_METHODS.forEach(function (m) { all[m] = M.net ? expNetCell(data, m, null, null) : expSum(data.days, '0000-01-01', '9999-12-31', m); });
+  EXP_METHODS.forEach(function (m) { all[m] = M.cell ? M.cell(data, m, null, null) : expSum(data.days, '0000-01-01', '9999-12-31', m); });
   const dv = M.value(all.Drone), mv = M.value(all.Manual), top = Math.max(dv || 0, mv || 0);
   const bars = h('div', { class: 'eh-cmp' }, EXP_METHODS.map(function (m) {
     const v = m === 'Drone' ? dv : mv;
@@ -3539,13 +3578,30 @@ function experimentScreen(host) {
     const render = function () { const W = Math.max(280, Math.floor(plot.clientWidth || 900)); plot._w = W; clear(plot); plot.appendChild(expLineChart(shown, mode, period, W, tip)); plot.appendChild(tip); };
     setTimeout(render, 0);
     if (window.ResizeObserver) { const ro = new ResizeObserver(function () { if (!plot.isConnected) { ro.disconnect(); return; } const w = Math.floor(plot.clientWidth); if (w && w !== plot._w) render(); }); ro.observe(plot); }
-    const f0 = shown[M.first] || shown.first, sub = M.net && period === 'day' ? 'Each point is the net margin of the ' + EXP_NET_WIN + ' days ending that day, from ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ' to ' + fullDate(shown.today) : period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(shown.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(shown.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(shown.today));
+    const f0 = shown[M.first] || shown.first, sub = M.win && period === 'day' ? (dayNo(f0) + EXP_NET_WIN - 1 > dayNo(shown.today) ? 'Each point covers ' + EXP_NET_WIN + ' days: the first one comes on ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ', ' + EXP_NET_WIN + ' days after the first day on record' : 'Each point is the ' + (M.net ? 'net margin of' : 'foliar used in') + ' the ' + EXP_NET_WIN + ' days ending that day, from ' + fullDate(isoOf(dayNo(f0) + EXP_NET_WIN - 1)) + ' to ' + fullDate(shown.today)) : period === 'day' ? 'Every day from ' + fullDate(f0) + ' to ' + fullDate(shown.today) + '  |  the thick line is the average of the last ' + EXP_TREND + ' days' : (period === 'month' ? 'One point per month, ' + fullDate(f0) + ' to ' + fullDate(shown.today) : 'One point per year, ' + fullDate(f0) + ' to ' + fullDate(shown.today));
     return h('div', { class: 'exp-body exp-chart', 'data-kpi': mode },
       h('div', { class: 'mon-ctl' }, periodBar()),
-      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, M.net ? 'The whole chosen period is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period.' : 'The whole chosen period is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above uses the same period. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
+      h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0' }, M.title), help(h('div', null, M.help, h('div', { style: 'margin-top:8px' }, M.read ? M.read() : 'The whole chosen period is always shown. Daily: each dot is one day (that day\'s total divided by its total) and the thick line is the average of the last ' + EXP_TREND + ' days. Monthly and Yearly: one point per month or year. Move over the graph, or tap it, to read the values. A gap means no entries for that method. The big number above uses the same period. Foliar kg is recorded per spray event and shared between its fields by area, so a foliar value describes the events of its day.')), 'How to read this')),
       h('div', { class: 'muted small', style: 'margin:2px 0 6px' }, sub),
       h('ul', { class: 'legend', 'aria-label': 'Colours' }, h('li', null, h('i', { class: 'swatch drone' }), 'Drone'), h('li', null, h('i', { class: 'swatch manual' }), 'Manual')),
-      plot);
+      plot, M.fields ? fieldBars(mode) : null);
+  }
+  /** The bars under the Foliar saving graph: every field part (the drone or the manual part of a field) sprayed in the chosen period, its foliar per hectare of land per month, the heaviest first. */
+  function fieldBars(mode) {
+    const M = EXP_MODES[mode], rows = [], obs = {};
+    EXP_METHODS.forEach(function (m) { obs[m] = expFolCell(shown, m, null, null).obs; expFolPlots(shown, m, null, null).plots.forEach(function (p) { const v = M.value({ kg: p.kg, cost: p.cost, ext: p.ext, obs: obs[m] }); if (v !== null) rows.push({ m: m, p: p, v: v }); }); });
+    rows.sort(function (x, y) { return y.v - x.v; });
+    const top = rows.length ? rows[0].v : 1, box = h('div', { class: 'fbars', 'data-fieldbars': mode });
+    box.appendChild(h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0;font-size:15px' }, (M.money ? 'Foliar cost by field, ' : 'By field, ') + (shown.range_label || 'all time')), help(h('div', null, 'Each bar is one field part, worked out the same way as the big number: the foliar ' + (M.money ? 'cost' : 'used') + ' on it in the chosen period divided by its land (counted once however often it was sprayed), per month. Blue is the drone part of a field, orange the manual part. When the spray rounds are even, the bars sit close together; a long bar is a field that ' + (M.money ? 'cost more' : 'used more foliar') + ', usually because it was sprayed more often. Only the field parts sprayed in the period are listed.'), 'How to read the bars')));
+    if (!rows.length) { box.appendChild(h('div', { class: 'muted small' }, 'No spraying in this period.')); return box; }
+    const list = h('div', { class: 'fb-list' });
+    rows.forEach(function (r) {
+      list.appendChild(h('div', { class: 'fb-row ' + r.m.toLowerCase(), 'data-plot': r.p.f + '|' + r.m, title: (M.money ? 'Rs ' + num(r.p.cost, 0) + ' of foliar' : num(r.p.kg, 1) + ' kg') + ' on ' + num(r.p.ext, 2) + ' ha of land, ' + num(r.p.rounds, 1) + ' rounds' },
+        h('span', { class: 'fb-name' }, r.p.label), h('span', { class: 'fb-track' }, h('i', { class: 'fb-fill', style: 'width:' + Math.max(2, r.v / top * 100) + '%' })),
+        h('b', { class: 'fb-val' }, expFmt(r.v)), h('span', { class: 'fb-sub' }, num(r.p.rounds, 1) + (Math.abs(r.p.rounds - 1) < 0.05 ? ' round' : ' rounds'))));
+    });
+    box.appendChild(list);
+    return box;
   }
   /** A KPI card and, when it is clicked, its graph attached right under it: the card is the header of the graph. Click again to fold. */
   function kpiCard(mode) {
@@ -3561,7 +3617,7 @@ function experimentScreen(host) {
     const open = !!S.expGroupOpen[g.key], toggle = function () { S.expGroupOpen[g.key] = !open; draw(); };
     const head = h('div', { class: 'grp-head', role: 'button', tabindex: '0', 'aria-expanded': open ? 'true' : 'false', title: open ? 'Click to fold' : 'Click to see the KPIs' },
       h('div', { class: 'grp-top' }, h('span', { class: 'grp-ico' }, icon(g.icon)), h('div', { class: 'grp-title' }, h('div', { class: 'grp-name' }, g.name), h('div', { class: 'grp-sub' }, g.sub)), h('i', { class: 'grp-chev', 'aria-hidden': 'true' })),
-      h('div', { class: 'grp-stats' }, g.stats(shown).map(function (t) { return h('div', { class: 'grp-stat ' + t.tone }, h('div', { class: 'gs-num', 'data-val': t.raw === null ? '' : String(t.raw) }, t.num), h('div', { class: 'gs-lab' }, t.lab)); })));
+      h('div', { class: 'grp-stats' }, g.stats(shown).map(function (t) { return h('div', { class: 'grp-stat ' + t.tone }, h('div', { class: 'gs-num', 'data-val': t.raw === null ? '' : String(t.raw) }, t.num), h('div', { class: 'gs-lab' }, t.lab), t.sub ? h('div', { class: 'gs-sub' }, t.sub) : null); })));
     head.addEventListener('click', toggle); head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     return h('section', { class: 'exp-group' + (open ? ' open' : ''), 'data-group': g.key }, head,
       h('div', { class: 'titlerow grp-foot' }, h('span', null, 'How these numbers are worked out'), help(g.help, 'How these numbers are worked out')),
@@ -3724,7 +3780,10 @@ VIEWS['history.view'] = function (root) {
   var ua = navigator.userAgent || '';
   var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var iosSafari = ios && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+  var android = /Android/.test(ua);
+  var inApp = android && (/; wv\)/.test(ua) || /FBAN|FBAV|Instagram|Line\/|MicroMessenger|WhatsApp|Snapchat|GSA\/|Telegram/.test(ua) || !/Chrome\/|Firefox\/|EdgA\/|OPR\//.test(ua));   // a page opened inside another app (QR scanner, chat app) cannot install
   var deferred = null, installed = false, copied = false;
+  var waiting = !ios, waitMs = window.IG_WAIT_MS !== undefined ? window.IG_WAIT_MS : 5000;      // Chrome offers the install a moment after the page opens: show "getting ready", not instructions
 
   var css = document.createElement('style');
   css.textContent =
@@ -3742,7 +3801,10 @@ VIEWS['history.view'] = function (root) {
     '.ig-steps li:before{content:counter(s);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;background:#e8f1ec;color:#14502f;font-weight:700;font-size:14px;text-align:center;line-height:26px}' +
     '.ig-note{font-size:13px;color:#6b7c73;margin-top:14px}' +
     '.ig-ok{width:56px;height:56px;border-radius:50%;background:#e1f3e8;color:#1d6b47;font-size:32px;line-height:56px;margin:0 auto}' +
-    '.ig-ico{display:inline-block;vertical-align:-4px;width:20px;height:20px}';
+    '.ig-ico{display:inline-block;vertical-align:-4px;width:20px;height:20px}' +
+    '.ig-spin{width:30px;height:30px;margin:6px auto 14px;border:4px solid #e3ebe6;border-top-color:#1d6b47;border-radius:50%;animation:igs .9s linear infinite}' +
+    '@keyframes igs{to{transform:rotate(360deg)}}' +
+    'a.ig-btn{text-decoration:none;text-align:center}';
   document.head.appendChild(css);
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
@@ -3762,6 +3824,7 @@ VIEWS['history.view'] = function (root) {
     card.appendChild(el('h1', '', 'Install the Foliar Spray app'));
     card.appendChild(el('p', '', 'To use this app you need to install it on your phone first. Once installed it opens from your home screen, even with no signal.'));
     if (deferred) {
+      card.appendChild(el('p', '', 'Tap the green button, then tap "Install".'));
       var b = el('button', 'ig-btn', 'Install app'); b.type = 'button';
       b.onclick = function () {
         var d = deferred; deferred = null;
@@ -3769,6 +3832,8 @@ VIEWS['history.view'] = function (root) {
         Promise.resolve(d.userChoice).then(function (c) { if (c && c.outcome === 'accepted') installed = true; render(); }, render);
       };
       card.appendChild(b);
+    } else if (waiting) {
+      card.appendChild(el('div', 'ig-spin')); card.appendChild(el('p', '', 'Getting the install ready…'));
     } else if (ios && iosSafari) {
       card.appendChild(steps([[ 'Tap the Share button ', shareIcon(), ' at the bottom of the screen.' ], 'Scroll down and tap "Add to Home Screen".', 'Tap "Add". Then open "Foliar Spray" from your home screen.']));
     } else if (ios) {
@@ -3776,6 +3841,12 @@ VIEWS['history.view'] = function (root) {
       var c = el('button', 'ig-btn alt', copied ? 'Link copied' : 'Copy link'); c.type = 'button';
       c.onclick = function () { try { navigator.clipboard.writeText(location.href.split('#')[0]).then(function () { copied = true; render(); }); } catch (e) { /* ignore */ } };
       card.appendChild(c);
+    } else if (inApp) {
+      card.appendChild(el('p', '', 'This page is open inside another app, which cannot install it. Open it in Google Chrome:'));
+      var o = el('a', 'ig-btn', 'Open in Chrome'); o.href = 'intent://' + location.host + location.pathname + '#Intent;scheme=https;package=com.android.chrome;end'; card.appendChild(o);
+      var c2 = el('button', 'ig-btn alt', copied ? 'Link copied' : 'Copy link'); c2.type = 'button';
+      c2.onclick = function () { try { navigator.clipboard.writeText(location.href.split('#')[0]).then(function () { copied = true; render(); }); } catch (e) { /* ignore */ } };
+      card.appendChild(c2);
     } else {
       card.appendChild(steps(['Open the browser menu (the three dots at the top right).', 'Tap "Install app" (or "Add to Home screen").', 'Tap "Install". Then open "Foliar Spray" from your home screen.']));
       card.appendChild(el('p', 'ig-note', 'Not seeing "Install app"? Open this address in Google Chrome.'));
@@ -3785,9 +3856,10 @@ VIEWS['history.view'] = function (root) {
 
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; render(); });
   window.addEventListener('appinstalled', function () { installed = true; deferred = null; render(); });
+  if (waiting) setTimeout(function () { waiting = false; render(); }, waitMs);
   render();
 })();
 </script>
-<script>if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
+<script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(function () {}); }</script>
 </body>
 </html>
