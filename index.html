@@ -3181,20 +3181,22 @@ const EXP_MODES = {
     words: function (pct) { return pct < 0 ? ['saved', 'in total cost per hectare (labour and foliar) with drones compared with manual spraying'] : ['dearer', 'total cost per hectare (labour and foliar) with drones than with manual spraying']; },
     tip: function (c) { return 'Rs ' + num(c.cost + c.mat_cost, 0) + ' (labour Rs ' + num(c.cost, 0) + ' + foliar Rs ' + num(c.mat_cost, 0) + ') for ' + num(c.ha, 2) + ' ha'; },
     help: 'Each point is the labour cost and the foliar cost of the spraying added together and divided by the area covered. Labour: for manual spraying the hours of the spray events times the men, at the cost of a man-hour; for drone spraying the hectares sprayed times the drone charge per hectare. Foliar: the kg applied times the price of one kg. All rates are the ones the Admin entered under Parameters and rates, as they were on that day.' },
-  leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
-    has: function (c) { return c.leaf_n > 0; },
-    value: function (c) { return c.leaf_ha > 0 ? c.leaf_kg / c.leaf_ha : null; },
+  leaf: { name: 'Leaf yield', icon: 'leaf', label: 'Leaf yield', title: 'Green leaf harvested per hectare of land', unit: 'kg/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts', win: true, cell: expLeafCell, src: 'leaf', fields: true, cumulative: true, key: 'kg', what: 'green leaf yield', barsTitle: 'Leaf yield by field, ', more: 'gave more leaf',
+    has: function (c) { return c.obs > 0; },
+    value: function (c) { return c.ext > 0 ? c.kg / c.ext : null; },
     words: function (pct) { return pct > 0 ? ['more', 'green leaf per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'green leaf per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
-    tip: function (c) { return num(c.leaf_kg, 0) + ' kg from ' + num(c.leaf_ha, 2) + ' ha plucked'; },
-    help: 'Each point is the green leaf plucked (kg) divided by the area plucked (ha), from the parts of the fields sprayed by that method (a field sprayed partly by drone and partly by hand counts its two parts separately). A higher point means more leaf from the same area. This is a plain comparison: it does not yet correct for the age since pruning or for each field\'s own earlier yield.' }
+    tip: function (c) { return num(c.kg, 0) + ' kg from ' + num(c.ext, 2) + ' ha of land (' + c.plots + ' field part' + (c.plots === 1 ? '' : 's') + '), ' + c.obs + ' days'; },
+    read: function () { return expWinRead('green leaf yield'); },
+    help: 'The green leaf a method gave, per hectare of land, over the chosen period. For one method: add up the kg of green leaf plucked in the period, from the parts of the fields sprayed by that method (a field sprayed partly by drone and partly by hand counts its two parts separately), and divide by the land it was plucked from. The land is counted once however many times it was plucked: for each field part it is the smaller of the hectares plucked in the period and the area of that part. So a part plucked ten times gives ten rounds of leaf from the same land, and the number grows the longer the period; a part only half plucked in a round counts only the half plucked; a part not plucked in the period adds nothing. A higher point means more leaf from the same land. This is a plain comparison: it does not yet correct for the age since pruning or for each field\'s own earlier yield.' }
 };
-EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue', title: 'Green leaf revenue per hectare', unit: 'Rs/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts',
+EXP_MODES.rev = { name: 'Yield revenue', icon: 'banknote', label: 'Yield revenue', title: 'Green leaf revenue per hectare of land', unit: 'Rs/ha', lowerBetter: false, first: 'first_leaf', needs: 'plucking records from both the drone-sprayed and the manually sprayed parts', win: true, cell: expLeafCell, src: 'leaf', fields: true, cumulative: true, key: 'rev', what: 'green leaf revenue', barsTitle: 'Leaf revenue by field, ', more: 'earned more', thing: 'green leaf',
     waits: function (r) { return !r.leaf; }, waitText: 'The Admin enters the price of one kg of green leaf under Parameters and rates (Revenue).',
-    has: function (c) { return c.leaf_n > 0; },
-    value: function (c) { return c.leaf_ha > 0 && c.leaf_rev > 0 ? c.leaf_rev / c.leaf_ha : null; },
+    has: function (c) { return c.obs > 0; },
+    value: function (c) { return c.ext > 0 && c.rev > 0 ? c.rev / c.ext : null; },
     words: function (pct) { return pct > 0 ? ['more', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts'] : ['less', 'revenue per hectare from the drone-sprayed parts than from the manually sprayed parts']; },
-    tip: function (c) { return 'Rs ' + num(c.leaf_rev, 0) + ' from ' + num(c.leaf_kg, 0) + ' kg on ' + num(c.leaf_ha, 2) + ' ha plucked'; },
-    help: 'Each point is the value of the green leaf plucked divided by the area plucked: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), divided by the hectares plucked, from the parts of the fields sprayed by that method. A higher point means more money from the same area. It is the revenue only: the costs are not taken off yet.' };
+    tip: function (c) { return 'Rs ' + num(c.rev, 0) + ' from ' + num(c.kg, 0) + ' kg on ' + num(c.ext, 2) + ' ha of land (' + c.plots + ' field part' + (c.plots === 1 ? '' : 's') + '), ' + c.obs + ' days'; },
+    read: function () { return expWinRead('green leaf revenue'); },
+    help: 'The value of the green leaf a method gave, per hectare of land, over the chosen period. It is worked out exactly like Leaf yield, with rupees instead of kg: the kg plucked on each day times the price of one kg of green leaf (the price the Admin entered under Parameters and rates, as it was on that day), added up for the period and divided by the land it was plucked from, counted once however many times it was plucked (the smaller of the hectares plucked and the area of the field part). A higher point means more money from the same land, and the number grows the longer the period. It is the revenue only: the costs are not taken off yet.' };
 EXP_MODES.net = { name: 'Net gain', icon: 'scale', label: 'Net gain', blurb: 'The extra profit the drones bring over manual spraying: the green leaf revenue minus the spraying cost.', title: 'Net margin per hectare of land, per month', unit: 'Rs/ha/month', lowerBetter: false, first: 'first_net', net: true, win: true, cell: expNetCell, read: function () { return 'The whole chosen period is always shown. Daily: each point is the net margin of the last ' + EXP_NET_WIN + ' days ending on that day (spraying and plucking never fall on the same days, so a single day cannot be used). Monthly and Yearly: one point per month or year, worked out over the days observed in it; a month or year with too few days on record is not drawn yet. Move over the graph, or tap it, to read the values. The big number above uses the same period.'; }, needs: 'spray events and plucking records, and the land of both the drone-sprayed and the manually sprayed parts',
     waits: function (r) { return !(r.worker && r.drone && r.material && r.leaf); }, waitText: 'The Admin enters the cost of a man-hour, the drone charge, the price of one kg of foliar and the price of one kg of green leaf under Parameters and rates.',
     has: function (c) { return c.obs > 0; },
@@ -3235,7 +3237,7 @@ function expCustomError(from, to, today) {
 function expInRange(data, range) {
   if (!range) return Object.assign({}, data, { range_label: 'all time' });
   const hi = range.to < data.today ? range.to : data.today, up = function (iso) { return iso ? (iso > range.from ? iso : range.from) : ''; };
-  return Object.assign({}, data, { days: data.days.filter(function (d) { return d.date >= range.from && d.date <= hi; }), spray: (data.spray || []).filter(function (l) { return l[0] >= range.from && l[0] <= hi; }), _sp: null, today: hi, first: up(data.first), first_spray: up(data.first_spray), first_leaf: up(data.first_leaf), first_net: up(data.first_net), range_label: range.label });
+  return Object.assign({}, data, { days: data.days.filter(function (d) { return d.date >= range.from && d.date <= hi; }), spray: (data.spray || []).filter(function (l) { return l[0] >= range.from && l[0] <= hi; }), leaf: (data.leaf || []).filter(function (l) { return l[0] >= range.from && l[0] <= hi; }), _sp: null, _lf: null, today: hi, first: up(data.first), first_spray: up(data.first_spray), first_leaf: up(data.first_leaf), first_net: up(data.first_net), range_label: range.label });
 }
 const EXP_PERIODS = [['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']];       // how finely the history is grouped: the WHOLE history is always drawn
 const EXP_TREND = 14;                                                                       // days in the moving average of the daily view
@@ -3264,9 +3266,9 @@ function expAmount(v, unit) { return (unit === 'Rs' ? 'Rs ' : '') + expFmt(Math.
 function expSignedTile(v, unit, goodLab, badLab) { return v === null ? null : expTile(v, expAmount(v, unit), v >= 0 ? goodLab : badLab, v >= 0 ? 'good' : 'bad'); }
 function expAllData(data) { const all = {}; EXP_METHODS.forEach(function (m) { all[m] = expSum(data.days, '0000-01-01', '9999-12-31', m); }); return all; }
 /** What the drone land would have used / paid at the manual rate (per hectare of land, for the period) minus what it really used / paid: a total over the chosen period. */
-function expSavedTile(nd, nm, mode, unit, goodLab, badLab, unitLab) {
-  const M = EXP_MODES[mode], dv = M.value(nd), mv = M.value(nm), v = dv !== null && mv !== null ? (mv - dv) * nd.ext : null, tile = expSignedTile(v, unit, goodLab, badLab);
-  if (tile) tile.sub = (unit === 'Rs' ? 'Rs ' : '') + expFmt(Math.abs(mv - dv)) + (unit === 'kg' ? ' kg' : '') + '/ha ' + (mv - dv >= 0 ? 'less' : 'more') + ' than manual over the period';
+function expSavedTile(nd, nm, mode, unit, goodLab, badLab, higherBetter) {
+  const M = EXP_MODES[mode], dv = M.value(nd), mv = M.value(nm), gap = dv !== null && mv !== null ? (higherBetter ? dv - mv : mv - dv) : null, v = gap === null ? null : gap * nd.ext, tile = expSignedTile(v, unit, goodLab, badLab);
+  if (tile) tile.sub = (unit === 'Rs' ? 'Rs ' : '') + expFmt(Math.abs(gap)) + (unit === 'kg' ? ' kg' : '') + '/ha ' + (higherBetter ? (gap >= 0 ? 'more' : 'less') : (gap >= 0 ? 'less' : 'more')) + ' than manual over the period';
   return tile;
 }
 function expMaterialStats(data) {
@@ -3281,9 +3283,9 @@ function expLabourStats(data) {
   return [rt, !(r.worker && r.drone) ? expWaitTile('The cost of a man-hour and the drone charge') : (expSavedTile(nd, nm, 'cost', 'Rs', 'labour cost saved by the drones', 'more labour cost with the drones') || expNoTile('spray events by both methods'))];
 }
 function expYieldStats(data) {
-  const A = expAllData(data), r = data.rates_set || { leaf: true }, kg = expGap(A.Drone, A.Manual, 'leaf_kg', 'leaf_ha'), rs = expGap(A.Drone, A.Manual, 'leaf_rev', 'leaf_ha');    // a gap is manual minus drone: the gain is its opposite
-  return [expSignedTile(kg === null ? null : -kg, 'kg', 'more green leaf from the drone parts', 'less green leaf from the drone parts') || expNoTile('plucking records from both methods'),
-    !r.leaf ? expWaitTile('The price of one kg of green leaf') : (expSignedTile(rs === null ? null : -rs, 'Rs', 'more revenue from the drone parts', 'less revenue from the drone parts') || expNoTile('plucking records from both methods'))];
+  const r = data.rates_set || { leaf: true }, nd = expLeafCell(data, 'Drone', null, null), nm = expLeafCell(data, 'Manual', null, null);
+  return [expSavedTile(nd, nm, 'leaf', 'kg', 'more green leaf from the drone parts', 'less green leaf from the drone parts', true) || expNoTile('plucking records from both methods'),
+    !r.leaf ? expWaitTile('The price of one kg of green leaf') : (expSavedTile(nd, nm, 'rev', 'Rs', 'more revenue from the drone parts', 'less revenue from the drone parts', true) || expNoTile('plucking records from both methods'))];
 }
 function expMoneyStats(data) {
   const A = expAllData(data), D = A.Drone, M = A.Manual, r = data.rates_set || { worker: true, drone: true, material: true, leaf: true };
@@ -3300,7 +3302,7 @@ const EXP_GROUPS = [
   { key: 'labour', name: 'Labour', icon: 'users', sub: 'Work speed and Labour cost saving', kpis: ['speed', 'cost'], stats: expLabourStats,
     help: '1 drone = N workers compares the area covered per hour: the hectares sprayed divided by the man-hours (manual) and by the drone-hours (drone). If a man covers 1 ha an hour and a drone 2.5 ha an hour, one drone does the work of 2.5 workers. The second number is the labour cost the drones saved over the chosen period: what the drone land would have cost at the manual rate (labour cost per hectare of land, each field part\'s land counted once however often it was sprayed) minus what it really cost; the line under it is the same difference per hectare. Red means the drones cost more. Open the card for the two KPIs.' },
   { key: 'yield', name: 'Yield', icon: 'leaf', sub: 'Leaf yield and Yield revenue', kpis: ['leaf', 'rev'], stats: expYieldStats,
-    help: 'Over the chosen period, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: (drone kg per ha plucked minus manual kg per ha plucked) times the hectares plucked on the drone parts, and the same with the revenue at the green leaf price. A red number means less. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' },
+    help: 'Over the chosen period, the green leaf and the revenue the drone-sprayed parts gave over the manually sprayed parts: what the drone land really gave, minus what it would have given at the manual rate (kg or rupees per hectare of land, each field part\'s land counted once however often it was plucked, the leaf priced at the price per kg of each day). The line under each is the same difference per hectare of land over the period. A red number means less. The longer the period, the more rounds each field has had, so the numbers grow with it. This is a plain comparison: it does not correct for the age since pruning. Open the card for the two KPIs.' },
   { key: 'money', name: 'Money', icon: 'wallet', sub: 'Total cost saving and Net gain', kpis: ['total', 'net'], stats: expMoneyStats,
     help: 'The first number is the labour cost and the foliar cost the drones saved together: (manual labour + foliar cost per ha minus drone labour + foliar cost per ha) times the hectares the drones sprayed. The second is the money the drones made or lost over manual spraying: what the drone-sprayed land earned (green leaf revenue minus spraying cost) minus what the same land would have earned at the rate of the manually sprayed land, over the days on record in the chosen period. A red number means a loss. It does not correct for the age since pruning. Open the card for the two KPIs.' }
 ];
@@ -3332,6 +3334,27 @@ function expFolPlots(data, m, a, b) {
     p.area = area; p.ext = area > 0 ? Math.min(p.ha, area) : p.ha; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.ha / area : 0; out.plots.push(p);
   });
   return out;
+}
+/** The same for the GREEN LEAF: the plucking records of the part of a field sprayed by that method, from the first plucking on record: kg plucked, its revenue (kg x the green leaf price of each day) and the ha plucked;
+ *  the plot's extent is the smaller of the ha plucked in the window and the area of the plot. */
+function expLeafPlots(data, m, a, b) {
+  const out = { obs: 0, plots: [] };
+  if (!data.first_leaf) return out;
+  const s = dayNo(data.first_leaf), e = dayNo(data.today), lo = Math.max(s, a === null ? s : a), hi = Math.min(e, b === null ? e : b);
+  if (hi < lo) return out;
+  out.obs = hi - lo + 1;
+  const L = data._lf || (data._lf = (data.leaf || []).map(function (l) { return { n: dayNo(l[0]), f: l[1], m: l[2], kg: l[3], ha: l[4], rev: l[5] || 0 }; })), by = {};
+  L.forEach(function (l) { if (l.m !== m || l.n < lo || l.n > hi) return; const p = by[l.f] || (by[l.f] = { f: l.f, kg: 0, ha: 0, rev: 0 }); p.kg += l.kg; p.ha += l.ha; p.rev += l.rev; });
+  Object.keys(by).forEach(function (f) {
+    const p = by[f], pl = data.plots && data.plots[f + '|' + m], area = pl ? pl.ha : 0;
+    p.area = area; p.ext = area > 0 ? Math.min(p.ha, area) : p.ha; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.ha / area : 0; out.plots.push(p);
+  });
+  return out;
+}
+function expLeafCell(data, m, a, b) {
+  const r = expLeafPlots(data, m, a, b), c = { kg: 0, rev: 0, ext: 0, obs: r.obs, plots: r.plots.length };
+  r.plots.forEach(function (p) { c.kg += p.kg; c.rev += p.rev; c.ext += p.ext; });
+  return c;
 }
 function expFolCell(data, m, a, b) {
   const r = expFolPlots(data, m, a, b), c = { kg: 0, cost: 0, lab: 0, ext: 0, obs: r.obs, plots: r.plots.length };
@@ -3591,7 +3614,7 @@ function experimentScreen(host) {
   /** The bars under the Foliar saving graph: every field part (the drone or the manual part of a field) sprayed in the chosen period, its foliar per hectare of land per month, the heaviest first. */
   function fieldBars(mode) {
     const M = EXP_MODES[mode], rows = [], obs = {};
-    EXP_METHODS.forEach(function (m) { obs[m] = expFolCell(shown, m, null, null).obs; expFolPlots(shown, m, null, null).plots.forEach(function (p) { const v = M.value({ kg: p.kg, cost: p.cost, lab: p.lab, ext: p.ext, obs: obs[m] }); if (v !== null) rows.push({ m: m, p: p, v: v }); }); });
+    EXP_METHODS.forEach(function (m) { obs[m] = M.cell(shown, m, null, null).obs; (M.src === 'leaf' ? expLeafPlots : expFolPlots)(shown, m, null, null).plots.forEach(function (p) { const v = M.value({ kg: p.kg, cost: p.cost, lab: p.lab, rev: p.rev, ext: p.ext, obs: obs[m] }); if (v !== null) rows.push({ m: m, p: p, v: v }); }); });
     rows.sort(function (x, y) { return y.v - x.v; });
     const top = rows.length ? rows[0].v : 1, box = h('div', { class: 'fbars', 'data-fieldbars': mode });
     box.appendChild(h('div', { class: 'titlerow' }, h('h3', { style: 'margin:0;font-size:15px' }, M.barsTitle + (shown.range_label || 'all time')), help(h('div', null, 'Each bar is one field part, worked out the same way as the big number: the ' + M.what + ' on it in the chosen period divided by its land (counted once however often it was sprayed). Blue is the drone part of a field, orange the manual part. When the spray rounds are even, the bars sit close together; a long bar is a field that ' + M.more + ', usually because it was sprayed more often. Only the field parts sprayed in the period are listed.'), 'How to read the bars')));
