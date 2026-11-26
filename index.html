@@ -345,7 +345,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .pick.on.drone { background: var(--drone-soft); border-color: var(--drone-solid); } .pick.on.manual { background: var(--manual-soft); border-color: var(--manual-solid); } .pick.on .pk-mark { display: grid; }
 .pick.dis { opacity: .55; cursor: not-allowed; background: var(--surface); border: 1.5px dashed var(--line-strong); }
 .pick .t-bar { position: absolute; left: 0; right: 0; bottom: 0; top: auto; height: 4px; background: var(--line); border-radius: 0; margin: 0; } .pick .t-bar i { display: block; height: 100%; background: var(--primary); }
-.covgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.covgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
 .covcard { position: relative; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 14px; padding: 10px 10px 10px 12px; }
 .covcard.drone { border-color: var(--drone-solid); } .covcard.manual { border-color: var(--manual-solid); } .covcard.open { grid-column: 1 / -1; }
 .cov-top { display: flex; align-items: center; gap: 12px; }
@@ -354,7 +354,14 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .cov-info { min-width: 0; flex: 1; } .cov-code { font-weight: 700; } .cov-meta { font-size: 12px; color: var(--muted); } .cov-ha { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cov-note { font-size: 11.5px; color: var(--warn); display: flex; gap: 4px; align-items: center; } .cov-note svg { width: 12px; height: 12px; }
 .cov-x { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 8px; align-self: flex-start; } .cov-x:hover { background: var(--bad-soft); color: var(--bad); } .cov-x svg { width: 16px; height: 16px; display: block; }
-.cov-slider { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); } .cov-slider .sl-val { font-size: 19px; font-weight: 700; } .cov-slider .slider { padding: 0; border: 0; background: none; box-shadow: none; }
+.cov-slider { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); } .cov-slider .sl-val { font-size: 24px; font-weight: 700; } .cov-slider .sl-head { flex-direction: column; align-items: flex-start; gap: 0; } .cov-slider .sl-tag { min-height: 0; }
+.mixgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; } .mixrow { display: grid; gap: 6px; align-content: start; } .mixnum { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mixhint { color: var(--muted); font-size: 12.5px; line-height: 1.4; } .mixhint .warnnote { color: var(--warn); font-weight: 600; } .mixhint .usebtn { margin-left: 8px; padding: 2px 10px; min-height: 0; }
+.mixseg { margin-top: 2px; } .plannote { display: flex; gap: 10px; align-items: flex-start; background: var(--good-soft, var(--surface)); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 12px; font-size: 13.5px; } .plannote svg { width: 18px; height: 18px; flex: none; color: var(--primary); }
+.ev-mix { margin: 8px 0 2px; }
+.plan-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; } .plan-tile { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px; } .pt-name { font-size: 13px; color: var(--muted); font-weight: 600; } .pt-kg { margin-top: 4px; font-size: 13px; color: var(--muted); } .pt-kg b { font-size: 28px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.plan-form { display: grid; gap: 14px; } .plan-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@media (max-width: 760px) { .mixgrid { grid-template-columns: 1fr; } .plan-tiles, .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .covgrid { grid-template-columns: 1fr; } } .cov-slider .slider { padding: 0; border: 0; background: none; box-shadow: none; }
 .covempty { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 14px; padding: 4px 2px; } .covempty svg { width: 28px; height: 28px; flex: none; }
 .modal:has(.evform) { max-width: 780px; } .modal .actions { flex-wrap: wrap; }
 .evsum { flex: 1 0 100%; order: -1; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; }
@@ -798,9 +805,9 @@ function icon(name, cls) {
   (ICONS[name] || []).forEach(function (d) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.appendChild(p); });
   return s;
 }
-const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'pluck.entry': 'basket', 'history.view': 'clock', 'monitor.operation': 'tractor', 'monitor.experiment': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
+const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'foliar.plan': 'flask', 'pluck.entry': 'basket', 'history.view': 'clock', 'monitor.operation': 'tractor', 'monitor.experiment': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
   'params.manage': 'sliders', 'users.manage': 'users', 'roles.manage': 'shield', 'audit.view': 'clock' };
-const TASK_GROUP = { 'spray.entry': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'monitor.operation': 'Monitoring', 'monitor.experiment': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
+const TASK_GROUP = { 'spray.entry': 'Data entry', 'foliar.plan': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'monitor.operation': 'Monitoring', 'monitor.experiment': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
   'params.manage': 'Administration', 'users.manage': 'Administration', 'roles.manage': 'Administration', 'audit.view': 'Administration' };
 
 // ---------- feedback widgets
@@ -1021,7 +1028,7 @@ function openChangeUsername() {
 }
 
 // ---------- app shell: top bar, side navigation (bottom bar on phones), content
-const TAB_ORDER = ['home', 'spray.entry', 'pluck.entry', 'history.view', 'monitor.operation', 'monitor.experiment', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
+const TAB_ORDER = ['home', 'spray.entry', 'foliar.plan', 'pluck.entry', 'history.view', 'monitor.operation', 'monitor.experiment', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
 
 function enterApp() {
   if (S.me.must_change) { showForcedChange(); return Promise.resolve(); }
@@ -1254,7 +1261,7 @@ function openSyncPanel() {
     if (it.event) {                                    // a spray event goes back into the "unfinished event" slot of that day
       const cur = Draft.get('sprayevent', it.date).cur;
       if (cur && cur.event_id !== it.event.event_id) { toast('Finish or discard the unfinished spray event first.'); return; }
-      Draft.set('sprayevent', it.date, { cur: { event_id: it.event.event_id, date: it.event.date, method: it.event.method || '', kg: it.event.kg, men: it.event.men, drones: it.event.drones || 1, start: it.event.start_time, end: it.event.end_time,
+      Draft.set('sprayevent', it.date, { cur: { event_id: it.event.event_id, date: it.event.date, method: it.event.method || '', mix: mixFromList(mixListOf(it.event)), men: it.event.men, drones: it.event.drones || 1, start: it.event.start_time, end: it.event.end_time,
         pct: it.event.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) } });
       Sync.remove(it.id); if (panel) panel.close(); toast('Moved back to your unfinished spray event.'); if (S.go && S.tab) S.go(S.tab);
       return;
@@ -1844,50 +1851,91 @@ function fieldStrip(ctx) {
     set: function (before, v) { mineFrozen.style.width = before + '%'; mineFill.style.width = v + '%'; } };
 }
 
-/** Coverage slider for one field (or one method's part of it): 0 to 100%. What earlier events already covered (beforePct) is locked; you can only go above it.
+/** Hectare slider for one field (or one method's part of it). The bar is the whole part (partHa hectares). What earlier events of the round already covered (beforePct) is locked at the left;
+ *  you drag the end of THIS event's spraying to the right, in hectares. All the way right = the part is finished. A part that an earlier event left half way starts at that point, so you drag
+ *  the rest. maxPct (editing an earlier event) stops the slider where a later event on the same part begins. onChange gets the running % of the part (0-100, not rounded).
  *  ctx (a field with two methods): {method, fieldHa, partHa, other:{method, ha, done_pct}} shows the other method's part beside this one. */
-function coverSlider(areaHa, beforePct, pct, onChange, ctx, maxPct) {
-  const hi = maxPct === undefined || maxPct === null ? 100 : Math.max(0, Math.min(100, maxPct));            // an earlier event cannot go past what the later events on the field already use
-  const lo = Math.min(beforePct >= 99.5 ? 100 : Math.floor(beforePct + 1e-9) + 1, hi);       // at least 1% more than before
-  let v = Math.max(lo, Math.min(hi, Math.round(pct)));
+function haSlider(partHa, beforePct, pct, onChange, ctx, maxPct) {
+  const ext = partHa, step = 0.05, beforeHa = ext * beforePct / 100;
+  const hiPct = maxPct === undefined || maxPct === null ? 100 : Math.max(0, Math.min(100, maxPct)), hiHa = ext * hiPct / 100;     // an earlier event cannot go past what the later events on the part already use
+  const loHa = Math.min(hiHa, ext, beforeHa + step), loPct = ext ? loHa / ext * 100 : 0;                                         // at least one step more than before
+  const toPct = function (ha) { return ext && ha < ext - 0.0049 ? ha / ext * 100 : 100; };
+  const snap = function (v) { v = Math.round(v / step) * step; if (hiHa - v < step / 2 + 1e-9) v = hiHa; return Math.round(Math.max(loHa, Math.min(hiHa, v)) * 1000) / 1000; };
+  let pos = Math.round(Math.max(loHa, Math.min(hiHa, ext * pct / 100)) * 1000) / 1000;
   const what = ctx ? ctx.method.toLowerCase() + ' part' : 'field';
-  const range = h('input', { type: 'range', min: '0', max: '100', step: '1', value: String(v), 'aria-label': 'Percent of the ' + what + ' covered by this event' });
+  const range = h('input', { type: 'range', min: '0', max: String(ext), step: '0.01', value: String(pos), 'aria-label': 'Hectares of the ' + what + ' sprayed up to the end of this event' });
   const track = h('div', { class: 'rtrack' + (beforePct > 0 ? ' has-frozen' : '') }, h('div', { class: 'rt-bg' }), h('div', { class: 'rt-fill' }), h('div', { class: 'rt-frozen' }), range);
   const strip = ctx ? fieldStrip(ctx) : null;
-  const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' });
-  const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v - 5); } }, '- 5%');
-  const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(v + 5); } }, '+ 5%');
-  function show() {
-    track.style.setProperty('--q', String(v / 100)); track.style.setProperty('--p', String(beforePct / 100));
-    head.textContent = v + '% of the ' + what + ' = ' + r2(areaHa * v / 100) + ' of ' + r2(areaHa) + ' ha';
-    sub.textContent = 'This event covers ' + r2(areaHa * (v - beforePct) / 100) + ' ha';
-    if (strip) strip.set(beforePct, v);
-    minus.disabled = v <= lo; plus.disabled = v >= hi;
-    if (onChange) onChange(v);
+  const head = h('div', { class: 'sl-val' }), sub = h('div', { class: 'muted small' }), tag = h('span');
+  const minus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos - 0.1); } }, '- 0.1 ha');
+  const plus = h('button', { type: 'button', class: 'btn', onclick: function () { set(pos + 0.1); } }, '+ 0.1 ha');
+  const whole = h('button', { type: 'button', class: 'btn', onclick: function () { set(hiHa); } }, hiPct >= 100 ? 'To the end' : 'As far as allowed');
+  function show(notify) {
+    const p = toPct(pos);
+    track.style.setProperty('--q', String(ext ? pos / ext : 0)); track.style.setProperty('--p', String(ext ? beforeHa / ext : 0));
+    head.textContent = r2(Math.max(0, pos - beforeHa)).toFixed(2) + ' ha';
+    sub.textContent = 'sprayed in this event. The ' + what + ' is covered up to ' + r2(pos).toFixed(2) + ' of ' + r2(ext).toFixed(2) + ' ha (' + Math.round(p) + '%)';
+    clear(tag); if (p >= 100) tag.appendChild(h('span', { class: 'badge good' }, icon('check'), 'Round complete'));
+    if (strip) strip.set(ext ? beforeHa / ext * 100 : 0, ext ? pos / ext * 100 : 0);
+    minus.disabled = pos <= loHa + 1e-9; plus.disabled = pos >= hiHa - 1e-9; whole.disabled = pos >= hiHa - 1e-9;
+    if (notify && onChange) onChange(p);
   }
-  function set(x) { v = Math.max(lo, Math.min(hi, Math.round(x))); range.value = String(v); show(); }
-  range.addEventListener('input', function () { set(magnet(parseFloat(range.value), lo, hi, hi < 100 ? [hi] : [])); });          // dragging snaps to 0 / 25 / 50 / 75 / 100% (and to the highest allowed value)
-  show();
-  return { node: h('div', { class: 'slider' }, head, sub, strip ? strip.node : null, track, sliderTicks(),
-    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), Math.round(beforePct) + '% ' + (ctx ? 'of the ' + what + ' ' : '') + 'done earlier (locked)') : null,
-    hi < 100 ? h('div', { class: 'sl-note' }, icon('lock'), 'Up to ' + hi + '%: a later spray event covers the rest', help('A later spray event on this ' + (ctx ? 'part' : 'field') + ' already covers the rest, so this event can go up to ' + hi + '%. To go higher, lower that later event first.')) : null,
-    h('div', { class: 'sl-btns' }, minus, plus)), get: function () { return v; } };
+  function set(v) { pos = snap(v); range.value = String(pos); show(true); }
+  range.addEventListener('input', function () {                                  // dragging snaps to 0 / 25 / 50 / 75 / 100% of the part (and to the highest allowed point) when close
+    const raw = parseFloat(range.value), pc = ext ? raw / ext * 100 : 0, mp = magnet(pc, loPct, hiPct, hiPct < 100 ? [hiPct] : []);
+    pos = mp !== pc ? Math.round(Math.max(loHa, Math.min(hiHa, mp / 100 * ext)) * 1000) / 1000 : snap(raw);        // on a mark: exactly the mark; between marks: in steps of 0.05 ha
+    range.value = String(pos); show(true);
+  });
+  show(false);
+  if (Math.abs(toPct(pos) - pct) > 0.05 && onChange) onChange(toPct(pos));       // the saved value was outside what is allowed: bring it back inside
+  return { node: h('div', { class: 'slider' }, h('div', { class: 'sl-head' }, head, sub), h('div', { class: 'sl-tag' }, tag), strip ? strip.node : null, track, sliderTicks(),
+    beforePct > 0 ? h('div', { class: 'sl-note' }, icon('lock'), r2(beforeHa).toFixed(2) + ' ha (' + Math.round(beforePct) + '%) of the ' + what + ' done earlier (locked)') : null,
+    hiPct < 100 ? h('div', { class: 'sl-note' }, icon('lock'), 'Up to ' + r2(hiHa).toFixed(2) + ' ha: a later spray event covers the rest', help('A later spray event on this ' + (ctx ? 'part' : 'field') + ' already covers the rest, so this event can go up to ' + r2(hiHa).toFixed(2) + ' ha. To go higher, lower that later event first.')) : null,
+    h('div', { class: 'sl-btns' }, minus, plus, whole)), get: function () { return pos; } };
+}
+
+/** The foliar mix of one event: the kg of Zinc, Epsom salt, Wuxal and the fourth compound (Urea or T65). touched[k] = the person typed that number, so it is not replaced by the plan any more. */
+const MIX_KEYS = ['zinc', 'epsom', 'wuxal', 'fourth'], MIX_NAMES = { zinc: 'Zinc', epsom: 'Epsom salt', wuxal: 'Wuxal' }, MIX_FOURTH = ['Urea', 'T65'];
+function newMix() { return { zinc: '', epsom: '', wuxal: '', fourth: '', fourth_name: '', touched: {} }; }
+function mixTotal(m) { let t = 0; if (m) MIX_KEYS.forEach(function (k) { t += Number(m[k]) || 0; }); return Math.round(t * 1000) / 1000; }
+/** A mix state from a stored list [{name, kg} x 4] (zinc, epsom, wuxal, fourth) - the numbers are what was really used, so none is replaced by the plan. */
+function mixFromList(list) {
+  if (!list || list.length < 4) return newMix();
+  return { zinc: String(list[0].kg), epsom: String(list[1].kg), wuxal: String(list[2].kg), fourth: String(list[3].kg), fourth_name: list[3].name, touched: { zinc: true, epsom: true, wuxal: true, fourth: true } };
+}
+/** The four compounds of a payload as a list, or null for an event with one total kg. */
+function mixListOf(ev) {
+  if (!ev || ev.zinc_kg === undefined || ev.zinc_kg === '') return null;
+  return [{ name: 'Zinc', kg: Number(ev.zinc_kg) }, { name: 'Epsom salt', kg: Number(ev.epsom_kg) }, { name: 'Wuxal', kg: Number(ev.wuxal_kg) }, { name: ev.fourth_name || 'Urea', kg: Number(ev.fourth_kg) }];
+}
+function mixText(list) { return list ? list.map(function (m) { return m.name + ' ' + r2(m.kg); }).join('  |  ') + ' kg' : ''; }
+/** The foliar plan in force on a date from the list the server sent (oldest first; a later one with the same date wins). */
+function planFor(plans, date) {
+  let best = null; (plans || []).forEach(function (p) { if (p.effective_from <= date && (!best || p.effective_from >= best.effective_from)) best = p; });
+  return best;
 }
 
 function newEventState(date, method) {
-  return { event_id: 'EVT-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8), date: date, method: method || '', kg: '', men: 3, drones: 1, start: '', end: '', pct: {} };
+  return { event_id: 'EVT-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8), date: date, method: method || '', mix: newMix(), men: 3, drones: 1, start: '', end: '', pct: {} };
 }
-/** What goes to the server from a state (the popup validates first; for an old unsent draft the server does the checking). */
+/** What goes to the server from a state (the popup validates first; for an old unsent draft the server does the checking). A blank compound stays blank so the server asks for it. */
 function eventPayload(st) {
-  return { event_id: st.event_id, date: st.date, method: st.method, kg: Number(st.kg), men: parseInt(st.method === 'Drone' ? st.drones : st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
+  const p = { event_id: st.event_id, date: st.date, method: st.method, men: parseInt(st.method === 'Drone' ? st.drones : st.men, 10), drones: st.method === 'Drone' ? parseInt(st.drones, 10) : 0, start_time: st.start, end_time: st.end,
     lines: Object.keys(st.pct).map(function (id) { return { field_id: id, pct: st.pct[id] }; }) };
+  const m = st.mix;
+  if (m) {
+    const n = function (v) { return v === '' || v === undefined || v === null ? '' : Number(v); };
+    p.zinc_kg = n(m.zinc); p.epsom_kg = n(m.epsom); p.wuxal_kg = n(m.wuxal); p.fourth_name = m.fourth_name || ''; p.fourth_kg = n(m.fourth); p.kg = mixTotal(m);
+  } else p.kg = Number(st.kg);                                                                       // a draft saved before the compounds existed
+  return p;
 }
 /** A Drone event has one man per drone, so its crew is just the drones. */
 function crewText(method, men, drones) { return method === 'Drone' ? drones + (drones === 1 ? ' drone' : ' drones') : men + (men === 1 ? ' man' : ' men'); }
 
-/** The popup. o: {st, fields, existing (server event being edited, or null), persist, from, onDone, onDelete} */
+/** The popup. o: {st, fields, plans, fourth, tolerance, existing (server event being edited, or null), persist, from, onDone, onDelete} */
 function openSprayEvent(o) {
   const st = o.st, fields = o.fields, byId = {}; fields.forEach(function (f) { byId[f.field_id] = f; });
+  if (!st.mix) st.mix = newMix();
   const origMethod = o.existing ? o.existing.method : '';
   const members = {}, maxes = {}; (o.existing ? o.existing.lines : []).forEach(function (l) { members[l.field_id] = l.before_pct; maxes[l.field_id] = l.max_pct; });
   const isMember = function (id) { return members[id] !== undefined && st.method === origMethod; };      // a field of the event being changed (its earlier % is what came before THIS event)
@@ -1898,26 +1946,80 @@ function openSprayEvent(o) {
   if (methods.indexOf(st.method) < 0) st.method = methods.length === 1 ? methods[0] : '';        // two kinds of field: the person chooses Drone or Manual FIRST
   if (!methods.length) st.method = 'Manual';
   Object.keys(st.pct).forEach(function (id) { if (!byId[id] || sprayPart(byId[id], st.method).ha <= 0) delete st.pct[id]; });       // a field that is no longer yours, or has no part for this method
-  let openId = null, q = '';
+  const plan = planFor(o.plans, st.date), fourthOpts = o.fourth && o.fourth.length ? o.fourth : MIX_FOURTH, tol = o.tolerance === undefined || o.tolerance === null ? 10 : Number(o.tolerance);
+  if (!st.mix.fourth_name && plan) st.mix.fourth_name = plan.fourth_name;
+  let q = '';
   const save = function () { if (o.persist) Draft.set('sprayevent', st.date, { cur: st }); };
 
-  const kgIn = numInput(st.kg, { step: '0.1', class: 'bignum', placeholder: '0', 'aria-label': 'Foliar applied, kg' });
   const men = stepper(st.men, 500), drones = stepper(st.drones, 50);
   const start = h('input', { type: 'time', value: st.start || '', 'aria-label': 'Start time' }), end = h('input', { type: 'time', value: st.end || '', 'aria-label': 'End time' });
   const menField = field('Men used', men.node), dronesField = field('Drones used', drones.node);
-  const methodBox = h('div'), pickBox = h('div'), covBox = h('div'), sumBox = h('div'), err = h('div');
-  kgIn.addEventListener('input', function () { st.kg = kgIn.value; save(); renderSummary(); });
+  const methodBox = h('div'), pickBox = h('div'), covBox = h('div'), sumBox = h('div'), err = h('div'), mixBox = h('div', { class: 'mixbox' });
   men.node.addEventListener('input', function () { st.men = men.get(); save(); renderSummary(); });
   drones.node.addEventListener('input', function () { st.drones = drones.get(); save(); renderSummary(); });
   start.addEventListener('input', function () { st.start = start.value; save(); }); end.addEventListener('input', function () { st.end = end.value; save(); });
 
-  function totals() { let ha = 0; Object.keys(st.pct).forEach(function (id) { ha += sprayPart(byId[id], st.method).ha * (st.pct[id] - beforeOf(id)) / 100; }); const kg = Number(st.kg) || 0; return { ha: ha, kg: kg, kgha: ha > 0 && kg > 0 ? kg / ha : '' }; }
+  function totals() { let ha = 0; Object.keys(st.pct).forEach(function (id) { ha += sprayPart(byId[id], st.method).ha * (st.pct[id] - beforeOf(id)) / 100; }); const kg = mixTotal(st.mix); return { ha: ha, kg: kg, kgha: ha > 0 && kg > 0 ? kg / ha : '' }; }
   function renderSummary() {
+    syncMix();
     const t = totals(), n = Object.keys(st.pct).length;
     clear(sumBox); add(sumBox, [
       h('div', { class: 'evsum-s' }, h('b', null, r2(t.ha).toFixed(2)), h('span', null, 'ha covered')), h('div', { class: 'evsum-s' }, h('b', null, t.kg ? String(r2(t.kg)) : '-'), h('span', null, 'kg applied')),
       h('div', { class: 'evsum-s' }, h('b', null, t.kgha === '' ? '-' : r2(t.kgha).toFixed(2)), h('span', null, 'kg per ha')), h('div', { class: 'evsum-s' }, h('b', null, String(n)), h('span', null, n === 1 ? 'field' : 'fields'))]);
   }
+
+  // ----- the mix: four numbers, suggested from the foliar plan (kg per ha x ha sprayed), each one can be changed
+  const mixIn = {}, mixHint = {}, mixLab = {};
+  const nameOf = function (k) { return k === 'fourth' ? (st.mix.fourth_name || 'Urea or T65') : MIX_NAMES[k]; };
+  const planPerHa = function (k) { if (!plan) return null; if (k === 'fourth') return st.mix.fourth_name === plan.fourth_name ? plan.fourth : null; return plan[k]; };
+  MIX_KEYS.forEach(function (k) {
+    mixIn[k] = numInput(st.mix[k], { step: '0.01', class: 'mixnum', 'data-mix': k, placeholder: '0' });
+    mixHint[k] = h('div', { class: 'mixhint small' });
+    mixIn[k].addEventListener('input', function () { st.mix[k] = mixIn[k].value; st.mix.touched[k] = true; save(); renderSummary(); });
+  });
+  const fourthSeg = h('div', { class: 'seg mixseg', role: 'group', 'aria-label': 'Fourth compound' });
+  function renderFourth() {
+    clear(fourthSeg);
+    fourthOpts.forEach(function (n) {
+      fourthSeg.appendChild(h('button', { type: 'button', class: n === st.mix.fourth_name ? 'on' : '', 'data-fourth': n, onclick: function () {
+        if (st.mix.fourth_name === n) return; st.mix.fourth_name = n; save(); renderFourth(); renderSummary();          // a number the person typed stays; one filled in from the plan follows the plan
+      } }, n));
+    });
+  }
+  /** Fill the numbers that the person has not typed from the plan, and show next to each what the plan says and how far the number is from it. */
+  function syncMix() {
+    const ha = totals().ha;
+    MIX_KEYS.forEach(function (k) {
+      const per = planPerHa(k), want = per !== null && ha > 0 ? r2(per * ha) : null;
+      if (!st.mix.touched[k]) { const v = want === null ? '' : String(want); if (st.mix[k] !== v) { st.mix[k] = v; mixIn[k].value = v; } }
+      if (mixLab[k]) mixLab[k].textContent = nameOf(k);
+      const hint = mixHint[k]; clear(hint);
+      if (!plan) return;
+      if (per === null) { hint.textContent = 'The plan has ' + plan.fourth_name + ' this month, not ' + (st.mix.fourth_name || 'this compound') + '.'; return; }
+      if (!(ha > 0)) { hint.textContent = 'Plan: ' + r2(per) + ' kg per ha. Choose the fields and the hectares first.'; return; }
+      hint.appendChild(document.createTextNode('Plan: ' + r2(per) + ' kg/ha x ' + r2(ha) + ' ha = ' + want + ' kg'));
+      const have = Number(st.mix[k]);
+      if (st.mix[k] !== '' && want > 0 && isFinite(have)) {
+        const dev = (have - want) / want * 100;
+        if (Math.abs(dev) > tol + 1e-9) hint.appendChild(h('span', { class: 'warnnote' }, ' - ' + Math.round(Math.abs(dev)) + '% ' + (dev > 0 ? 'more' : 'less') + ' than the plan (it will be flagged for review)'));
+      }
+      if (st.mix.touched[k] && String(want) !== st.mix[k]) hint.appendChild(h('button', { type: 'button', class: 'btn small usebtn', onclick: function () { delete st.mix.touched[k]; save(); renderSummary(); } }, 'Use plan'));
+    });
+  }
+  function renderMix() {
+    clear(mixBox);
+    mixBox.appendChild(plan
+      ? h('div', { class: 'plannote' }, icon('check'), h('div', null, 'Foliar plan from ' + shortDate(plan.effective_from) + ' ' + plan.effective_from.slice(0, 4) + ': Zinc ' + r2(plan.zinc) + ', Epsom salt ' + r2(plan.epsom) + ', Wuxal ' + r2(plan.wuxal) + ', ' + plan.fourth_name + ' ' + r2(plan.fourth) + ' kg per ha.'))
+      : msgBox('warn', 'No foliar plan is set for ' + shortDate(st.date) + '. Enter the kg of each compound yourself and choose Urea or T65. Ask the person who plans the foliar to enter the plan under Foliar planning.'));
+    const grid = h('div', { class: 'mixgrid' });
+    MIX_KEYS.forEach(function (k) {
+      mixLab[k] = h('span', { class: 'mix-name' }, nameOf(k));
+      grid.appendChild(h('div', { class: 'mixrow', 'data-key': k }, h('label', { class: 'f' }, h('span', null, mixLab[k], ' (kg)'), mixIn[k]), k === 'fourth' ? fourthSeg : null, mixHint[k]));
+    });
+    mixBox.appendChild(grid);
+    renderFourth();
+  }
+
   function renderMethod() {
     clear(methodBox); if (!st.method) return;
     dronesField.style.display = st.method === 'Drone' ? '' : 'none'; menField.style.display = st.method === 'Drone' ? 'none' : '';   // a Drone event: one man per drone, so only the drones are asked
@@ -1926,7 +2028,7 @@ function openSprayEvent(o) {
     methods.forEach(function (m) {
       seg.appendChild(h('button', { type: 'button', class: m === st.method ? 'on' : '', 'data-method': m, onclick: function () {
         if (st.method === m) return;
-        st.method = m; st.pct = {}; openId = null;          // the coverage of a field is a % of ONE method's part, so choosing the other method starts the selection again
+        st.method = m; st.pct = {};          // the coverage of a field is a % of ONE method's part, so choosing the other method starts the selection again
          save(); renderMethod(); renderPick(); renderCover(); renderSummary();
       } }, m));
     });
@@ -1934,7 +2036,7 @@ function openSprayEvent(o) {
   }
   function toggle(f) {
     const id = f.field_id;
-    if (st.pct[id] !== undefined) { delete st.pct[id]; if (openId === id) openId = null; } else st.pct[id] = 100;
+    if (st.pct[id] !== undefined) delete st.pct[id]; else st.pct[id] = 100;
     save(); renderPick(); renderCover(); renderSummary();
   }
   function renderPick() {
@@ -1973,46 +2075,44 @@ function openSprayEvent(o) {
   function renderCover() {
     clear(covBox);
     const ids = Object.keys(st.pct);
-    if (!ids.length) { covBox.appendChild(h('div', { class: 'covempty' }, icon('droplet'), h('div', null, 'Selected fields appear here ', help('Each field you add appears here at 100%. Tap its ring if only part of it was sprayed.')))); return; }
+    if (!ids.length) { covBox.appendChild(h('div', { class: 'covempty' }, icon('droplet'), h('div', null, 'Selected fields appear here ', help('Each field you add appears here with a slider set to the whole field. Drag the slider back to the hectares that were really sprayed. A field that an earlier spray left half way starts at that point: drag the rest.')))); return; }
     const grid = h('div', { class: 'covgrid' });
     fields.filter(function (f) { return st.pct[f.field_id] !== undefined; }).forEach(function (f) { grid.appendChild(covCard(f)); });
     covBox.appendChild(grid);
   }
+  /** One selected field: its hectare slider. The slider changes the totals and the suggested kg at once. */
   function covCard(f) {
-    const id = f.field_id, before = beforeOf(id), part = sprayPart(f, st.method), mixed = f.method === 'Mixed', om = otherMethod(st.method), op = sprayPart(f, om), d = donut(st.pct[id], st.method, 64);
-    const haNow = function () { return r2(part.ha * (st.pct[id] - before) / 100); };
-    const haText = h('div', { class: 'cov-ha' }, haNow() + ' ha');
-    const card = h('div', { class: 'covcard ' + st.method.toLowerCase() + (openId === id ? ' open' : ''), 'data-code': f.code });
-    const ring = h('button', { type: 'button', class: 'ring', 'aria-expanded': openId === id ? 'true' : 'false', 'aria-label': 'Change how much of ' + f.code + ' was covered. Now ' + Math.round(st.pct[id]) + '%', onclick: function () { openId = openId === id ? null : id; renderCover(); } }, d.node);
-    card.appendChild(h('div', { class: 'cov-top' }, ring, h('div', { class: 'cov-info' }, h('div', { class: 'cov-code' }, f.code), h('div', { class: 'cov-meta' }, mixed ? r2(part.ha) + ' ha ' + st.method.toLowerCase() + ' part of ' + r2(f.area_ha) + ' ha' : r2(f.area_ha) + ' ha field'), haText,
-      before > 0 ? h('div', { class: 'cov-note' }, icon('lock'), Math.round(before) + '% earlier') : null),
+    const id = f.field_id, before = beforeOf(id), part = sprayPart(f, st.method), mixed = f.method === 'Mixed', om = otherMethod(st.method), op = sprayPart(f, om);
+    const card = h('div', { class: 'covcard ' + st.method.toLowerCase(), 'data-code': f.code });
+    card.appendChild(h('div', { class: 'cov-top' }, h('div', { class: 'cov-info' }, h('div', { class: 'cov-code' }, f.code), h('div', { class: 'cov-meta' }, mixed ? r2(part.ha) + ' ha ' + st.method.toLowerCase() + ' part of ' + r2(f.area_ha) + ' ha' : r2(f.area_ha) + ' ha field')),
       h('button', { type: 'button', class: 'cov-x', 'aria-label': 'Remove ' + f.code, onclick: function () { toggle(f); } }, icon('x'))));
-    if (openId === id) {
-      const ctx = mixed ? { method: st.method, fieldHa: f.area_ha, partHa: part.ha, other: { method: om, ha: op.ha, done_pct: op.done_pct } } : null;
-      const sl = coverSlider(part.ha, before, st.pct[id], function (v) { st.pct[id] = v; d.set(v); haText.textContent = haNow() + ' ha'; save(); renderSummary(); }, ctx, maxOf(id));
-      card.appendChild(h('div', { class: 'cov-slider' }, sl.node, h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:8px' }, h('button', { type: 'button', class: 'btn primary small', onclick: function () { openId = null; renderCover(); } }, 'Done'))));
-    }
+    const ctx = mixed ? { method: st.method, fieldHa: f.area_ha, partHa: part.ha, other: { method: om, ha: op.ha, done_pct: op.done_pct } } : null;
+    const sl = haSlider(part.ha, before, st.pct[id], function (v) { st.pct[id] = v; save(); renderSummary(); }, ctx, maxOf(id));
+    card.appendChild(h('div', { class: 'cov-slider' }, sl.node));
     return card;
   }
   function collect() {
-    const errs = [], kg = Number(st.kg);
+    const errs = [];
     if (!st.method) errs.push('Choose first how the foliar was sprayed: Drone or Manual.');
-    if (!(kg > 0)) errs.push('Enter how many kg of foliar were applied.');
+    MIX_KEYS.forEach(function (k) { const v = st.mix[k]; if (v === '' || v === undefined || !(Number(v) >= 0)) errs.push('Enter the kg of ' + nameOf(k) + ' (0 if it was not used).'); });
+    if (!st.mix.fourth_name) errs.push('Choose the fourth compound: Urea or T65.');
+    else if (!errs.length && !(mixTotal(st.mix) > 0)) errs.push('Enter how many kg of foliar were applied.');
     if (st.method === 'Drone') { if (!(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.'); }
     else if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
     if (!st.start || !st.end) errs.push('Enter the start and end time.'); else if (hoursBetween(st.start, st.end) === null) errs.push('The end time must be after the start time.');
     const ids = Object.keys(st.pct);
     if (!ids.length) errs.push('Select at least one field that was sprayed.');
-    ids.forEach(function (id) { if (st.pct[id] <= beforeOf(id) + 1e-9) errs.push(byId[id].code + ': set the coverage above ' + Math.round(beforeOf(id)) + '% (already sprayed earlier).'); });
+    ids.forEach(function (id) { if (st.pct[id] <= beforeOf(id) + 1e-9) errs.push(byId[id].code + ': move the slider above ' + r2(sprayPart(byId[id], st.method).ha * beforeOf(id) / 100).toFixed(2) + ' ha (already sprayed earlier).'); });
     return errs;
   }
 
   const formBox = h('div', { class: 'evform' },
-    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The mix and the crew'), methodBox,
-      h('div', { class: 'pair' }, field('Foliar applied (kg)', kgIn), h('div', null, menField, dronesField)),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '1'), 'The crew and the time'), methodBox,
+      h('div', null, menField, dronesField),
       h('div', { class: 'pair' }, field('Start time', start), field('End time', end))),
     h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '2'), 'Which fields were sprayed?', help('Tap a field card to add it. Tap it again to remove it.')), pickBox),
-    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How much of each field was covered?'), covBox),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '3'), 'How many hectares of each field?', help('Drag the slider of a field to the hectares that were sprayed. All the way right means the field (or its drone / manual part) is finished.')), covBox),
+    h('div', { class: 'evsec' }, h('div', { class: 'evsec-h' }, h('span', { class: 'n' }, '4'), 'The foliar mix: kg of each compound', help('The foliar plan (kg per hectare) multiplied by the hectares above fills the kg of each compound for you. If the mix was different, type what was really used: what you enter is what is recorded.')), mixBox),
     err);
   const choice = h('div', { class: 'methodchoice' }), body = h('div', { class: 'evform' }, choice, formBox);
   let sumWrap = null;
@@ -2031,7 +2131,7 @@ function openSprayEvent(o) {
     if (sumWrap) sumWrap.style.display = st.method ? '' : 'none';
   }
   function choose(m) { st.method = m; save(); updateGate(); renderMethod(); renderPick(); renderCover(); renderSummary(); if (dlg && dlg.box) dlg.box.scrollTop = 0; }
-  renderChoice(); renderMethod(); renderPick(); renderCover(); renderSummary(); updateGate();
+  renderChoice(); renderMix(); renderMethod(); renderPick(); renderCover(); renderSummary(); updateGate();
 
   const left = [];
   if (o.existing && o.existing.can_delete && o.onDelete) left.push({ label: 'Delete event', kind: 'danger', left: true, onclick: function (m) { m.close(); o.onDelete(); } });
@@ -2062,7 +2162,7 @@ VIEWS['spray.entry'] = function (root) {
     h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Previous day', onclick: function () { shiftDay(-1); } }, icon('left')), dateIn,
     h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Next day', onclick: function () { shiftDay(1); } }, icon('right')),
     h('button', { type: 'button', class: 'btn today', onclick: function () { dateIn.value = S.today; loadAll(); } }, 'Today')));
-  root.appendChild(pageHead('Foliar spray', 'Create a spray event each time a mix of foliar is sprayed: the kg applied, the crew, and the fields covered.'));
+  root.appendChild(pageHead('Foliar spray', 'Create a spray event each time a mix of foliar is sprayed: the crew, the fields and hectares covered, and the kg of each of the four compounds.'));
   root.appendChild(bar); root.appendChild(bannerBox); root.appendChild(sumBox); root.appendChild(createBox); root.appendChild(listBox);
   dateIn.addEventListener('change', loadAll);
   Sync.onChange(function () {
@@ -2074,11 +2174,11 @@ VIEWS['spray.entry'] = function (root) {
 
   function loadAll() {
     clear(listBox).appendChild(skeleton(3)); const date = dateIn.value;
-    return api('api_sprayDay', date).then(function (d) { data = d; offlineInfo = ''; Cache.set('spray:day:' + date, d); Cache.set('spray:fields', { fields: d.fields, methods: d.methods, saved: new Date().toISOString() }); afterLoad(); }).catch(function (e) {
+    return api('api_sprayDay', date).then(function (d) { data = d; offlineInfo = ''; Cache.set('spray:day:' + date, d); Cache.set('spray:fields', { fields: d.fields, methods: d.methods, plans: d.plans || [], fourth: d.fourth_options, tolerance: d.tolerance_pct, saved: new Date().toISOString() }); afterLoad(); }).catch(function (e) {
       if (!e.network) { clear(listBox).appendChild(msgBox('err', e.message)); return; }
       const cd = Cache.get('spray:day:' + date), cf = Cache.get('spray:fields');
       if (!cf) { clear(listBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
-      data = { fields: cf.fields, methods: cf.methods, events: cd ? cd.events : [] };
+      data = { fields: cf.fields, methods: cf.methods, events: cd ? cd.events : [], plans: cf.plans || [], fourth_options: cf.fourth, tolerance_pct: cf.tolerance };
       offlineInfo = 'No signal. Showing what this phone saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Events you create are kept on this phone and upload when you have signal.';
       afterLoad();
     });
@@ -2113,13 +2213,13 @@ VIEWS['spray.entry'] = function (root) {
     Object.keys(queued).forEach(function (id) { if (!seen[id]) out.push(fromQueued(queued[id], null, 0)); });
     return out;
     function fromServer(e) {
-      return { kind: 'recorded', event_id: e.event_id, no: e.no, method: e.method, kg: e.kg, men: e.men, drones: e.drones, start: e.start_time, end: e.end_time, total_ha: e.total_ha, kg_per_ha: e.kg_per_ha,
+      return { kind: 'recorded', event_id: e.event_id, no: e.no, method: e.method, kg: e.kg, mix: e.mix, men: e.men, drones: e.drones, start: e.start_time, end: e.end_time, total_ha: e.total_ha, kg_per_ha: e.kg_per_ha,
         lines: e.lines.map(function (l) { return { code: l.code, pct: l.pct_method !== undefined ? l.pct_method : l.pct_total, id: l.field_id, mixed: !!l.mixed, ha: l.area_ha }; }), can_edit: e.can_edit, can_delete: e.can_delete, lock_reason: e.lock_reason, by: e.entered_by, server: e, flags: e.flags };
     }
     function fromQueued(ev, server, no) {
       const before = {}; if (server && server.method === ev.method) server.lines.forEach(function (l) { before[l.field_id] = l.before_pct; });
       let ha = 0; const lines = ev.lines.map(function (l) { const f = byId[l.field_id], part = f ? sprayPart(f, ev.method) : { ha: 0, done_pct: 0 }, b = before[l.field_id] !== undefined ? before[l.field_id] : part.done_pct, mine = part.ha * (l.pct - b) / 100; ha += mine; return { code: f ? f.code : '?', pct: l.pct, id: l.field_id, mixed: !!f && f.method === 'Mixed', ha: mine }; });
-      return { kind: 'queued', event_id: ev.event_id, no: no, method: ev.method || (byId[ev.lines[0].field_id] || {}).method || 'Manual', kg: ev.kg, men: ev.men, drones: ev.drones, start: ev.start_time, end: ev.end_time, total_ha: round2(ha), kg_per_ha: ha > 0 ? round2(ev.kg / ha) : '',
+      return { kind: 'queued', event_id: ev.event_id, no: no, method: ev.method || (byId[ev.lines[0].field_id] || {}).method || 'Manual', kg: ev.kg, mix: mixListOf(ev), men: ev.men, drones: ev.drones, start: ev.start_time, end: ev.end_time, total_ha: round2(ha), kg_per_ha: ha > 0 ? round2(ev.kg / ha) : '',
         lines: lines, can_edit: true, can_delete: true, lock_reason: '', by: S.me.username, server: server, queuedEvent: ev };
     }
   }
@@ -2140,13 +2240,13 @@ VIEWS['spray.entry'] = function (root) {
     const btn = h('button', { type: 'button', class: 'evcreate' + (draft ? ' has-draft' : ''), 'data-role': 'create-event', onclick: function () { openNew(btn); } },
       h('span', { class: 'ec-ic' }, icon('plus')),
       h('span', { class: 'ec-t' }, draft ? 'Continue the unfinished spray event' : 'Create spray event'),
-      draft ? h('span', { class: 'ec-s' }, n + (n === 1 ? ' field' : ' fields') + (draft.kg ? ', ' + draft.kg + ' kg' : '') + '. Saved on this phone.') : null);
+      draft ? h('span', { class: 'ec-s' }, n + (n === 1 ? ' field' : ' fields') + (draft.mix && mixTotal(draft.mix) ? ', ' + mixTotal(draft.mix) + ' kg' : '') + '. Saved on this phone.') : null);
     createBox.appendChild(btn);
   }
   function openNew(from) {
     const cur = Draft.get('sprayevent', dateIn.value).cur;
     from.classList.add('editing');
-    openSprayEvent({ st: cur || newEventState(dateIn.value, ''), fields: data.fields, methods: data.methods, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); } });
+    openSprayEvent({ st: cur || newEventState(dateIn.value, ''), fields: data.fields, methods: data.methods, plans: data.plans, fourth: data.fourth_options, tolerance: data.tolerance_pct, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); } });
   }
 
   function renderList() {
@@ -2166,6 +2266,7 @@ VIEWS['spray.entry'] = function (root) {
       h('div', { class: 'ev-head' }, h('div', { class: 'ev-title' }, c.no ? 'Spray event ' + c.no : 'New spray event'), methodBadge(c.method), h('div', { class: 'ev-actions' }, actions)),
       h('div', { class: 'ev-sub' }, h('span', { class: 'ev-time' }, c.start + ' to ' + c.end), c.kind === 'queued' ? h('span', { class: 'badge warn' }, icon('upload'), 'Waiting to upload') : null),
       h('div', { class: 'ev-stats' }, stat(r2(c.total_ha).toFixed(2), 'ha covered'), stat(String(r2(c.kg)), 'kg used' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')), stat(crewText(c.method, c.men, c.drones), 'crew')),
+      c.mix ? h('div', { class: 'ev-mix small muted', 'aria-label': 'Kg of each compound' }, mixText(c.mix)) : null,
       h('div', { class: 'tags', 'aria-label': 'Fields sprayed' }, c.lines.map(function (l) { return h('span', { class: 'tag' + (l.mixed || l.pct < 100 ? ' part' : '') }, l.mixed ? l.code + ' ' + r2(l.ha) + ' ha' : l.code + (l.pct < 100 ? ' ' + Math.round(l.pct) + '%' : '')); })),
       c.flags ? h('div', { class: 'small', style: 'color:var(--warn);margin-top:8px' }, 'Check: ' + c.flags) : null,
       !readOnly() && !c.can_edit && c.lock_reason ? h('div', { class: 'small muted', style: 'margin-top:8px' }, icon('lock'), ' ' + c.lock_reason) : null);
@@ -2174,16 +2275,16 @@ VIEWS['spray.entry'] = function (root) {
 
   function openCard(c, from) {
     if (readOnly() || !c.can_edit) { viewEvent(c, from); return; }
-    const st = c.queuedEvent ? { event_id: c.event_id, date: dateIn.value, method: c.method, kg: c.queuedEvent.kg, men: c.queuedEvent.men, drones: c.queuedEvent.drones, start: c.queuedEvent.start_time, end: c.queuedEvent.end_time,
+    const st = c.queuedEvent ? { event_id: c.event_id, date: dateIn.value, method: c.method, mix: mixFromList(mixListOf(c.queuedEvent)), men: c.queuedEvent.men, drones: c.queuedEvent.drones, start: c.queuedEvent.start_time, end: c.queuedEvent.end_time,
         pct: c.queuedEvent.lines.reduce(function (m, l) { m[l.field_id] = l.pct; return m; }, {}) }
-      : { event_id: c.event_id, date: dateIn.value, method: c.method, kg: c.kg, men: c.men, drones: c.drones || 1, start: c.start, end: c.end, pct: c.lines.reduce(function (m, l) { m[l.id] = l.pct; return m; }, {}) };
+      : { event_id: c.event_id, date: dateIn.value, method: c.method, mix: mixFromList(c.mix), men: c.men, drones: c.drones || 1, start: c.start, end: c.end, pct: c.lines.reduce(function (m, l) { m[l.id] = l.pct; return m; }, {}) };
     from.classList.add('editing');
-    openSprayEvent({ st: st, fields: data.fields, methods: data.methods, existing: c.server, persist: false, from: from, onDone: renderAll, onDelete: function () { askDelete(c); }, onClosed: function () { from.classList.remove('editing'); } });
+    openSprayEvent({ st: st, fields: data.fields, methods: data.methods, plans: data.plans, fourth: data.fourth_options, tolerance: data.tolerance_pct, existing: c.server, persist: false, from: from, onDone: renderAll, onDelete: function () { askDelete(c); }, onClosed: function () { from.classList.remove('editing'); } });
   }
 
   function viewEvent(c, from) {
     const facts = h('dl', { class: 'facts' });
-    [['Time', c.start + ' to ' + c.end], ['Foliar applied', r2(c.kg) + ' kg'], ['Area covered', r2(c.total_ha).toFixed(2) + ' ha' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')], ['Crew', crewText(c.method, c.men, c.drones)], ['Entered by', c.by]].forEach(function (x) { facts.appendChild(h('dt', null, x[0])); facts.appendChild(h('dd', null, x[1])); });
+    [['Time', c.start + ' to ' + c.end], ['Foliar applied', r2(c.kg) + ' kg' + (c.mix ? ' (' + mixText(c.mix).replace(/ kg$/, '') + ')' : '')], ['Area covered', r2(c.total_ha).toFixed(2) + ' ha' + (c.kg_per_ha !== '' ? ' (' + r2(c.kg_per_ha) + ' kg/ha)' : '')], ['Crew', crewText(c.method, c.men, c.drones)], ['Entered by', c.by]].forEach(function (x) { facts.appendChild(h('dt', null, x[0])); facts.appendChild(h('dd', null, x[1])); });
     const rows = (c.server ? c.server.lines : []).map(function (l) { return { f: l.label, pct: l.pct_total, ha: l.area_ha, kg: l.kg }; });
     modal('Spray event' + (c.no ? ' ' + c.no : ''), h('div', { class: 'stack' }, c.lock_reason ? h('div', { class: 'msg warn', style: 'margin:0' }, icon('lock'), h('div', null, c.lock_reason)) : null, facts,
       rows.length ? table([{ label: 'Field', key: 'f' }, { label: 'Covered (total)', cls: 'num', render: function (r) { return Math.round(r.pct) + '%'; } }, { label: 'ha this event', cls: 'num', render: function (r) { return r2(r.ha).toFixed(2); } }, { label: 'kg share', cls: 'num', render: function (r) { return r2(r.kg); } }], rows, null, { scroll: true }) : null),
@@ -2750,6 +2851,82 @@ VIEWS['params.manage'] = function (root) {
       modal('History: ' + p.label, table([{ label: 'Value', key: 'value' }, { label: 'From', key: 'effective_from', cls: 'nowrap' }, { label: 'Note', key: 'note' }, { label: 'Set by', key: 'set_by' },
         { label: 'When', render: function (r) { return String(r.set_at).replace('T', ' '); }, cls: 'nowrap' }], rows), [{ label: 'Close', onclick: function (m) { m.close(); } }]);
     }).catch(function (e) { toast(e.message, true); });
+  }
+};
+
+// ---------------------------------------------------------------- Foliar planning
+/** What is mixed for ONE hectare: kg of Zinc, Epsom salt, Wuxal and Urea or T65, from an effective date. The Foliar spray screen multiplies it by the hectares sprayed. */
+VIEWS['foliar.plan'] = function (root) {
+  const out = h('div');
+  root.appendChild(pageHead('Foliar planning', 'Once a month the kg of each compound for one hectare is decided. Enter it here with the date from which it applies. When the AFOs record a spray event, the app multiplies these kg by the hectares sprayed and fills in the kg of each compound for them.'));
+  root.appendChild(out);
+  refresh();
+
+  const NAMES = [['zinc', 'Zinc'], ['epsom', 'Epsom salt'], ['wuxal', 'Wuxal']];
+  function refresh() {
+    api('api_listPlans').then(function (d) { clear(out); add(out, [currentCard(d), formCard(d), historyCard(d)]); }).catch(function (e) { clear(out).appendChild(msgBox('err', e.message)); });
+  }
+  function tile(name, kg, unit) { return h('div', { class: 'plan-tile' }, h('div', { class: 'pt-name' }, name), h('div', { class: 'pt-kg' }, h('b', null, num(kg, 2)), ' ' + (unit || 'kg per ha'))); }
+  function currentCard(d) {
+    const p = d.current;
+    const card = h('div', { class: 'card' }, h('h2', null, 'In force today'));
+    if (!p) { card.appendChild(msgBox('warn', 'No foliar plan is in force today. Spray events will show "no plan" and the AFOs have to type every kg themselves. Enter the plan below.')); return card; }
+    card.appendChild(h('div', { class: 'plan-tiles' }, NAMES.map(function (n) { return tile(n[1], p[n[0]]); }).concat([tile(p.fourth_name, p.fourth)])));
+    card.appendChild(h('div', { class: 'muted small', style: 'margin-top:10px' }, 'Applies from ' + p.effective_from + (p.note ? '  |  ' + p.note : '') + '  |  set by ' + p.set_by));
+    if (d.next) card.appendChild(h('div', { class: 'msg warn', style: 'margin-top:10px' }, icon('clock'), h('div', null, 'A newer plan starts on ' + d.next.effective_from + ': ' + planLine(d.next))));
+    return card;
+  }
+  function planLine(p) { return 'Zinc ' + num(p.zinc, 2) + ', Epsom salt ' + num(p.epsom, 2) + ', Wuxal ' + num(p.wuxal, 2) + ', ' + p.fourth_name + ' ' + num(p.fourth, 2) + ' kg per ha'; }
+
+  function formCard(d) {
+    const cur = d.current || {}, inp = {}, err = h('div'), eg = h('div', { class: 'muted small' });
+    NAMES.forEach(function (n) { inp[n[0]] = numInput(cur[n[0]] === undefined ? '' : cur[n[0]], { step: '0.01', 'aria-label': n[1] + ', kg per hectare', 'data-plan': n[0] }); });
+    inp.fourth = numInput(cur.fourth === undefined ? '' : cur.fourth, { step: '0.01', 'data-plan': 'fourth' });
+    const fourthName = select(d.fourth_options.map(function (o) { return { value: o, label: o }; }), cur.fourth_name || d.fourth_options[0], { 'aria-label': 'Fourth compound', 'data-plan': 'fourth_name' });
+    const eff = h('input', { type: 'date', value: d.today, 'aria-label': 'Effective from', 'data-plan': 'effective_from' });
+    const note = h('input', { type: 'text', maxlength: '200', placeholder: 'Optional note, e.g. December mix' });
+    const fourthLabel = h('span', null, fourthName.value + ' (kg per ha)');
+    function example() {
+      const v = function (k) { return Number(inp[k].value) || 0; };
+      eg.textContent = 'For 10 ha this mix needs: Zinc ' + num(v('zinc') * 10, 2) + ' kg, Epsom salt ' + num(v('epsom') * 10, 2) + ' kg, Wuxal ' + num(v('wuxal') * 10, 2) + ' kg, ' + fourthName.value + ' ' + num(v('fourth') * 10, 2) + ' kg.';
+      fourthLabel.textContent = fourthName.value + ' (kg per ha)';
+    }
+    Object.keys(inp).forEach(function (k) { inp[k].addEventListener('input', example); }); fourthName.addEventListener('change', example); example();
+    const save = h('button', { type: 'button', class: 'btn primary', 'data-role': 'save-plan', onclick: function () {
+      clear(err);
+      run(save, function () {
+        return api('api_savePlan', { effective_from: eff.value, zinc: inp.zinc.value, epsom: inp.epsom.value, wuxal: inp.wuxal.value, fourth_name: fourthName.value, fourth: inp.fourth.value, note: note.value })
+          .then(function (r) { toast(r.replaced ? 'Saved. It replaced the plan that started on the same date.' : 'Foliar plan saved'); refresh(); })
+          .catch(function (e) { err.appendChild(msgBox('err', e.message)); });
+      });
+    } }, 'Save plan');
+    return h('div', { class: 'card' }, h('h2', null, 'New plan', ' ', help('The kg to mix for ONE hectare. Zinc, Epsom salt and Wuxal are always in the mix; the fourth compound is Urea or T65, whichever the month needs. The plan applies to spray events on or after the date. A plan for a date that already has one replaces it.')),
+      h('div', { class: 'plan-form' },
+        field('Applies from', eff),
+        h('div', { class: 'plan-grid' },
+          NAMES.map(function (n) { return field(n[1] + ' (kg per ha)', inp[n[0]]); }),
+          h('div', { class: 'f' }, 'Fourth compound', fourthName),
+          h('label', { class: 'f' }, fourthLabel, inp.fourth)),
+        field('Note', note), eg, err, h('div', { class: 'row', style: 'justify-content:flex-end' }, save)));
+  }
+
+  function historyCard(d) {
+    return h('div', { class: 'card' }, h('h2', null, 'All plans'), table([
+      { label: 'From', cls: 'nowrap', render: function (r) { return r.effective_from; } },
+      { label: 'Zinc', cls: 'num', render: function (r) { return num(r.zinc, 2); } }, { label: 'Epsom salt', cls: 'num', render: function (r) { return num(r.epsom, 2); } }, { label: 'Wuxal', cls: 'num', render: function (r) { return num(r.wuxal, 2); } },
+      { label: 'Urea / T65', cls: 'num', render: function (r) { return r.fourth_name + ' ' + num(r.fourth, 2); } },
+      { label: 'Note', cls: 'hide-sm', render: function (r) { return h('span', { class: 'small' }, r.note || ''); } },
+      { label: 'Set by', cls: 'hide-sm nowrap', render: function (r) { return r.set_by; } },
+      { label: 'Status', cls: 'nowrap', render: function (r) { return r.status !== 'Active' ? badge('Voided', 'bad') : (r.in_force ? badge('In force', 'good') : (r.effective_from > d.today ? badge('Starts later', 'warn') : badge('Earlier plan'))); } },
+      { label: '', cls: 'nowrap', render: function (r) { return r.status === 'Active' ? h('button', { type: 'button', class: 'btn small danger', onclick: function () { askVoid(r); } }, 'Void') : null; } }], d.history));
+  }
+  function askVoid(r) {
+    const why = h('input', { type: 'text', maxlength: '200', placeholder: 'Why (optional)' }), err = h('div');
+    modal('Void this plan?', h('div', { class: 'stack' }, h('div', null, 'The plan from ' + r.effective_from + ' (' + planLine(r) + ') will no longer be used. Spray events already recorded keep the kg that were entered. A record of this is kept.'), field('Reason', why), err), [
+      { label: 'Keep it', onclick: function (m) { m.close(); } },
+      { label: 'Void plan', kind: 'danger', onclick: function (m, btn) {
+        run(btn, function () { return api('api_voidPlan', r.plan_id, why.value).then(function () { m.close(); toast('Plan voided'); refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
+      } }]);
   }
 };
 
