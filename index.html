@@ -2909,17 +2909,19 @@ VIEWS['roles.manage'] = function (root) {
     const desc = h('input', { type: 'text', value: r.description || '', maxlength: '200' });
     const scope = select(['assigned', 'drone', 'all'].map(function (k) { return { value: k, label: SCOPE_TEXT[k] }; }), r.field_scope);
     const act = select([{ value: 'true', label: 'Active' }, { value: 'false', label: 'Inactive' }], String(r.active !== false));
-    const boxes = {}, groups = h('div');
+    const boxes = {}, groups = h('div'), wholeEstate = [];
     groupBy(tasks, function (t) { return t.group; }).forEach(function (g) {
       const gd = h('div', { class: 'taskgroup' }, h('div', { class: 'divhead', style: 'margin-top:4px' }, g.key));
       g.items.forEach(function (t) {
         const cb = h('input', { type: 'checkbox', id: 'tk-' + t.id, checked: r.tasks.indexOf(t.id) >= 0 });
-        boxes[t.id] = cb;
-        gd.appendChild(h('div', { class: 'taskrow' }, cb, h('label', { for: 'tk-' + t.id }, h('strong', null, t.label), ' ', t.sensitive ? badge('Admin-level', 'bad') : null, ' ', help(t.desc))));
+        boxes[t.id] = cb; if (t.whole_estate) wholeEstate.push(cb);
+        gd.appendChild(h('div', { class: 'taskrow' }, cb, h('label', { for: 'tk-' + t.id }, h('strong', null, t.label), ' ', t.sensitive ? badge('Admin-level', 'bad') : null, ' ', t.whole_estate ? h('span', { class: 'muted small', 'data-role': 'estate-only' }, 'needs "Every field"') : null, help(t.desc))));
       });
       groups.appendChild(gd);
     });
     const err = h('div');
+    function syncScope() { const limited = scope.value !== 'all'; wholeEstate.forEach(function (cb) { if (limited) cb.checked = false; cb.disabled = limited; }); }       // a role limited to some fields cannot have a whole-estate screen
+    scope.addEventListener('change', syncScope); syncScope();
     modal(isNew ? 'New job role' : 'Edit role: ' + r.role_name, h('div', { class: 'stack' }, field('Role name', name), field('Description', desc), isNew ? null : field('Status', act),
       field('Which fields can this role record on?', scope, 'Applies to Foliar spray and Plucking'), h('div', null, h('strong', null, 'Tasks (tabs) this role can use'), groups),
       msgBox('warn', 'Admin-level tasks let a person create accounts and change permissions. Give them only to trusted administrators.'), err), [
@@ -3769,7 +3771,14 @@ const EXP_GROUPS = [
 
 /** NET GAIN over the days a..b (day numbers; null = the whole shown period, from the first day both spraying and plucking are on record), for one method, counted per PLOT (the drone or the manual part of a field):
  *  rev = the green leaf revenue of the plot's plucking lines, cost = the foliar + labour of its spray lines; only plots with some spraying or plucking in the window are counted (idle land is left out);
- *  a plot's land is its area, counted once however often it was sprayed or plucked (if the area is unknown, the larger of the ha sprayed and the ha plucked). */
+ *  a plot's land is its area, counted once however often it was sprayed or plucked. A plot that has no area now (the field part was removed, or its drone / manual area was set to 0) is left out. */
+/** How many field parts have records but no land now (they are left out of every per-hectare figure). */
+function expLeftOut(data) {
+  const seen = {}, plots = data.plots || {};
+  (data.spray || []).forEach(function (r) { const k = r[1] + '|' + r[2]; if (!plots[k]) seen[k] = true; });
+  (data.leaf || []).forEach(function (r) { const k = r[1] + '|' + r[2]; if (!plots[k]) seen[k] = true; });
+  return Object.keys(seen).length;
+}
 function expNetPlots(data, m, a, b) {
   const out = { obs: 0, plots: [] };
   if (!data.first_net) return out;
@@ -3781,7 +3790,8 @@ function expNetPlots(data, m, a, b) {
   expLeafLines(data).forEach(function (l) { if (l.m !== m || l.n < lo || l.n > hi) return; const p = get(l.f); p.rev += l.rev; p.lha += l.ha; });
   Object.keys(by).forEach(function (f) {
     const p = by[f], pl = data.plots && data.plots[f + '|' + m], area = pl ? pl.ha : 0;
-    p.area = area; p.ext = area > 0 ? area : Math.max(p.sha, p.lha); p.net = p.rev - p.cost; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.sha / area : 0; out.plots.push(p);
+    if (!(area > 0)) return;       // a part of a field that is no longer sprayed (or plucked) that way has no land now: its old records are left out, they must not count each round as new land
+    p.area = area; p.ext = area; p.net = p.rev - p.cost; p.label = pl ? pl.l : f; p.rounds = p.sha / area; out.plots.push(p);
   });
   return out;
 }
@@ -3806,7 +3816,8 @@ function expFolPlots(data, m, a, b) {
   L.forEach(function (l) { if (l.m !== m || l.n < lo || l.n > hi) return; const p = by[l.f] || (by[l.f] = { f: l.f, kg: 0, ha: 0, cost: 0, lab: 0 }); p.kg += l.kg; p.ha += l.ha; p.cost += l.c; p.lab += l.lab; });
   Object.keys(by).forEach(function (f) {
     const p = by[f], pl = data.plots && data.plots[f + '|' + m], area = pl ? pl.ha : 0;
-    p.area = area; p.ext = area > 0 ? Math.min(p.ha, area) : p.ha; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.ha / area : 0; p.tot = p.cost + p.lab; out.plots.push(p);
+    if (!(area > 0)) return;       // a part of a field that is no longer sprayed (or plucked) that way has no land now: its old records are left out, they must not count each round as new land
+    p.area = area; p.ext = Math.min(p.ha, area); p.label = pl ? pl.l : f; p.rounds = p.ha / area; p.tot = p.cost + p.lab; out.plots.push(p);
   });
   return out;
 }
@@ -3822,7 +3833,8 @@ function expLeafPlots(data, m, a, b) {
   L.forEach(function (l) { if (l.m !== m || l.n < lo || l.n > hi) return; const p = by[l.f] || (by[l.f] = { f: l.f, kg: 0, ha: 0, rev: 0 }); p.kg += l.kg; p.ha += l.ha; p.rev += l.rev; });
   Object.keys(by).forEach(function (f) {
     const p = by[f], pl = data.plots && data.plots[f + '|' + m], area = pl ? pl.ha : 0;
-    p.area = area; p.ext = area > 0 ? Math.min(p.ha, area) : p.ha; p.label = pl ? pl.l : f; p.rounds = area > 0 ? p.ha / area : 0; out.plots.push(p);
+    if (!(area > 0)) return;       // a part of a field that is no longer sprayed (or plucked) that way has no land now: its old records are left out, they must not count each round as new land
+    p.area = area; p.ext = Math.min(p.ha, area); p.label = pl ? pl.l : f; p.rounds = p.ha / area; out.plots.push(p);
   });
   return out;
 }
@@ -4037,7 +4049,7 @@ function experimentScreen(host) {
     const sel = S.expRange || { kind: 'all' }, today = data.today, info = h('div', { class: 'exp-filter-info' }), msg = h('div', { class: 'exp-filter-msg', role: 'alert' });
     const refreshInfo = function () {
       const R = expResolveRange(S.expRange, today), from = R ? R.from : data.first, to = R ? (R.to < today ? R.to : today) : today;
-      clear(info).appendChild(document.createTextNode('Showing ' + fullDate(from) + ' to ' + fullDate(to) + '  (' + (dayNo(to) - dayNo(from) + 1) + ' days)' + (shown && !shown.days.length ? '  |  no entries in this period' : '')));
+      clear(info).appendChild(document.createTextNode('Showing ' + fullDate(from) + ' to ' + fullDate(to) + '  (' + (dayNo(to) - dayNo(from) + 1) + ' days)' + (shown && !shown.days.length ? '  |  no entries in this period' : '') + (expLeftOut(data) ? '  |  ' + expLeftOut(data) + ' earlier field part' + (expLeftOut(data) === 1 ? '' : 's') + ' that no longer exist (their drone or manual area is now 0) left out' : '')));
     };
     const choose = function (kind) {
       if (kind === 'custom') {
