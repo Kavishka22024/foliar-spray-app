@@ -359,6 +359,33 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .mixhint { color: var(--muted); font-size: 12.5px; line-height: 1.4; } .mixhint .warnnote { color: var(--warn); font-weight: 600; } .mixhint .usebtn { margin-left: 8px; padding: 2px 10px; min-height: 0; }
 .mixseg { margin-top: 2px; } .plannote { display: flex; gap: 10px; align-items: flex-start; background: var(--good-soft, var(--surface)); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 12px; font-size: 13.5px; } .plannote svg { width: 18px; height: 18px; flex: none; color: var(--primary); }
 .ev-mix { margin: 8px 0 2px; }
+.fcal .fc-nav { display: flex; align-items: center; gap: 8px; margin: 12px 0 6px; flex-wrap: wrap; } .fc-month { font-size: 20px; font-weight: 700; min-width: 170px; text-align: center; }
+.fc-sum { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); margin: 6px 0 10px; } .fc-prog { width: 160px; margin: 0; }
+.fc-bar { align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; } .fc-legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; } .fc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid; display: inline-block; } .lg.planned { background: var(--tile); border-color: var(--line-strong); } .lg.done { background: var(--good-soft); border-color: var(--good); } .lg.overdue { background: var(--bad-soft); border-color: var(--bad); }
+.fc-div { display: flex; gap: 6px; flex-wrap: wrap; } .fc-help { margin: 0 0 10px; }
+.fc-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
+.fc-grid { display: grid; grid-template-columns: 78px repeat(7, minmax(140px, 1fr)); min-width: 1060px; }
+.fc-corner, .fc-wd { background: var(--surface-2); padding: 8px 6px; font-size: 12px; font-weight: 700; text-align: center; letter-spacing: .06em; color: var(--muted); }
+.fc-wk { background: var(--surface-2); border-top: 1px solid var(--line); padding: 8px 6px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; color: var(--muted); } .fc-wk b { color: var(--ink); font-size: 12.5px; }
+.fc-day { border-top: 1px solid var(--line); border-left: 1px solid var(--line); padding: 6px; min-height: 150px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.fc-day.past { background: var(--surface-2); } .fc-day.today { box-shadow: inset 0 0 0 2px var(--primary); } .fc-day.empty { background: repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 6px, var(--surface) 6px, var(--surface) 12px); }
+.fc-date { display: flex; gap: 6px; align-items: baseline; font-size: 12px; color: var(--muted); } .fc-date b { font-size: 15px; color: var(--ink); }
+.fc-sec { border: 1px dashed var(--line); border-radius: 8px; padding: 3px; flex: 1; min-height: 56px; display: flex; flex-direction: column; gap: 4px; }
+.fc-sec.can { border-color: var(--good); background: var(--good-soft); } .fc-sec.cannot { border-color: var(--bad); background: var(--bad-soft); opacity: .75; } .fc-sec.over { box-shadow: inset 0 0 0 2px var(--good); }
+.fc-sechead { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; } .fc-sechead .over { color: var(--bad); font-weight: 700; }
+.stamp { border-radius: 8px; border: 1.5px solid var(--line-strong); background: var(--tile); color: var(--ink); padding: 5px 7px; font-size: 12px; position: relative; overflow: hidden; }
+.stamp .st-name { display: flex; align-items: center; gap: 5px; } .st-div { font-size: 10px; font-weight: 700; color: var(--muted); } .stamp b { font-size: 14px; } .stamp svg.ico { width: 14px; height: 14px; margin-left: auto; } .st-mv { margin-left: auto; display: inline-flex; } .st-mv svg { width: 12px; height: 12px; }
+.st-side { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; padding: 2px 6px; border-radius: 5px; margin-top: 3px; background: var(--line); }
+.stamp.done { background: var(--good-soft); border-color: var(--good); } .stamp.done .st-side { background: var(--good); color: #fff; } .stamp.done svg.ico { color: var(--good); stroke-width: 3; }
+.stamp.overdue { background: var(--bad-soft); border-color: var(--bad); } .stamp.overdue .st-side { background: var(--bad); color: #fff; } .stamp.due { border-color: var(--warn); box-shadow: 0 0 0 1px var(--warn); }
+.stamp.movable { cursor: grab; } .stamp.selected { outline: 3px solid var(--primary); } .stamp.dragging { opacity: .4; } .stamp.dim { opacity: .25; } .stamp.moved { border-style: dashed; }
+.st-bar { height: 4px; background: var(--line); border-radius: 3px; margin-top: 4px; } .st-bar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
+.due { margin-bottom: 14px; } .due h3 { margin: 0 0 8px; font-size: 15px; } .due-group { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); padding: 10px 12px; margin-bottom: 8px; }
+.due-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; } .due-head b { font-size: 14px; } .due-head .sub { color: var(--muted); font-size: 12.5px; margin-left: 8px; }
+.due-chips { display: flex; flex-wrap: wrap; gap: 6px; } .due-chip { border-radius: 8px; border: 1.5px solid var(--line-strong); background: var(--tile); padding: 4px 9px; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.due-chip.done { background: var(--good-soft); border-color: var(--good); } .due-chip.overdue { background: var(--bad-soft); border-color: var(--bad); } .due-chip small { color: var(--muted); }
+@media (max-width: 760px) { .fc-month { min-width: 140px; font-size: 18px; } .fc-day { min-height: 130px; } }
 .plan-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; } .plan-tile { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px; } .pt-name { font-size: 13px; color: var(--muted); font-weight: 600; } .pt-kg { margin-top: 4px; font-size: 13px; color: var(--muted); } .pt-kg b { font-size: 28px; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .plan-form { display: grid; gap: 14px; } .plan-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; align-items: start; }
 @media (max-width: 760px) { .mixgrid { grid-template-columns: 1fr; } .plan-tiles, .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .covgrid { grid-template-columns: 1fr; } } .cov-slider .slider { padding: 0; border: 0; background: none; box-shadow: none; }
@@ -769,6 +796,7 @@ const ICONS = {
   edit: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'],
   trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6', 'M10 11v6', 'M14 11v6'],
   droplet: ['M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z'],
+  calendar: ['M7 3v3', 'M17 3v3', 'M4 9h16', 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z', 'M8 13h2', 'M14 13h2', 'M8 17h2'],
   basket: ['M5 11l4-7', 'M19 11l-4-7', 'M2 11h20', 'M4 11l1.2 8.2A2 2 0 0 0 7.2 21h9.6a2 2 0 0 0 2-1.8L20 11', 'M10 15v2', 'M14 15v2'],
   dashboard: ['M3 3h7v9H3z', 'M14 3h7v5h-7z', 'M14 12h7v9h-7z', 'M3 16h7v5H3z'],
   list: ['M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2', 'M9 3h6v4H9z', 'M9 12h6', 'M9 16h6'],
@@ -805,9 +833,9 @@ function icon(name, cls) {
   (ICONS[name] || []).forEach(function (d) { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); s.appendChild(p); });
   return s;
 }
-const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'foliar.plan': 'flask', 'pluck.entry': 'basket', 'history.view': 'clock', 'monitor.operation': 'tractor', 'monitor.experiment': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
+const TASK_ICON = { home: 'home', 'spray.entry': 'droplet', 'foliar.plan': 'flask', 'foliar.calendar': 'calendar', 'foliar.schedule': 'calendar', 'pluck.entry': 'basket', 'history.view': 'clock', 'monitor.operation': 'tractor', 'monitor.experiment': 'dashboard', 'records.manage': 'list', 'estate.manage': 'map',
   'params.manage': 'sliders', 'users.manage': 'users', 'roles.manage': 'shield', 'audit.view': 'clock' };
-const TASK_GROUP = { 'spray.entry': 'Data entry', 'foliar.plan': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'monitor.operation': 'Monitoring', 'monitor.experiment': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
+const TASK_GROUP = { 'spray.entry': 'Data entry', 'foliar.plan': 'Data entry', 'foliar.calendar': 'Data entry', 'foliar.schedule': 'Data entry', 'pluck.entry': 'Data entry', 'history.view': 'Data entry', 'monitor.operation': 'Monitoring', 'monitor.experiment': 'Monitoring', 'records.manage': 'Administration', 'estate.manage': 'Administration',
   'params.manage': 'Administration', 'users.manage': 'Administration', 'roles.manage': 'Administration', 'audit.view': 'Administration' };
 
 // ---------- feedback widgets
@@ -1028,7 +1056,7 @@ function openChangeUsername() {
 }
 
 // ---------- app shell: top bar, side navigation (bottom bar on phones), content
-const TAB_ORDER = ['home', 'spray.entry', 'foliar.plan', 'pluck.entry', 'history.view', 'monitor.operation', 'monitor.experiment', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
+const TAB_ORDER = ['home', 'spray.entry', 'foliar.plan', 'foliar.calendar', 'foliar.schedule', 'pluck.entry', 'history.view', 'monitor.operation', 'monitor.experiment', 'records.manage', 'estate.manage', 'params.manage', 'users.manage', 'roles.manage', 'audit.view'];
 
 function enterApp() {
   if (S.me.must_change) { showForcedChange(); return Promise.resolve(); }
@@ -1044,7 +1072,11 @@ function renderShell() {
   document.body.classList.remove('nav-open');
   const labels = { home: 'Home' };
   me.tasks.forEach(function (t) { labels[t.id] = t.label; });
-  const tabs = TAB_ORDER.filter(function (id) { return id === 'home' || (labels[id] && VIEWS[id]); });
+  const tabs = TAB_ORDER.filter(function (id) {
+    if (id === 'foliar.calendar' && labels['foliar.plan']) return false;                                   // the planning screen already shows the calendar
+    if (id === 'foliar.schedule' && (labels['foliar.plan'] || labels['foliar.calendar'])) return false;      // the calendar screen already lets this person edit
+    return id === 'home' || (labels[id] && VIEWS[id]);
+  });
   const nav = h('nav', { class: 'tabs', 'aria-label': 'Main' });
   const main = h('main', { class: 'content' });
   const title = h('div', { class: 'title' });
@@ -2180,7 +2212,7 @@ function openSprayEvent(o) {
 
 VIEWS['spray.entry'] = function (root) {
   const dateIn = h('input', { type: 'date', value: S.today, max: S.today, 'aria-label': 'Date' });
-  const bannerBox = h('div'), sumBox = h('div'), createBox = h('div'), listBox = h('div');
+  const bannerBox = h('div'), sumBox = h('div'), createBox = h('div'), dueBox = h('div'), listBox = h('div');
   let data = { fields: [], events: [] }, offlineInfo = '', hadQueue = false;
   const readOnly = function () { return dateIn.value < S.today; };
   function shiftDay(n) { const d = new Date(dateIn.value + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); const v = d.toISOString().slice(0, 10); if (v > S.today) return; dateIn.value = v; loadAll(); }
@@ -2189,7 +2221,7 @@ VIEWS['spray.entry'] = function (root) {
     h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Next day', onclick: function () { shiftDay(1); } }, icon('right')),
     h('button', { type: 'button', class: 'btn today', onclick: function () { dateIn.value = S.today; loadAll(); } }, 'Today')));
   root.appendChild(pageHead('Foliar spray', 'Create a spray event each time a mix of foliar is sprayed: the crew, the fields and hectares covered, and the kg of each of the four compounds.'));
-  root.appendChild(bar); root.appendChild(bannerBox); root.appendChild(sumBox); root.appendChild(createBox); root.appendChild(listBox);
+  root.appendChild(bar); root.appendChild(bannerBox); root.appendChild(sumBox); root.appendChild(createBox); root.appendChild(dueBox); root.appendChild(listBox);
   dateIn.addEventListener('change', loadAll);
   Sync.onChange(function () {
     if (!root.isConnected) return false;
@@ -2204,13 +2236,43 @@ VIEWS['spray.entry'] = function (root) {
       if (!e.network) { clear(listBox).appendChild(msgBox('err', e.message)); return; }
       const cd = Cache.get('spray:day:' + date), cf = Cache.get('spray:fields');
       if (!cf) { clear(listBox).appendChild(msgBox('warn', 'No signal, and this phone has not loaded your fields yet. Open this screen once with signal, then it works offline.')); return; }
-      data = { fields: cf.fields, methods: cf.methods, events: cd ? cd.events : [], plans: cf.plans || [], fourth_options: cf.fourth, tolerance_pct: cf.tolerance };
+      data = { fields: cf.fields, methods: cf.methods, events: cd ? cd.events : [], due: cd ? (cd.due || []) : [], plans: cf.plans || [], fourth_options: cf.fourth, tolerance_pct: cf.tolerance };
       offlineInfo = 'No signal. Showing what this phone saved on ' + String(cf.saved).replace('T', ' ').slice(0, 16) + '. Events you create are kept on this phone and upload when you have signal.';
       afterLoad();
     });
   }
   function afterLoad() { hadQueue = Object.keys(Sync.waitingEvents(dateIn.value)).length > 0; renderAll(); }
-  function renderAll() { renderBanners(); renderSummary(); renderCreate(); renderList(); }
+  function renderAll() { renderBanners(); renderSummary(); renderCreate(); renderDue(); renderList(); }
+
+  /** The drone spray plan of the day (from the foliar calendar): the blocks planned for this day, and for today also what was planned earlier and is not sprayed yet. Each block is a button
+   *  that opens a new event with those fields already picked, set to the hectares of the plan (the sliders can still be changed). */
+  function renderDue() {
+    clear(dueBox);
+    const due = data.due || []; if (!due.length) return;
+    const byId = {}; data.fields.forEach(function (f) { byId[f.field_id] = f; });
+    const date = dateIn.value, draft = Draft.get('sprayevent', date).cur, canDrone = (data.methods || []).indexOf('Drone') >= 0;
+    const groups = [{ title: 'Morning', list: due.filter(function (s) { return s.date === date && s.half === 'AM'; }) }, { title: 'Evening', list: due.filter(function (s) { return s.date === date && s.half === 'PM'; }) },
+      { title: 'Planned earlier, not sprayed yet', list: due.filter(function (s) { return s.date < date; }), late: true }].filter(function (g) { return g.list.length; });
+    const box = h('div', { class: 'due', 'data-role': 'due' }, h('h3', null, readOnly() ? 'Drone spray plan for ' + shortDate(date) : 'Drone spray plan for today', ' ', help('The drone spray plan of the foliar calendar for your fields. After spraying a block tap Record this block: its fields are already chosen and set to the hectares of the plan; move a slider if less was sprayed. A field sprayed but not listed here: use Create spray event.')));
+    groups.forEach(function (g) {
+      const open = g.list.filter(function (s) { return s.state !== 'done'; }), ha = g.list.reduce(function (t, s) { return t + s.ha; }, 0);
+      const btn = !readOnly() && open.length && canDrone ? h('button', { type: 'button', class: 'btn small primary', 'data-role': 'record-block', disabled: !!draft, title: draft ? 'Finish or discard the unfinished spray event first' : '', onclick: function (ev) { startFrom(open, ev.currentTarget); } }, g.late ? 'Record these' : 'Record this block') : null;
+      box.appendChild(h('div', { class: 'due-group' }, h('div', { class: 'due-head' }, h('div', null, h('b', null, g.title), h('span', { class: 'sub' }, r2(ha).toFixed(2) + ' ha, ' + g.list.length + (g.list.length === 1 ? ' field' : ' fields'))), btn),
+        h('div', { class: 'due-chips' }, g.list.map(function (s) { return h('span', { class: 'due-chip ' + s.state, 'data-field': s.field_id }, h('b', null, s.div_abbr + ' ' + s.code), r2(s.ha) + ' ha', s.state === 'done' ? icon('check') : null, g.late ? h('small', null, shortDate(s.date)) : null); }))));
+    });
+    dueBox.appendChild(box);
+    function startFrom(list, from) {
+      const st = newEventState(date, 'Drone'), pos = {};
+      list.forEach(function (s) {
+        const f = byId[s.field_id]; if (!f) return; const part = sprayPart(f, 'Drone'); if (!(part.ha > 0) || part.done) return;
+        pos[f.field_id] = (pos[f.field_id] === undefined ? part.done_ha : pos[f.field_id]) + Math.max(0, s.ha - s.done_ha);
+      });
+      Object.keys(pos).forEach(function (id) { const part = sprayPart(byId[id], 'Drone'); if (pos[id] > part.done_ha + 0.004) st.pct[id] = pos[id] >= part.ha - 0.005 ? 100 : pos[id] / part.ha * 100; });
+      if (!Object.keys(st.pct).length) { toast('Nothing left to record: these fields are already fully sprayed in their round.'); return; }
+      from.classList.add('editing');
+      openSprayEvent({ st: st, fields: data.fields, methods: data.methods, plans: data.plans, fourth: data.fourth_options, tolerance: data.tolerance_pct, existing: null, persist: true, from: from, onDone: renderAll, onClosed: function () { from.classList.remove('editing'); renderCreate(); renderDue(); } });
+    }
+  }
 
   function renderBanners() {
     clear(bannerBox);
@@ -2623,17 +2685,41 @@ VIEWS['estate.manage'] = function (root) {
         code: h('input', { type: 'text', value: f.code, maxlength: '20', class: 'w90' }), name: h('input', { type: 'text', value: f.name, maxlength: '80', placeholder: 'optional' }),
         area: numInput(f.area_ha, { step: '0.01', class: 'w90' }), prune: h('input', { type: 'date', value: f.last_prune_date || '', max: S.today }),
         tea: select([{ value: '', label: '-' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], f.tea_type),
-        drone: numInput(f.drone_ha, { step: '0.01', class: 'w90', placeholder: 'ha' }), manual: h('span', { class: 'small' }),
+        drone: numInput(f.drone_ha, { step: '0.01', class: 'w90', placeholder: 'ha' }), manual: numInput(f.manual_ha, { step: '0.01', class: 'w90', placeholder: 'ha' }), mnote: h('div', { class: 'small' }),
         active: h('input', { type: 'checkbox', checked: f.active }) };
     });
     const msg = h('div');
     /** the manual part is what is left of the field after the drone part; shown as the person types */
-    function showManual(r) {
-      const a = parseFloat(r.area.value), d = parseFloat(r.drone.value);
-      r.manual.textContent = r.drone.value === '' || !(a > 0) ? '' : (d > a + 0.006 || d < 0 ? 'more than the field' : num(Math.round((a - d) * 100) / 100, 2) + (d <= 0 ? '  (all manual)' : (a - d < 0.05 ? '  (all drone)' : '')));
-      r.manual.style.color = r.manual.textContent === 'more than the field' ? 'var(--bad)' : '';
+    function showManual(r, from) {
+      const a = parseFloat(r.area.value);
+      if (a > 0 && from === 'manual' && r.manual.value !== '') { const m = parseFloat(r.manual.value); r.drone.value = m >= 0 && m <= a + 0.006 ? String(Math.round((a - m) * 100) / 100) : ''; }       // you may type either part: the other is what is left
+      else if (a > 0 && r.drone.value !== '') { const d0 = parseFloat(r.drone.value); r.manual.value = d0 >= 0 && d0 <= a + 0.006 ? String(Math.round((a - d0) * 100) / 100) : ''; }
+      const d = parseFloat(r.drone.value), bad = r.drone.value !== '' && a > 0 && (d > a + 0.006 || d < 0);
+      r.mnote.textContent = r.drone.value === '' || !(a > 0) ? '' : (bad ? 'more than the field' : (d <= 0 ? 'all manual' : (a - d < 0.05 ? 'all drone' : 'part drone, part manual')));
+      r.mnote.style.color = bad ? 'var(--bad)' : '';
     }
-    rows.forEach(function (r) { showManual(r); r.area.addEventListener('input', function () { showManual(r); }); r.drone.addEventListener('input', function () { showManual(r); }); });
+    rows.forEach(function (r) { showManual(r); r.area.addEventListener('input', function () { showManual(r); }); r.drone.addEventListener('input', function () { showManual(r, 'drone'); }); r.manual.addEventListener('input', function () { showManual(r, 'manual'); }); });
+    function addFieldDialog() {
+      const code = h('input', { type: 'text', maxlength: '20', placeholder: 'e.g. 12A' }), name = h('input', { type: 'text', maxlength: '80', placeholder: 'optional' }), area = numInput('', { step: '0.01', placeholder: 'ha' }), drone = numInput('', { step: '0.01', placeholder: 'ha' }), manual = numInput('', { step: '0.01', placeholder: 'ha' });
+      const tea = select([{ value: '', label: '-' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], ''), err = h('div'), note = h('div', { class: 'small muted' });
+      function link(from) {
+        const a = parseFloat(area.value);
+        if (a > 0 && from === 'manual' && manual.value !== '') drone.value = String(Math.round((a - parseFloat(manual.value)) * 100) / 100);
+        else if (a > 0 && drone.value !== '') manual.value = String(Math.round((a - parseFloat(drone.value)) * 100) / 100);
+        const d = parseFloat(drone.value); note.textContent = !(a > 0) || drone.value === '' ? 'Enter the total area and either the drone area or the manual area: the other is what is left.' : (d > a + 0.006 || d < 0 ? 'More than the field.' : (d <= 0 ? 'All manual.' : (a - d < 0.05 ? 'All drone.' : 'Part drone, part manual.')));
+      }
+      area.addEventListener('input', function () { link(drone.value === '' && manual.value !== '' ? 'manual' : 'drone'); }); drone.addEventListener('input', function () { link('drone'); }); manual.addEventListener('input', function () { link('manual'); }); link();
+      modal('Add a field to ' + dv.name, h('div', { class: 'stack' }, field('Field code', code), field('Name', name), field('Total area (ha)', area), h('div', { class: 'pair' }, field('Drone area (ha)', drone), field('Manual area (ha)', manual)), note, field('Tea type', tea), err), [
+        { label: 'Cancel', onclick: function (m) { m.close(); } },
+        { label: 'Add field', kind: 'primary', onclick: function (m, btn) {
+          run(btn, function () { return api('api_addField', dv.division_id, { code: code.value, name: name.value, area_ha: area.value, drone_ha: drone.value, tea_type: tea.value }).then(function () { m.close(); toast('Field added'); openDiv = dv.division_id; return refresh(); }).catch(function (e) { clear(err).appendChild(msgBox('err', e.message)); }); });
+        } }]);
+    }
+    function removeDialog(r) {
+      modal('Remove field ' + r.f.code + '?', h('div', { class: 'stack' }, h('div', null, 'A field that never had a spray or plucking record is deleted for good. A field that has records is only made inactive: it disappears from the entry screens and the land totals, its records stay, and ticking Active again brings it back.')), [
+        { label: 'Keep it', onclick: function (m) { m.close(); } },
+        { label: 'Remove field', kind: 'danger', onclick: function (m, btn) { run(btn, function () { return api('api_removeField', r.f.field_id).then(function (x) { m.close(); toast(x.deleted ? 'Field deleted' : 'Field made inactive'); openDiv = dv.division_id; return refresh(); }).catch(function (e) { m.close(); toast(e.message, true); }); }); } }]);
+    }
     const fillTea = select([{ value: '', label: 'Tea type...' }, { value: 'VP', label: 'VP' }, { value: 'SD', label: 'SD' }], '');
     const fillMeth = select([{ value: '', label: 'Spraying...' }, { value: 'Drone', label: 'All drone' }, { value: 'Manual', label: 'All manual' }], '');
     const fillPrune = h('input', { type: 'date', max: S.today }), fillArea = numInput('', { step: '0.01', placeholder: 'ha', class: 'w90' });
@@ -2645,7 +2731,7 @@ VIEWS['estate.manage'] = function (root) {
     const saveBtn = h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields');
     out.appendChild(h('div', { class: 'card' },
       h('div', { class: 'row', style: 'justify-content:space-between;align-items:center' }, h('h2', { style: 'margin:0' }, dv.name + ': fields'),
-        h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openDiv = null; refresh(); } }, 'Back to divisions'), saveBtn)),
+        h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openDiv = null; refresh(); } }, 'Back to divisions'), h('button', { class: 'btn', 'data-role': 'add-field', onclick: addFieldDialog }, icon('plus'), 'Add a field'), saveBtn)),
       help('For every field enter the area, the drone area, the last pruning date and the tea type. The drone area is the part of the field that the drone sprays; the rest is sprayed by hand. Enter 0 if the whole field is sprayed by hand, or the whole area if it is all by drone. Fields that are not complete cannot be used for data entry.'),
       h('div', { class: 'row fillbar' }, h('strong', { class: 'small' }, 'Fill empty cells in all rows:'), fillTea, fillMeth, fillPrune, fillArea,
         h('button', { class: 'btn small', onclick: function () {
@@ -2657,10 +2743,10 @@ VIEWS['estate.manage'] = function (root) {
           });
         } }, 'Apply')),
       msg,
-      h('div', { class: 'tablewrap scroll' }, h('table', { class: 'grid-edit' }, h('thead', null, h('tr', null, ['Code', 'Name', 'Area (ha)', 'Drone area (ha)', 'Manual area (ha)', 'Last prune date', 'Tea type', 'AFO', 'Active'].map(function (x) { return h('th', null, x); }))),
+      h('div', { class: 'tablewrap scroll' }, h('table', { class: 'grid-edit' }, h('thead', null, h('tr', null, ['Code', 'Name', 'Area (ha)', 'Drone area (ha)', 'Manual area (ha)', 'Last prune date', 'Tea type', 'AFO', 'Active', ''].map(function (x) { return h('th', null, x); }))),
         h('tbody', null, rows.map(function (r) {
-          return h('tr', { class: r.f.complete ? '' : 'incomplete' }, h('td', null, r.code), h('td', null, r.name), h('td', null, r.area), h('td', null, r.drone), h('td', null, r.manual), h('td', null, r.prune), h('td', null, r.tea),
-            h('td', { class: 'small' }, r.f.afo_name ? r.f.afo_name + (r.f.afo_active ? '' : ' (inactive)') : h('span', { class: 'muted' }, 'none')), h('td', null, r.active));
+          return h('tr', { class: r.f.complete ? '' : 'incomplete' }, h('td', null, r.code), h('td', null, r.name), h('td', null, r.area), h('td', null, r.drone), h('td', null, r.manual, r.mnote), h('td', null, r.prune), h('td', null, r.tea),
+            h('td', { class: 'small' }, r.f.afo_name ? r.f.afo_name + (r.f.afo_active ? '' : ' (inactive)') : h('span', { class: 'muted' }, 'none')), h('td', null, r.active), h('td', null, h('button', { type: 'button', class: 'iconbtn ghost danger', 'aria-label': 'Remove field ' + r.f.code, 'data-role': 'remove-field', onclick: function () { removeDialog(r); } }, icon('trash'))));
         })))),
       h('div', { style: 'margin-top:12px' }, h('button', { class: 'btn primary', onclick: function (ev) { save(ev.currentTarget); } }, 'Save all fields'))));
   }
@@ -2886,6 +2972,8 @@ VIEWS['foliar.plan'] = function (root) {
   const out = h('div');
   root.appendChild(pageHead('Foliar planning', 'Once a month the kg of each compound for one hectare is decided. Enter it here with the date from which it applies. When the AFOs record a spray event, the app multiplies these kg by the hectares sprayed and fills in the kg of each compound for them.'));
   root.appendChild(out);
+  if (hasTask('foliar.calendar') || hasTask('foliar.schedule')) root.appendChild(foliarCalendarCard());
+  if (S.me.is_admin) root.appendChild(planFileCard());
   refresh();
 
   const NAMES = [['zinc', 'Zinc'], ['epsom', 'Epsom salt'], ['wuxal', 'Wuxal']];
@@ -2955,6 +3043,152 @@ VIEWS['foliar.plan'] = function (root) {
       } }]);
   }
 };
+
+// ---------------------------------------------------------------- Foliar calendar: the month's drone spray plan as a grid of stamps
+function hasTask(id) { return !!S.me && S.me.tasks.some(function (t) { return t.id === id; }); }
+const FC_WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const FC_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const FC_STATE_TEXT = { done: 'Sprayed', overdue: 'Not sprayed on its day', due: 'Planned for today', planned: 'Planned' };
+function fcMonthLabel(m) { return FC_MONTHS[parseInt(m.slice(5, 7), 10) - 1] + ' ' + m.slice(0, 4); }
+function fcOrd(n) { return n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'); }
+
+/** The calendar. Rows are the weeks of the month (1st week = days 1-7, 2nd = 8-14 ...), columns MON to SUN; each day has a morning (AM) and an evening (PM) block that holds stamps.
+ *  A stamp = one planned block of one field's drone part. Grey = planned, green = sprayed, red = its day passed and it was not sprayed. In edit mode a grey or red stamp can be dragged
+ *  (or tapped, then the place tapped) to today or a later day of the month, up to the block and day limits; a green stamp cannot be moved. */
+function foliarCalendarCard() {
+  let month = '', data = null, edit = false, selected = null, filter = '';
+  const card = h('div', { class: 'card fcal' });
+  load();
+  return card;
+
+  function load(m) {
+    return api('api_foliarCalendar', m || month || '').then(function (d) { data = d; month = d.month; selected = null; draw(); }).catch(function (e) { clear(card).appendChild(msgBox('err', e.message)); });
+  }
+  function used(date, half, exceptId) { return data.stamps.reduce(function (t, s) { return t + (s.date === date && (!half || s.half === half) && s.stamp_id !== exceptId ? s.ha : 0); }, 0); }
+  /** Can this stamp go into this block? Returns '' when it can, otherwise why not (the server checks again). */
+  function why(s, date, half) {
+    if (date < data.today) return 'Past days cannot be used.';
+    if (date === s.date && half === s.half) return 'It is already here.';
+    const block = used(date, half, s.stamp_id) + s.ha, day = used(date, '', s.stamp_id) + s.ha;
+    if (block > data.block_max + 1e-9) return 'This ' + (half === 'AM' ? 'morning' : 'evening') + ' would hold ' + Math.round(block * 100) / 100 + ' ha (most ' + data.block_max + ').';
+    if (day > data.day_max + 1e-9) return 'This day would hold ' + Math.round(day * 100) / 100 + ' ha (most ' + data.day_max + ').';
+    return '';
+  }
+  function move(s, date, half) {
+    const problem = why(s, date, half);
+    if (problem) { toast(problem, true); return; }
+    api('api_moveFoliarStamp', { stamp_id: s.stamp_id, date: date, half: half }).then(function (r) { if (r.moved) toast('Moved to ' + shortDate(date) + ' ' + (half === 'AM' ? 'morning' : 'evening')); return load(); }).catch(function (e) { toast(e.message, true); load(); });
+  }
+  function movable(s) { return edit && data.can_edit && s.state !== 'done'; }
+
+  function stampEl(s) {
+    const mv = movable(s), dim = filter && s.div_abbr !== filter;
+    const pctDone = s.ha > 0 ? Math.min(100, Math.round(s.done_ha / s.ha * 100)) : 0;
+    const el = h('div', { class: 'stamp ' + s.state + (s.moved ? ' moved' : '') + (mv ? ' movable' : '') + (selected && selected.stamp_id === s.stamp_id ? ' selected' : '') + (dim ? ' dim' : ''), 'data-stamp': s.stamp_id, 'data-code': s.div_abbr + ' ' + s.code, 'data-state': s.state, draggable: mv ? 'true' : 'false',
+      title: s.label + ' (drone part ' + s.ha + ' ha of ' + s.drone_ha + ' ha). ' + FC_STATE_TEXT[s.state] + (s.done_ha ? ', ' + s.done_ha + ' ha sprayed' + (s.done_on ? ' (' + shortDate(s.done_on) + ')' : '') : '') + (s.moved ? '. Moved from ' + shortDate(s.orig_date) + ' ' + s.orig_half + '.' : '') },
+      h('div', { class: 'st-name' }, h('span', { class: 'st-div' }, s.div_abbr), h('b', null, s.code), s.state === 'done' ? icon('check') : (s.moved ? h('span', { class: 'st-mv', 'aria-label': 'moved' }, icon('refresh')) : null)),
+      h('div', { class: 'st-side drone' }, h('span', null, 'Drone'), h('span', null, num(s.ha, 2) + ' ha')),
+      s.done_ha > 0 && s.state !== 'done' ? h('div', { class: 'st-bar' }, h('i', { style: 'width:' + pctDone + '%' })) : null);
+    if (mv) {
+      el.addEventListener('dragstart', function (ev) { selected = s; try { ev.dataTransfer.setData('text/plain', s.stamp_id); ev.dataTransfer.effectAllowed = 'move'; } catch (e) { /* ignore */ } el.classList.add('dragging'); mark(); });
+      el.addEventListener('dragend', function () { el.classList.remove('dragging'); selected = null; unmark(); });
+      el.addEventListener('click', function (ev) { ev.stopPropagation(); selected = selected && selected.stamp_id === s.stamp_id ? null : s; draw(); });
+    }
+    return el;
+  }
+  function mark() {          // show where the dragged / selected stamp can go
+    Array.prototype.forEach.call(card.querySelectorAll('.fc-sec'), function (el) {
+      el.classList.remove('can', 'cannot'); const date = el.getAttribute('data-date'), half = el.getAttribute('data-half');
+      if (!selected || date < data.today) return;
+      el.classList.add(why(selected, date, half) && !(date === selected.date && half === selected.half) ? 'cannot' : 'can');
+    });
+  }
+  function unmark() { Array.prototype.forEach.call(card.querySelectorAll('.fc-sec'), function (el) { el.classList.remove('can', 'cannot'); }); }
+
+  function secEl(day, half) {
+    const list = data.stamps.filter(function (s) { return s.date === day.date && s.half === half; }).sort(function (a, b) { return a.label < b.label ? -1 : 1; });
+    const ha = list.reduce(function (t, s) { return t + s.ha; }, 0), over = ha > data.block_max + 1e-9;
+    const sec = h('div', { class: 'fc-sec ' + half.toLowerCase(), 'data-date': day.date, 'data-half': half },
+      h('div', { class: 'fc-sechead' }, h('span', null, half === 'AM' ? 'Morning' : 'Evening'), h('span', { class: over ? 'over' : '' }, ha ? num(ha, 2) + ' / ' + data.block_max + ' ha' : '')),
+      list.map(stampEl));
+    if (edit && data.can_edit && day.date >= data.today) {
+      sec.addEventListener('dragover', function (ev) { if (selected && !why(selected, day.date, half)) { ev.preventDefault(); sec.classList.add('over'); } });
+      sec.addEventListener('dragleave', function () { sec.classList.remove('over'); });
+      sec.addEventListener('drop', function (ev) { ev.preventDefault(); sec.classList.remove('over'); const s = selected; selected = null; unmark(); if (s) move(s, day.date, half); });
+      sec.addEventListener('click', function () { if (selected) { const s = selected; selected = null; move(s, day.date, half); } });
+    }
+    return sec;
+  }
+
+  function draw() {
+    clear(card);
+    const d = data;
+    const nav = h('div', { class: 'fc-nav' },
+      h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Previous month', onclick: function () { load(d.prev); } }, icon('left')),
+      h('div', { class: 'fc-month' }, fcMonthLabel(d.month)),
+      h('button', { type: 'button', class: 'btn iconbtn', 'aria-label': 'Next month', onclick: function () { load(d.next); } }, icon('right')),
+      h('button', { type: 'button', class: 'btn small', onclick: function () { load(d.today.slice(0, 7)); } }, 'This month'));
+    const tools = h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' });
+    if (d.can_edit && d.stamps.length) tools.appendChild(h('button', { type: 'button', class: 'btn ' + (edit ? 'primary' : ''), 'data-role': 'edit-plan', onclick: function () { edit = !edit; selected = null; draw(); } }, icon(edit ? 'check' : 'edit'), edit ? 'Done editing' : 'Edit the plan'));
+    card.appendChild(h('div', { class: 'row between', style: 'align-items:center;flex-wrap:wrap;gap:10px' }, h('h2', { style: 'margin:0' }, 'Foliar calendar ', help('The drone spray plan of the month. Week 1 is days 1 to 7 of the month, week 2 days 8 to 14, and so on. Each day has a morning and an evening block. Grey: planned. Green: sprayed. Red: the planned day has passed and it was not sprayed. Only the drone part of a field is planned for now.')), tools));
+    card.appendChild(nav);
+    const pct = d.planned_ha > 0 ? Math.round(d.done_ha / d.planned_ha * 100) : 0;
+    card.appendChild(h('div', { class: 'fc-sum' }, h('span', null, h('b', null, num(d.done_ha, 1)), ' of ', h('b', null, num(d.planned_ha, 1)), ' ha sprayed (' + pct + '%)'), h('div', { class: 'progress fc-prog' }, h('i', { style: 'width:' + pct + '%' }))));
+    const legend = h('div', { class: 'fc-legend' }, [['planned', 'Planned'], ['done', 'Sprayed'], ['overdue', 'Not sprayed on its day']].map(function (x) { return h('span', null, h('i', { class: 'lg ' + x[0] }), x[1]); }));
+    const chips = h('div', { class: 'chips fc-div' }, [{ abbr: '', name: 'All' }].concat(d.divisions).map(function (x) { return h('button', { type: 'button', class: 'chip' + (filter === x.abbr ? ' on' : ''), onclick: function () { filter = x.abbr; draw(); } }, x.abbr || 'All'); }));
+    card.appendChild(h('div', { class: 'row between fc-bar' }, legend, chips));
+    if (edit) card.appendChild(h('div', { class: 'msg warn fc-help' }, icon('edit'), h('div', null, 'Editing: drag a grey or red stamp to another morning or evening of today or a later day. On a phone tap the stamp, then tap the place. Green stamps cannot be moved. A morning or evening holds up to ' + d.block_max + ' ha, a day up to ' + d.day_max + ' ha.')));
+    if (!d.has_template) { card.appendChild(emptyState('No drone spray plan has been loaded yet.' + (S.me.is_admin ? ' Load the plan file below.' : ' Ask the Admin to load the plan file.'), 'tractor')); return; }
+    if (!d.stamps.length) { card.appendChild(emptyState('There is no plan for ' + fcMonthLabel(d.month) + '.' + (d.month < d.today.slice(0, 7) ? ' (Months before the plan started have none.)' : ''), 'clock')); return; }
+    const grid = h('div', { class: 'fc-grid' }), dim = new Date(Date.UTC(+d.month.slice(0, 4), +d.month.slice(5, 7), 0)).getUTCDate();
+    grid.appendChild(h('div', { class: 'fc-corner' }));
+    FC_WEEKDAYS.forEach(function (w) { grid.appendChild(h('div', { class: 'fc-wd' }, w)); });
+    for (let n = 1; n <= 5; n++) {
+      const row = d.days.filter(function (x) { return x.week_no === n; });
+      if (!row.length) continue;
+      grid.appendChild(h('div', { class: 'fc-wk' }, h('b', null, fcOrd(n) + ' week'), h('span', null, 'days ' + ((n - 1) * 7 + 1) + '-' + Math.min(n * 7, dim))));
+      for (let w = 1; w <= 7; w++) {
+        const day = row.filter(function (x) { return x.weekday === w; })[0];
+        if (!day) { grid.appendChild(h('div', { class: 'fc-day empty' })); continue; }
+        const past = day.date < d.today, isToday = day.date === d.today;
+        grid.appendChild(h('div', { class: 'fc-day' + (past ? ' past' : '') + (isToday ? ' today' : ''), 'data-date': day.date },
+          h('div', { class: 'fc-date' }, h('b', null, String(parseInt(day.date.slice(8), 10))), h('span', null, isToday ? 'today' : '')), secEl(day, 'AM'), secEl(day, 'PM')));
+      }
+    }
+    card.appendChild(h('div', { class: 'fc-scroll' }, grid));
+    if (selected) mark();
+  }
+}
+
+/** Admin only: load the plan file ("Foliar Plan.xlsx") into the app: the drone ha of every field and the monthly schedule. Shows what will change first. */
+function planFileCard() {
+  const out = h('div'), card = h('div', { class: 'card' }, h('h2', null, 'Plan file ', help('The drone spray plan from Foliar Plan.xlsx is built into the app. Loading it sets the drone area of every field (fields that are not in the plan become all manual; the total area of every field is not changed) and writes the monthly schedule that the Foliar calendar shows. It is safe to load again. After loading, the calendar of this and later months is made again from the plan, so moves made by hand in those months are lost.')), out);
+  show();
+  return card;
+  function show() {
+    clear(out); out.appendChild(h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', 'data-role': 'check-plan-file', onclick: function (ev) { run(ev.currentTarget, function () { return api('api_foliarPlanFilePreview').then(review).catch(function (e) { toast(e.message, true); }); }); } }, 'Check the plan file against the fields'),
+      h('span', { class: 'muted small' }, 'Nothing changes until you confirm.')));
+  }
+  function review(p) {
+    const body = h('div', { class: 'stack' },
+      h('div', null, 'The plan has ', h('b', null, String(p.drone_fields)), ' fields sprayed by drone, ', h('b', null, num(p.drone_ha_plan, 2) + ' ha'), ' in ', h('b', null, String(p.slot_count)), ' morning/evening blocks. The fields now have ', h('b', null, num(p.drone_ha_now, 2) + ' ha'), ' by drone.'),
+      p.missing.length ? msgBox('err', 'Not on the sheet (create these fields first): ' + p.missing.join(', ')) : null,
+      p.problems.length ? msgBox('warn', p.problems.join('; ')) : null,
+      p.changes.length ? table([{ label: 'Field', key: 'label' }, { label: 'Area (ha)', cls: 'num', render: function (r) { return num(r.area_ha, 2); } }, { label: 'Drone ha now', cls: 'num', render: function (r) { return num(r.from, 2); } },
+        { label: 'Drone ha in the plan', cls: 'num', render: function (r) { return h('b', null, num(r.to, 2)); } }], p.changes, null, { scroll: true }) : msgBox('ok', 'Every field already has the drone area of the plan.'));
+    modal('Load the plan file?', body, [
+      { label: 'Cancel', onclick: function (m) { m.close(); } },
+      { label: p.changes.length ? 'Change ' + p.changes.length + ' fields and load the schedule' : 'Load the schedule', kind: 'primary', onclick: function (m, btn) {
+        if (p.missing.length) { toast('Create the missing fields first.', true); return; }
+        run(btn, function () { return api('api_foliarPlanFileApply').then(function (r) { m.close(); toast('Plan file loaded: ' + r.fields_changed + ' fields changed, ' + r.slots + ' blocks'); if (S.go && S.tab) S.go(S.tab); }).catch(function (e) { toast(e.message, true); }); });
+      } }]);
+  }
+}
+VIEWS['foliar.calendar'] = function (root) {
+  root.appendChild(pageHead('Foliar calendar', 'The month\'s drone spray plan: grey planned, green sprayed, red planned day passed and not sprayed.'));
+  root.appendChild(foliarCalendarCard());
+};
+VIEWS['foliar.schedule'] = VIEWS['foliar.calendar'];
 
 // ---------------------------------------------------------------- Audit log
 VIEWS['audit.view'] = function (root) {
