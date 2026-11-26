@@ -366,7 +366,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .modal:has(.evform) { max-width: 780px; } .modal .actions { flex-wrap: wrap; }
 .evsum { flex: 1 0 100%; order: -1; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; }
 .evsum > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; } .evsum-s b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; } .evsum-s span { font-size: 11.5px; color: var(--muted); }
-@media (max-width: 860px) { .evcreate { padding: 18px; column-gap: 14px; } .evcreate .ec-t { font-size: 17px; } .ev-stat b { font-size: 18px; } .covgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .covcard.open { grid-column: 1 / -1; } .evsec { padding: 14px 12px; } }
+@media (max-width: 860px) { .evcreate { padding: 18px; column-gap: 14px; } .evcreate .ec-t { font-size: 17px; } .ev-stat b { font-size: 18px; } .covcard.open { grid-column: 1 / -1; } .evsec { padding: 14px 12px; } }
 
 .methodchoice { border: 1px solid var(--line); border-radius: var(--r-md); padding: 18px 16px; background: var(--surface-2); }
 .mc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -1108,9 +1108,35 @@ function boot() {
 const Local = {
   _ok: null, _mem: {},
   ok: function () { if (this._ok === null) { try { localStorage.setItem('fsx:t', '1'); localStorage.removeItem('fsx:t'); this._ok = true; } catch (e) { this._ok = false; } } return this._ok; },
-  get: function (k, def) { try { const raw = this.ok() ? localStorage.getItem(k) : this._mem[k]; return raw ? JSON.parse(raw) : def; } catch (e) { return def; } },
-  set: function (k, v) { const raw = JSON.stringify(v); this._mem[k] = raw; try { if (this.ok()) localStorage.setItem(k, raw); } catch (e) { /* storage full: kept in memory */ } },
-  del: function (k) { delete this._mem[k]; try { if (this.ok()) localStorage.removeItem(k); } catch (e) { /* ignore */ } },
+  _dirty: {},        // keys whose newest value could NOT be written to the phone's storage (full): the copy in memory is the true one
+  get: function (k, def) { try { const raw = this._dirty[k] || !this.ok() ? this._mem[k] : localStorage.getItem(k); return raw ? JSON.parse(raw) : def; } catch (e) { return def; } },
+  /** Write to the phone's storage. When it is full, the saved copies of other days (they are only a convenience, the server has the data) are deleted first and the write is tried again; an outbox or a draft is never deleted to make room. */
+  set: function (k, v) {
+    const raw = JSON.stringify(v); this._mem[k] = raw; delete this._dirty[k];
+    if (!this.ok()) return;
+    const put = function () { try { localStorage.setItem(k, raw); return true; } catch (e) { return false; } };
+    if (put()) return;
+    this.evict(k, true); if (put()) return;
+    this.evict(k, false); if (put()) return;
+    this._dirty[k] = true;                                  // still full: kept in memory for this session (and used from there)
+  },
+  /** Delete saved copies of this phone's caches (never the outbox, drafts or the login): the copies of single days first, then all of them. */
+  evict: function (keep, daysOnly) {
+    try {
+      const drop = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k !== keep && /^fsx:[^:]*:cache:/.test(k) && (!daysOnly || /\d{4}-\d\d-\d\d$/.test(k))) drop.push(k); }
+      drop.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) { /* ignore */ }
+  },
+  /** Keep only the newest keepN single-day copies under a key prefix (the app only needs the last few days, and an old day is loaded again when it is opened). */
+  pruneDays: function (prefix, keepN) {
+    try {
+      const ks = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(prefix) === 0 && /\d{4}-\d\d-\d\d$/.test(k)) ks.push(k); }
+      ks.sort().reverse().slice(keepN).forEach(function (k) { localStorage.removeItem(k); delete Local._mem[k]; });
+    } catch (e) { /* ignore */ }
+  },
+  del: function (k) { delete this._mem[k]; delete this._dirty[k]; try { if (this.ok()) localStorage.removeItem(k); } catch (e) { /* ignore */ } },
   user: function () { return S.me ? S.me.username : ''; },
   key: function (name) { return 'fsx:' + this.user() + ':' + name; },
   today: function () { const d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
@@ -1125,7 +1151,7 @@ const Draft = {
 };
 const Cache = {
   get: function (name) { return Local.get(Local.key('cache:' + name), null); },
-  set: function (name, v) { Local.set(Local.key('cache:' + name), v); }
+  set: function (name, v) { Local.set(Local.key('cache:' + name), v); const m = /^(.*:)\d{4}-\d\d-\d\d$/.exec(name); if (m) Local.pruneDays(Local.key('cache:' + m[1]), 8); }      // a day's copy: only the newest 8 days stay
 };
 
 const TYPE_LABEL = { spray: 'Foliar spray event', pluck: 'Plucking' };
@@ -2905,7 +2931,7 @@ VIEWS['foliar.plan'] = function (root) {
         field('Applies from', eff),
         h('div', { class: 'plan-grid' },
           NAMES.map(function (n) { return field(n[1] + ' (kg per ha)', inp[n[0]]); }),
-          h('div', { class: 'f' }, 'Fourth compound', fourthName),
+          h('label', { class: 'f' }, 'Fourth compound', fourthName),
           h('label', { class: 'f' }, fourthLabel, inp.fourth)),
         field('Note', note), eg, err, h('div', { class: 'row', style: 'justify-content:flex-end' }, save)));
   }
