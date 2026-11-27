@@ -13,6 +13,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="config.js"></script>
+<script>window.APP_ENGINE = 'engine.js';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -2257,6 +2258,60 @@ th.nowrap {
   font-size: 13px;
   flex: none;
 }
+.wizsteps {
+  display: flex;
+  gap: 6px;
+}
+.wz {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wz .n {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--line);
+  color: var(--ink);
+  font-size: 12px;
+  flex: none;
+}
+.wz.on {
+  border-color: var(--primary);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.wz.on .n,
+.wz.done .n {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.wz:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+@media (max-width: 520px) {
+  .wz-t {
+    display: none;
+  }
+  .wz.on .wz-t {
+    display: inline;
+  }
+}
 .methodline {
   display: flex;
   align-items: center;
@@ -2762,6 +2817,17 @@ th.nowrap {
 .st-mv {
   margin-left: auto;
   display: inline-flex;
+}
+.st-undo {
+  border: 0;
+  border-radius: 6px;
+  padding: 4px;
+  background: var(--line);
+  color: var(--ink);
+  cursor: pointer;
+}
+.st-undo:hover {
+  background: var(--line-strong);
 }
 .st-mv svg {
   width: 12px;
@@ -6191,7 +6257,27 @@ function transport(name, args, ok, fail) {
     .then(ok)
     .catch(fail);
 }
+/** A call from a screen: the phone's own copy answers it when it can (at once, with or without signal); otherwise the server does (or, without signal, the saved windows). */
 function callServer(name, args) {
+  if (typeof Phone !== 'undefined' && Phone.handles(name)) return callLocal(name, args);
+  return callRemote(name, args);
+}
+function callLocal(name, args) {
+  return Phone.call(name, args).then(
+    function (r) {
+      if (r && r.ok) return r.data;
+      const err = new Error((r && r.error) || 'Request failed');
+      err.code = r && r.code;
+      if (err.code === 'PASSWORD_CHANGE_REQUIRED') showForcedChange();
+      throw err;
+    },
+    function (e) {
+      if (e && e.needsServer) return callRemote(name, args); // only the server can answer this one (a month's stamps are made there once)
+      throw e;
+    }
+  );
+}
+function callRemote(name, args) {
   const readable = typeof Offline !== 'undefined' && Offline.canCache(name, args),
     ck = readable ? Offline.key(name, args.slice(1)) : '';
   return new Promise(function (resolve, reject) {
@@ -6647,13 +6733,33 @@ function enterApp() {
   }
   S.today = Local.today(); // the phone's own date: entry is for today only
   saveSession(); // remembered on the phone so the app opens even without signal
-  renderShell();
-  Sync.start();
-  Offline.start();
-  setTimeout(function () {
-    Offline.warm();
-  }, 3000);
-  return Promise.resolve();
+  return openShell();
+}
+/** Show the app. When the phone can hold its own copy of the data the copy is opened first (a moment: it comes from the phone's storage), so the first screen is answered from it. */
+function openShell() {
+  const go = function () {
+    try {
+      renderShell();
+    } catch (e) {
+      shellFailed();
+      return;
+    }
+    Sync.start();
+    Offline.start();
+    setTimeout(function () {
+      Offline.warm();
+    }, 3000);
+  };
+  if (typeof Phone === 'undefined' || !Phone.supported()) {
+    go();
+    return Promise.resolve();
+  }
+  return Promise.race([
+    Phone.start(),
+    new Promise(function (r) {
+      setTimeout(r, 1500);
+    })
+  ]).then(go, go);
 }
 
 function renderShell() {
@@ -6769,6 +6875,10 @@ function renderShell() {
               api('api_logout')
                 .catch(function () {})
                 .then(function () {
+                  return typeof Phone !== 'undefined' ? Phone.leave() : null;
+                })
+                .catch(function () {})
+                .then(function () {
                   showLogin('You have been logged out.');
                 });
             }
@@ -6818,20 +6928,33 @@ function boot() {
   S.token = sess.token;
   S.me = sess.me;
   S.today = Local.today();
-  try {
-    renderShell();
-  } catch (e) {
-    Local.del('fsx:session');
-    S.token = '';
-    S.me = null;
-    showLogin('Please log in again.');
+  if (typeof Phone !== 'undefined' && Phone.supported()) {
+    bootOpen(openShell());
     return;
   }
-  Sync.start();
-  Offline.start(); // opens straight away from what the phone remembers, even offline
-  setTimeout(function () {
-    Offline.warm();
-  }, 3000);
+  bootOpen(null);
+}
+/** The screen could not be built from what the phone remembered (a login saved by an older version): back to the login screen. */
+function shellFailed() {
+  Local.del('fsx:session');
+  S.token = '';
+  S.me = null;
+  showLogin('Please log in again.');
+}
+function bootOpen(opening) {
+  if (!opening) {
+    try {
+      renderShell();
+    } catch (e) {
+      shellFailed();
+      return;
+    }
+    Sync.start();
+    Offline.start(); // opens straight away from what the phone remembers, even offline
+    setTimeout(function () {
+      Offline.warm();
+    }, 3000);
+  }
   api('api_me')
     .then(function (me) {
       S.me = me;
@@ -7026,6 +7149,7 @@ const Sync = {
   memoryOnly: false, // the outbox could not be written to the phone's storage: it lives in memory only, and is lost when the app is closed
   save: function (list) {
     this.memoryOnly = !Local.set(Local.key('outbox'), list) && list.length > 0;
+    if (typeof Phone !== 'undefined') Phone.mirrorOutbox(list); // where the service worker can read it (it sends what waits when signal returns, also with the app closed)
     this.emit();
   },
   onChange: function (fn) {
@@ -7130,7 +7254,15 @@ const Sync = {
       .reduce(function (n, i) {
         return n + (i.event ? 1 : i.lines.length);
       }, 0); // fields (or spray events) waiting, not submissions
+    const ph = typeof Phone !== 'undefined' ? Phone.status() : null; // the phone's own copy: its first copy and the changes waiting to go
     const off = (typeof navigator !== 'undefined' && navigator.onLine === false) || this.offline;
+    if (ph && ph.kind === 'copy') return { kind: 'busy', text: ph.text };
+    if (ph && ph.waiting && !failed && !this.busy)
+      return {
+        kind: off ? 'offline' : 'wait',
+        n: ph.waiting + waiting,
+        text: (off ? 'Offline: ' : '') + (ph.waiting + waiting) + ' waiting to upload'
+      };
     if (this.memoryOnly) return { kind: 'problem', n: items.length, text: 'Phone storage is full: keep the app open until this uploads' };
     if (failed) return { kind: 'problem', n: failed, text: failed + ' need' + (failed === 1 ? 's' : '') + ' attention' };
     if (this.busy) return { kind: 'busy', text: 'Uploading...' };
@@ -7170,7 +7302,7 @@ const Sync = {
         return next(i + 1);
       }
       return (
-        it.event ? callServer('api_saveSprayEvent', [S.token, it.event]) : callServer('api_savePluck', [S.token, { date: it.date, lines: it.lines }])
+        it.event ? self.send('api_saveSprayEvent', [it.event], it.id) : self.send('api_savePluck', [{ date: it.date, lines: it.lines }], it.id)
       ).then(
         function (r) {
           count += r.saved;
@@ -7183,7 +7315,14 @@ const Sync = {
           return next(i + 1);
         },
         function (e) {
-          if (e.network || e.code === 'BUSY' || e.code === 'SESSION_EXPIRED' || e.code === 'NO_SESSION' || e.code === 'PASSWORD_CHANGE_REQUIRED')
+          if (
+            e.network ||
+            e.code === 'BUSY' ||
+            e.code === 'SESSION_EXPIRED' ||
+            e.code === 'NO_SESSION' ||
+            e.code === 'PASSWORD_CHANGE_REQUIRED' ||
+            e.code === 'DEVICE_REVOKED'
+          )
             throw e; // keep everything, try again later
           if (e.code === 'UNEXPECTED' && (it.tries || 0) < 4) {
             self.save(
@@ -7215,7 +7354,25 @@ const Sync = {
         self.busy = false;
         self.emit();
         if (count) toast('Uploaded ' + count + ' entr' + (count === 1 ? 'y' : 'ies'));
+        if (count && typeof Phone !== 'undefined' && Phone.ready) Phone.pull().catch(function () {}); // the phone's own copy takes in what the server now holds (and the screen shows it)
       });
+  },
+  /** One entry of the queue to the server. With the phone's own key it goes through the one-time door under the entry's own id (so the service worker and the page can both send it: it is done once); otherwise as before. */
+  send: function (fn, args, id) {
+    if (typeof Phone !== 'undefined' && Phone.supported() && Phone.key)
+      return Phone.netData('api_submitOp', [Phone.key, id, fn, args]).then(
+        function (inner) {
+          if (inner && inner.ok) return inner.data;
+          const e = new Error((inner && inner.error) || 'Request failed');
+          e.code = inner && inner.code;
+          throw e;
+        },
+        function (e) {
+          if (e.code === 'DEVICE_REVOKED') Phone.key = ''; // the next try uses the login
+          throw e;
+        }
+      );
+    return callServer(fn, [S.token].concat(args));
   },
   retry: function (id) {
     this.save(
@@ -7689,6 +7846,7 @@ const Offline = {
   warm: function (force) {
     const self = this;
     if (!S.me || !S.token || self._warming) return;
+    if (typeof Phone !== 'undefined' && Phone.ready) return; // the phone holds its own copy: nothing to warm
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
     const last = Local.get(Local.key('warmed'), 0);
     if (!force && last && Date.now() - last < 2 * 3600 * 1000) return;
@@ -7949,6 +8107,667 @@ const OfflineAuth = {
         /* ignore */
       }
     }, 50);
+  }
+};
+</script>
+
+<script>
+// ---------------------------------------------------------------- the phone's own copy of the data (see OFFLINE_REDESIGN_PLAN.md)
+// A Web Worker (engine.js: the app's own server code over a copy of the tables this account may see) answers the screens at once, with or without signal. This file
+// keeps that copy up to date and sends what the person does:
+//   copy      the first time (and whenever the server says every copy must be taken again): every table, page by page ("Getting data 3/12")
+//   pull      every 30 s while the app is open, when the signal returns and when the app is opened again: only the rows written since the last pull
+//   operations (a stamp moved on the calendar): run on the copy at once, shown at once, queued, and sent with api_submitOp; the server's rows then replace the phone's guess
+// Everything stays on the old path (the network, then the saved windows) while there is no copy yet, in the Apps Script page (no engine.js) and for every function the engine does not carry.
+
+/** A small store shared by the page and the service worker: IndexedDB (kept in memory where a browser has none, as in the tests). */
+const Kv = (function () {
+  const mem = {};
+  let dbp = null;
+  function db() {
+    if (!dbp)
+      dbp = new Promise(function (res, rej) {
+        const q = indexedDB.open('fsx-sync', 1);
+        q.onupgradeneeded = function () {
+          q.result.createObjectStore('kv');
+        };
+        q.onsuccess = function () {
+          res(q.result);
+        };
+        q.onerror = function () {
+          rej(q.error);
+        };
+      });
+    return dbp;
+  }
+  function tx(mode, fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        const t = d.transaction('kv', mode),
+          out = fn(t.objectStore('kv'));
+        t.oncomplete = function () {
+          res(out && out.result !== undefined ? out.result : undefined);
+        };
+        t.onerror = t.onabort = function () {
+          rej(t.error);
+        };
+      });
+    });
+  }
+  const has = typeof indexedDB !== 'undefined';
+  return {
+    get: function (k, dflt) {
+      if (!has) return Promise.resolve(mem[k] === undefined ? dflt : JSON.parse(mem[k]));
+      return tx('readonly', function (os) {
+        return os.get(k);
+      }).then(
+        function (v) {
+          return v === undefined ? dflt : v;
+        },
+        function () {
+          return dflt;
+        }
+      );
+    },
+    set: function (k, v) {
+      if (!has) {
+        mem[k] = JSON.stringify(v);
+        return Promise.resolve(true);
+      }
+      return tx('readwrite', function (os) {
+        os.put(v, k);
+      }).then(
+        function () {
+          return true;
+        },
+        function () {
+          return false;
+        }
+      );
+    },
+    del: function (k) {
+      if (!has) {
+        delete mem[k];
+        return Promise.resolve();
+      }
+      return tx('readwrite', function (os) {
+        os.delete(k);
+      }).catch(function () {});
+    }
+  };
+})();
+
+const Phone = {
+  // what the copy answers (the engine carries more, e.g. api_me stays on the server so a login that ended is noticed); a write is an operation
+  READS: [
+    'api_listTasks',
+    'api_getEstate',
+    'api_listPlans',
+    'api_foliarCalendar',
+    'api_historyFields',
+    'api_fieldHistory',
+    'api_homeSummary',
+    'api_pluckRounds',
+    'api_sprayRounds',
+    'api_expCharts',
+    'api_listParams',
+    'api_paramHistory',
+    'api_entryFields',
+    'api_dayRecords',
+    'api_listRecords',
+    'api_sprayDay'
+  ],
+  WRITES: ['api_moveFoliarStamp'],
+  worker: null,
+  seq: 0,
+  wait: {},
+  uid: '',
+  key: '', // this phone's long-lived key for the sync doors (a session lasts 6 hours)
+  ready: false, // the copy is complete: the screens read from it
+  outdated: false,
+  copying: null, // { done, total } while the first copy is taken
+  ops: [], // operations made on the copy and not yet answered by the server, oldest first: { id, fn, args }
+  busy: false,
+  refused: [], // what the server did not accept: { fn, error, at }
+  lastPull: 0,
+  timer: null,
+
+  supported: function () {
+    return typeof Worker !== 'undefined' && !!window.APP_ENGINE;
+  },
+  handles: function (name) {
+    return this.ready && (this.READS.indexOf(name) >= 0 || this.WRITES.indexOf(name) >= 0);
+  },
+  online: function () {
+    return !(typeof navigator !== 'undefined' && navigator.onLine === false);
+  },
+  auth: function () {
+    return this.key || S.token;
+  },
+  emit: function () {
+    if (typeof Sync !== 'undefined') Sync.emit();
+  },
+  status: function () {
+    if (this.copying) return { kind: 'copy', text: 'Getting data ' + this.copying.done + '/' + this.copying.total, waiting: 0 };
+    return { kind: 'ok', text: '', waiting: this.ops.length };
+  },
+
+  // ---------- talking to the worker and the server
+  rpc: function (type, data) {
+    const self = this;
+    return new Promise(function (resolve, reject) {
+      const id = ++self.seq;
+      self.wait[id] = { resolve: resolve, reject: reject };
+      self.worker.postMessage(Object.assign({ id: id, type: type }, data || {}));
+    });
+  },
+  /** One call to the server, without the saved windows: resolves with its {ok, data | error, code}; rejects with an Error (network = true) when it cannot be reached. */
+  net: function (name, args) {
+    return new Promise(function (resolve, reject) {
+      transport(
+        name,
+        args,
+        function (r) {
+          if (typeof Sync !== 'undefined') Sync.noteOnline(true);
+          resolve(r);
+        },
+        function () {
+          const e = new Error('No signal.');
+          e.network = true;
+          if (typeof Sync !== 'undefined') Sync.noteOnline(false);
+          reject(e);
+        }
+      );
+    });
+  },
+  /** net(), unwrapped: the data, or an Error with the server's code. */
+  netData: function (name, args) {
+    return this.net(name, args).then(function (r) {
+      if (r && r.ok) return r.data;
+      const e = new Error((r && r.error) || 'Request failed');
+      e.code = r && r.code;
+      throw e;
+    });
+  },
+
+  // ---------- starting
+  /** Open the copy of the logged-in account (from the phone's storage, so it is there with no signal at all); take it from the server when there is none yet. Resolves whether the copy can be used. */
+  start: function () {
+    const self = this;
+    if (!self.supported() || !S.me || !S.token) return Promise.resolve(false);
+    if (self.uid === S.me.user_id && self.worker) return Promise.resolve(self.ready);
+    self.uid = S.me.user_id;
+    return Promise.all([Kv.get('plan:' + self.uid, null), Kv.get('device:' + self.uid, null), Kv.get('ops:' + self.uid, [])]).then(function (v) {
+      const stored = v[0];
+      self.key = v[1] && v[1].key ? v[1].key : '';
+      self.ops = v[2] || [];
+      if (stored)
+        return self.open(stored).then(function (ok) {
+          self.refreshPlan(); // (in the background: the layout may have changed on the server)
+          return ok;
+        });
+      return self
+        .fetchPlan()
+        .then(function (plan) {
+          return self.open(plan);
+        })
+        .catch(function () {
+          return false; // the first copy needs signal: until then the screens use the server
+        });
+    });
+  },
+  fetchPlan: function () {
+    const self = this;
+    return self.netData('api_syncPlan', [self.auth()]).then(function (p) {
+      const plan = { uid: p.me.user_id, tz: p.tz, schema: p.schema, fmt: p.fmt };
+      return Kv.set('plan:' + self.uid, plan).then(function () {
+        return plan;
+      });
+    });
+  },
+  refreshPlan: function () {
+    const self = this;
+    if (!self.online()) return;
+    self.fetchPlan().then(
+      function (plan) {
+        if (self.worker && plan.schema !== self.plan.schema) {
+          // the server's layout changed: open again (a copy of the old layout is dropped by the engine)
+          self.plan = plan;
+          self.rpc('init', { plan: plan }).then(function (st) {
+            self.apply(st);
+            if (!st.ready && !st.outdated) self.copy();
+          });
+        }
+      },
+      function () {}
+    );
+  },
+  apply: function (st) {
+    this.ready = !!st.ready;
+    this.outdated = !!st.outdated;
+    if (st.ready && this.uid) Kv.set('engine-meta:' + this.uid, { since: st.since, epoch: st.epoch, scope: st.scope }); // where the service worker starts when it pulls with the app closed
+    this.emit();
+  },
+  open: function (plan) {
+    const self = this;
+    self.plan = plan;
+    if (!self.worker) {
+      try {
+        self.worker = new Worker(window.APP_ENGINE);
+      } catch (e) {
+        return Promise.resolve(false);
+      }
+      self.worker.onmessage = function (ev) {
+        const m = ev.data,
+          w = self.wait[m.id];
+        if (!w) return;
+        delete self.wait[m.id];
+        if (m.err !== undefined) w.reject(new Error(m.err));
+        else w.resolve(m.ok);
+      };
+      self.worker.onerror = function () {
+        self.ready = false;
+      };
+    }
+    return self.rpc('init', { plan: plan }).then(
+      function (st) {
+        self.apply(st);
+        self.begin();
+        if (!st.ready && !st.outdated) self.copy();
+        return self.ready;
+      },
+      function () {
+        return false;
+      }
+    );
+  },
+  /** The loop that keeps the copy current: every 30 s while the app is open, when signal returns, when the app comes back to the front. */
+  begin: function () {
+    const self = this;
+    if (self.timer) return;
+    self.timer = setInterval(function () {
+      if (!document.hidden) self.sync();
+    }, 30000);
+    window.addEventListener('online', function () {
+      setTimeout(function () {
+        self.sync();
+      }, 800);
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) self.sync();
+    });
+    self.ensureKey();
+    self.background();
+    setTimeout(function () {
+      self.sync();
+    }, 1500);
+  },
+  /** Tell the service worker whose data this is (it works with the app closed) and ask the browser to wake it when signal returns and now and then (Android Chrome; elsewhere nothing happens). */
+  background: function () {
+    const self = this;
+    Kv.set('current', { uid: self.uid, endpoint: window.APP_ENDPOINT });
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.addEventListener('message', function (ev) {
+      if (ev.data && ev.data.fsx === 'background-done') self.sync();
+    });
+    navigator.serviceWorker.ready.then(
+      function (reg) {
+        if (reg.periodicSync)
+          reg.periodicSync.register('fsx-pull', { minInterval: 3 * 3600 * 1000 }).catch(function () {
+            /* the browser refuses (not installed, low engagement): the copy is then brought up to date when the app opens */
+          });
+      },
+      function () {}
+    );
+  },
+  /** Something waits to go: ask the browser to wake the service worker when there is signal, even if the app is closed by then. */
+  wake: function () {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready.then(
+      function (reg) {
+        if (reg.sync) reg.sync.register('fsx-send').catch(function () {});
+      },
+      function () {}
+    );
+  },
+  /** The old queue (spray events, plucking) is mirrored where the service worker can read it. */
+  mirrorOutbox: function (list) {
+    if (!this.uid) return;
+    Kv.set('outbox:' + this.uid, list);
+    if (
+      list.some(function (i) {
+        return !i.failed;
+      })
+    )
+      this.wake();
+  },
+  /** What the service worker did while the app was closed: answers for the queue and the operations (sent with the phone's key), and changes of the server it brought in. */
+  adopt: function () {
+    const self = this;
+    if (!self.uid || !self.worker) return Promise.resolve();
+    const uid = self.uid;
+    return Promise.all([
+      Kv.get('ledger:' + uid, {}),
+      Kv.get('opledger:' + uid, {}),
+      Kv.get('staged:' + uid, []),
+      Kv.get('needcopy:' + uid, false)
+    ]).then(function (v) {
+      const ledger = v[0],
+        opledger = v[1],
+        staged = v[2];
+      let list = Sync.items(),
+        uploaded = 0,
+        flagged = false;
+      Object.keys(ledger).forEach(function (id) {
+        const it = list.filter(function (x) {
+          return x.id === id;
+        })[0];
+        if (!it) return;
+        if (ledger[id].ok) {
+          list = list.filter(function (x) {
+            return x.id !== id;
+          });
+          uploaded++;
+        } else {
+          it.failed = true;
+          it.error = ledger[id].error;
+          flagged = true;
+        }
+      });
+      if (uploaded || flagged) {
+        Sync.save(list);
+        Sync.lastOk = new Date().toISOString();
+      }
+      const clean = Object.keys(ledger).length
+        ? Kv.get('ledger:' + uid, {}).then(function (now) {
+            Object.keys(ledger).forEach(function (id) {
+              delete now[id];
+            });
+            return Kv.set('ledger:' + uid, now);
+          })
+        : Promise.resolve();
+      // operations the service worker already sent: the phone takes the server's rows in for each
+      const ids = Object.keys(opledger);
+      let chain = Promise.resolve();
+      ids.forEach(function (id) {
+        const op = self.ops.filter(function (x) {
+          return x.id === id;
+        })[0];
+        if (op)
+          chain = chain.then(function () {
+            return self.answered(op, opledger[id]);
+          });
+      });
+      chain = chain.then(function () {
+        if (!ids.length) return;
+        return Kv.get('opledger:' + uid, {}).then(function (now) {
+          ids.forEach(function (id) {
+            delete now[id];
+          });
+          return Kv.set('opledger:' + uid, now);
+        });
+      });
+      // changes of the server it brought in while the app was closed (only the ones newer than the copy's own last pull)
+      const apply = self.rpc('status').then(function (st) {
+        let c2 = Promise.resolve();
+        staged
+          .filter(function (r) {
+            return r.now > st.since;
+          })
+          .forEach(function (r) {
+            c2 = c2.then(function () {
+              return self.rpc('applyPull', { res: r });
+            });
+          });
+        return c2.then(function () {
+          return staged.length ? Kv.set('staged:' + uid, []) : null;
+        });
+      });
+      return Promise.all([clean, chain, apply]).then(function () {
+        if (v[3]) {
+          Kv.set('needcopy:' + uid, false);
+          self.ready = false; // the server says every copy must be taken again
+        }
+        if (uploaded || staged.length || ids.length) self.changed();
+      });
+    });
+  },
+  /** A long-lived key for this phone, asked for once right after a normal login. */
+  ensureKey: function () {
+    const self = this;
+    if (self.key || !self.online() || !S.token) return Promise.resolve();
+    return self.netData('api_deviceKey', [S.token, 'phone']).then(
+      function (d) {
+        self.key = d.key;
+        return Kv.set('device:' + self.uid, { key: d.key, id: d.device_id });
+      },
+      function () {}
+    );
+  },
+
+  // ---------- the first copy
+  copy: function () {
+    const self = this;
+    if (self.copying || !self.online() || !self.worker) return Promise.resolve(false);
+    self.copying = { done: 0, total: 1 };
+    self.emit();
+    let since = Infinity,
+      info = null;
+    return self
+      .netData('api_syncPlan', [self.auth()])
+      .then(function (plan) {
+        self.copying.total = plan.tables.length;
+        return self.rpc('beginSnapshot').then(function () {
+          function table(i) {
+            if (i >= plan.tables.length) return Promise.resolve();
+            const name = plan.tables[i];
+            function page(from) {
+              return self.netData('api_syncSnapshot', [self.auth(), name, from]).then(function (r) {
+                since = Math.min(since, r.now);
+                info = { epoch: r.epoch, scope: r.scope };
+                return self.rpc('snapshotTable', { name: name, rows: r.rows, done: !r.more }).then(function () {
+                  if (r.more) return page(r.next);
+                });
+              });
+            }
+            return page(0).then(function () {
+              self.copying.done = i + 1;
+              self.emit();
+              return table(i + 1);
+            });
+          }
+          return table(0);
+        });
+      })
+      .then(function () {
+        return self.rpc('finishSnapshot', { info: { since: since, epoch: info.epoch, scope: info.scope } });
+      })
+      .then(function (st) {
+        self.copying = null;
+        self.apply(st);
+        self.changed();
+        return true;
+      })
+      .catch(function () {
+        self.copying = null; // no signal, or the server is busy: the next sync tries again from the start
+        self.emit();
+        return false;
+      });
+  },
+
+  // ---------- keeping it current
+  sync: function () {
+    const self = this;
+    if (!self.worker || self.busy || self.copying || !self.online()) return Promise.resolve();
+    if (!self.ready && !self.outdated) return self.copy();
+    if (!self.ready) return Promise.resolve();
+    self.busy = true;
+    return self
+      .adopt()
+      .then(function () {
+        return self.flushOps();
+      })
+      .then(function () {
+        return self.pull();
+      })
+      .catch(function () {})
+      .then(function () {
+        self.busy = false;
+        self.emit();
+      });
+  },
+  pull: function () {
+    const self = this;
+    return self.rpc('status').then(function (st) {
+      return self.netData('api_syncPull', [self.auth(), st.since, st.epoch, st.scope]).then(function (res) {
+        if (res.snapshot) {
+          self.ready = false;
+          return self.copy();
+        }
+        const n = Object.keys(res.rows).length + Object.keys(res.deleted).length;
+        return self.rpc('applyPull', { res: res }).then(function (st) {
+          self.lastPull = Date.now();
+          self.apply(st);
+          if (n) self.changed();
+        });
+      });
+    });
+  },
+  /** The copy changed under the screen: show the screen again (not while a dialog is open, somebody is typing or a screen asks to be left alone while it is being edited). */
+  changed: function () {
+    if (!S.me || !S.go || !S.tab) return;
+    if (
+      document.querySelector('.overlay') ||
+      document.querySelector('[data-no-refresh]') ||
+      document.querySelector('input:focus,textarea:focus,select:focus')
+    )
+      return;
+    clearTimeout(this._refresh);
+    this._refresh = setTimeout(function () {
+      if (document.querySelector('.overlay') || document.querySelector('[data-no-refresh]')) return;
+      S.go(S.tab, true);
+    }, 400);
+  },
+
+  // ---------- the screens' calls
+  /** Answer a call from the copy: resolves with the server-shaped {ok, data | error, code}. Rejects with needsServer when only the server can answer (the screen then asks it). */
+  call: function (name, args) {
+    const self = this,
+      write = self.WRITES.indexOf(name) >= 0;
+    const opId = write ? 'OP-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) : undefined;
+    return self.rpc('run', { fn: name, args: args, opId: opId }).then(
+      function (r) {
+        if (write && r.result && r.result.ok) {
+          self.ops.push({ id: opId, fn: name, args: args.slice(1) });
+          Kv.set('ops:' + self.uid, self.ops);
+          self.wake(); // (if the app is closed before signal returns, the service worker sends it)
+          self.emit();
+          setTimeout(function () {
+            self.sync();
+          }, 50);
+        }
+        return r.result;
+      },
+      function (e) {
+        if (/^LOCAL_(NEEDS_SERVER|UNSUPPORTED|NOT_READY)/.test(e.message)) {
+          e.needsServer = true;
+        }
+        throw e;
+      }
+    );
+  },
+
+  // ---------- the operations
+  /** Send the operations waiting, oldest first. No signal stops here and keeps them; the server's answer (done or refused) makes the phone take the server's rows. */
+  flushOps: function () {
+    const self = this;
+    function next() {
+      if (!self.ops.length) return Promise.resolve();
+      const op = self.ops[0];
+      return self.net('api_submitOp', [self.auth(), op.id, op.fn, op.args]).then(function (r) {
+        if (!r || !r.ok) {
+          const code = r && r.code;
+          if (code === 'DEVICE_REVOKED' || code === 'NO_SESSION' || code === 'SESSION_EXPIRED') {
+            self.key = '';
+            Kv.del('device:' + self.uid);
+            return; // log in again: the operations wait
+          }
+          if (code === 'BUSY' || code === 'UNEXPECTED') return; // the server could not do it now: try again at the next sync
+        }
+        const inner = r && r.ok ? r.data : r;
+        return self.answered(op, inner).then(next);
+      });
+    }
+    return next();
+  },
+  /** The server answered an operation: swap the phone's guess for the server's rows, then forget the operation. */
+  answered: function (op, inner) {
+    const self = this;
+    const done = !!(inner && inner.ok);
+    return self
+      .rpc('pendingKeys', { opId: op.id })
+      .then(function (keys) {
+        return (Object.keys(keys).length ? self.netData('api_syncRows', [self.auth(), keys]) : Promise.resolve({ rows: {}, missing: {} })).then(
+          function (fix) {
+            return self.rpc('status').then(function (st) {
+              return self.netData('api_syncPull', [self.auth(), st.since, st.epoch, st.scope]).then(function (pull) {
+                return self
+                  .rpc('ack', { opId: op.id, server: { pull: pull.snapshot ? null : pull, rows: fix.rows, missing: fix.missing } })
+                  .then(function (st2) {
+                    if (pull.snapshot)
+                      self.ready = false; // (the next sync takes every table again)
+                    else self.apply(st2);
+                  });
+              });
+            });
+          }
+        );
+      })
+      .then(function () {
+        self.ops = self.ops.filter(function (x) {
+          return x.id !== op.id;
+        });
+        Kv.set('ops:' + self.uid, self.ops);
+        if (!done) {
+          self.refused.push({ fn: op.fn, error: (inner && inner.error) || 'The server did not accept it.', at: new Date().toISOString() });
+          toast('Not accepted: ' + ((inner && inner.error) || 'the server did not accept this change.'), true);
+        }
+        self.changed();
+        self.emit();
+      });
+  },
+
+  // ---------- leaving
+  /** The person logs out. Nothing is lost: operations still waiting stay on the phone (with the copy and the key) until they are sent; otherwise the copy and the key go. */
+  leave: function () {
+    const self = this;
+    if (!self.worker || !self.uid) return Promise.resolve();
+    if (self.ops.length) return Promise.resolve();
+    const key = self.key,
+      uid = self.uid;
+    self.ready = false;
+    self.key = '';
+    self.uid = '';
+    clearInterval(self.timer);
+    self.timer = null;
+    return (key && self.online() ? self.net('api_revokeDevice', [key]).catch(function () {}) : Promise.resolve())
+      .then(function () {
+        return self.rpc('reset');
+      })
+      .then(function () {
+        return Promise.all(
+          ['device:', 'plan:', 'ops:', 'outbox:', 'ledger:', 'opledger:', 'staged:', 'swstate:', 'needcopy:', 'engine-meta:']
+            .map(function (k) {
+              return Kv.del(k + uid);
+            })
+            .concat([Kv.del('current')])
+        );
+      })
+      .catch(function () {})
+      .then(function () {
+        self.worker.terminate();
+        self.worker = null;
+      });
   }
 };
 </script>
@@ -9675,23 +10494,32 @@ function openSprayEvent(o) {
     card.appendChild(h('div', { class: 'cov-slider' }, sl.node));
     return card;
   }
-  function collect() {
+  // what each step needs before the next one opens; collect() is all of them, checked again when the event is submitted
+  function mixErrs() {
     const errs = [];
-    if (!st.method) errs.push('Choose first how the foliar was sprayed: Drone or Manual.');
     MIX_KEYS.forEach(function (k) {
       const v = st.mix[k];
       if (v === '' || v === undefined || !(Number(v) >= 0)) errs.push('Enter the kg of ' + nameOf(k) + ' (0 if it was not used).');
     });
     if (!st.mix.fourth_name) errs.push('Choose the fourth compound: Urea or T65.');
     else if (!errs.length && !(mixTotal(st.mix) > 0)) errs.push('Enter how many kg of foliar were applied.');
+    return errs;
+  }
+  function crewErrs() {
+    const errs = [];
     if (st.method === 'Drone') {
       if (!(parseInt(st.drones, 10) >= 1)) errs.push('Enter how many drones were used.');
     } else if (!(parseInt(st.men, 10) >= 1)) errs.push('Enter how many men were used.');
     if (!st.start || !st.end) errs.push('Enter the start and end time.');
     else if (hoursBetween(st.start, st.end) === null) errs.push('The end time must be after the start time.');
-    const ids = Object.keys(st.pct);
-    if (!ids.length) errs.push('Select at least one field that was sprayed.');
-    ids.forEach(function (id) {
+    return errs;
+  }
+  function fieldErrs() {
+    return Object.keys(st.pct).length ? [] : ['Select at least one field that was sprayed.'];
+  }
+  function coverErrs() {
+    const errs = [];
+    Object.keys(st.pct).forEach(function (id) {
       if (st.pct[id] <= beforeOf(id) + 1e-9)
         errs.push(
           byId[id].code +
@@ -9701,6 +10529,9 @@ function openSprayEvent(o) {
         );
     });
     return errs;
+  }
+  function collect() {
+    return (st.method ? [] : ['Choose first how the foliar was sprayed: Drone or Manual.']).concat(mixErrs(), crewErrs(), fieldErrs(), coverErrs());
   }
 
   const formBox = h(
@@ -9756,6 +10587,68 @@ function openSprayEvent(o) {
     ),
     err
   );
+  // ----- four steps: 1 the crew and the time, 2 the fields, 3 the hectares, 4 the mix and Submit. Every step stays in the page (only one is shown), so nothing typed is lost going back.
+  const WIZ = ['Crew and time', 'Fields', 'Hectares', 'Mix'],
+    secs = Array.prototype.filter.call(formBox.children, function (c) {
+      return c.classList.contains('evsec');
+    }),
+    stepChecks = [crewErrs, fieldErrs, coverErrs, mixErrs];
+  let step = 1,
+    reached = o.existing ? 4 : 1, // the steps the person may jump to; a saved event can be opened at any of them
+    wiz = null;
+  const stepBar = h(
+    'div',
+    { class: 'wizsteps', role: 'group', 'aria-label': 'Steps' },
+    WIZ.map(function (label, i) {
+      return h(
+        'button',
+        {
+          type: 'button',
+          class: 'wz',
+          'data-step': String(i + 1),
+          onclick: function () {
+            if (i + 1 <= reached) goStep(i + 1);
+          }
+        },
+        h('span', { class: 'n' }, String(i + 1)),
+        h('span', { class: 'wz-t' }, label)
+      );
+    })
+  );
+  formBox.insertBefore(stepBar, formBox.firstChild);
+  function showStep() {
+    secs.forEach(function (sec, i) {
+      sec.style.display = i + 1 === step ? '' : 'none';
+    });
+    Array.prototype.forEach.call(stepBar.children, function (b, i) {
+      b.classList.toggle('on', i + 1 === step);
+      b.classList.toggle('done', i + 1 < step);
+      b.disabled = i + 1 > reached;
+      b.setAttribute('aria-current', i + 1 === step ? 'step' : 'false');
+    });
+    if (wiz) {
+      const gate = !!st.method; // before the method is chosen there are no steps yet
+      wiz.back.style.display = gate && step > 1 ? '' : 'none';
+      wiz.next.style.display = gate && step < WIZ.length ? '' : 'none';
+      wiz.submit.style.display = gate && step === WIZ.length ? '' : 'none';
+    }
+    if (dlg && dlg.box) dlg.box.scrollTop = 0;
+  }
+  function goStep(n) {
+    step = n;
+    clear(err);
+    showStep();
+  }
+  function nextStep() {
+    const errs = stepChecks[step - 1]();
+    clear(err);
+    if (errs.length) {
+      err.appendChild(msgBox('err', errs[0] + (errs.length > 1 ? ' (and ' + (errs.length - 1) + ' more to fix)' : '')));
+      return;
+    }
+    reached = Math.max(reached, step + 1);
+    goStep(step + 1);
+  }
   const choice = h('div', { class: 'methodchoice' }),
     body = h('div', { class: 'evform' }, choice, formBox);
   let sumWrap = null;
@@ -9804,9 +10697,11 @@ function openSprayEvent(o) {
     choice.style.display = st.method ? 'none' : '';
     formBox.style.display = st.method ? '' : 'none';
     if (sumWrap) sumWrap.style.display = st.method ? '' : 'none';
+    showStep();
   }
   function choose(m) {
     st.method = m;
+    step = 1;
     save();
     updateGate();
     renderMethod();
@@ -9856,8 +10751,20 @@ function openSprayEvent(o) {
         }
       },
       {
+        label: 'Back',
+        kind: 'wiz-back',
+        onclick: function () {
+          goStep(step - 1);
+        }
+      },
+      {
+        label: 'Next',
+        kind: 'primary wiz-next',
+        onclick: nextStep
+      },
+      {
         label: o.existing ? 'Save changes' : 'Submit event',
-        kind: 'primary',
+        kind: 'primary wiz-submit',
         onclick: function (m) {
           clear(err);
           const errs = collect();
@@ -9890,6 +10797,7 @@ function openSprayEvent(o) {
   if (acts) {
     sumWrap = h('div', { class: 'evsum' }, sumBox);
     acts.insertBefore(sumWrap, acts.firstChild);
+    wiz = { back: acts.querySelector('.wiz-back'), next: acts.querySelector('.wiz-next'), submit: acts.querySelector('.wiz-submit') };
     updateGate();
   } // the totals stay in view next to the buttons
 }
@@ -13520,18 +14428,24 @@ function foliarCalendarCard() {
     zoom = 0, // 0 = fit the month to the screen; otherwise the scale of the canvas (1 = 100%)
     full = false, // the calendar covers the whole screen
     canvas = null, // { scroll, zoomer, grid, zlabel } of the month on screen
+    pending = 0, // moves not yet confirmed by the server
+    sending = Promise.resolve(), // the moves are told to the server in the order they were made
     hooked = false;
   const card = h('div', { class: 'card fcal' });
   load();
   return card;
 
-  function load(m) {
+  function load(m, keepSelection) {
     return api('api_foliarCalendar', m || month || '')
       .then(function (d) {
-        const changed = d.month !== month;
+        const changed = d.month !== month,
+          keep = keepSelection && selected ? selected.stamp_id : '';
         data = d;
         month = d.month;
-        selected = null;
+        selected =
+          d.stamps.filter(function (x) {
+            return x.stamp_id === keep;
+          })[0] || null; // a stamp the person has picked up while the server was answering stays picked up
         draw(changed);
       })
       .catch(function (e) {
@@ -13568,18 +14482,57 @@ function foliarCalendarCard() {
       toast(problem, true);
       return;
     }
-    api('api_moveFoliarStamp', { stamp_id: s.stamp_id, date: date, half: half })
-      .then(function (r) {
-        if (r.moved) toast('Moved to ' + shortDate(date) + ' ' + (half === 'AM' ? 'morning' : 'evening'));
-        return load();
+    // The stamp moves on the screen at once. The server is told in the background, one move after the other, and only a refusal puts the stamp back.
+    const bump = function (map, key, ha) {
+      map[key] = Math.round(((map[key] || 0) + ha) * 1000) / 1000;
+    };
+    bump(data.load_block, s.date + ' ' + s.half, -s.ha);
+    bump(data.load_day, s.date, -s.ha);
+    bump(data.load_block, date + ' ' + half, s.ha);
+    bump(data.load_day, date, s.ha);
+    s.date = date;
+    s.half = half;
+    s.moved = date !== s.orig_date || half !== s.orig_half;
+    if (s.state === 'overdue') s.state = 'planned';
+    selected = null;
+    draw();
+    toast((s.moved ? 'Moved to ' : 'Put back on ') + shortDate(date) + ' ' + (half === 'AM' ? 'morning' : 'evening'));
+    pending++;
+    sending = sending
+      .then(function () {
+        return api('api_moveFoliarStamp', { stamp_id: s.stamp_id, date: date, half: half });
       })
       .catch(function (e) {
         toast(e.message, true);
-        load();
+      })
+      .then(function () {
+        if (--pending === 0) load('', true); // the server's own picture, once all the moves are told (a refused move goes back here)
       });
   }
   function movable(s) {
     return edit && data.can_edit && s.state !== 'done';
+  }
+
+  /** The mark of a moved stamp. While editing, and when its first day is today or later, it is a button that puts the stamp back where the plan had it. */
+  function movedMark(s, mv) {
+    if (!mv || s.orig_date < data.today) return h('span', { class: 'st-mv', 'aria-label': 'moved' }, icon('refresh'));
+    const label = 'Put back on ' + shortDate(s.orig_date) + ' ' + (s.orig_half === 'AM' ? 'morning' : 'evening');
+    return h(
+      'button',
+      {
+        type: 'button',
+        class: 'st-mv st-undo',
+        'data-role': 'put-back',
+        'aria-label': label,
+        title: label,
+        draggable: 'false',
+        onclick: function (ev) {
+          ev.stopPropagation();
+          move(s, s.orig_date, s.orig_half);
+        }
+      },
+      icon('refresh')
+    );
   }
 
   function stampEl(s) {
@@ -13616,7 +14569,7 @@ function foliarCalendarCard() {
         { class: 'st-name' },
         h('span', { class: 'st-div' }, s.div_abbr),
         h('b', null, s.code),
-        s.state === 'done' ? icon('check') : s.moved ? h('span', { class: 'st-mv', 'aria-label': 'moved' }, icon('refresh')) : null
+        s.state === 'done' ? icon('check') : s.moved ? movedMark(s, mv) : null
       ),
       h('div', { class: 'st-side drone' }, h('span', null, 'Drone'), h('span', null, num(s.ha, 2) + ' ha')),
       s.done_ha > 0 && s.state !== 'done' ? h('div', { class: 'st-bar' }, h('i', { style: 'width:' + pctDone + '%' })) : null
@@ -13851,6 +14804,9 @@ function foliarCalendarCard() {
     clear(card);
     canvas = null;
     card.classList.toggle('fc-full', full);
+    if (edit)
+      card.setAttribute('data-no-refresh', '1'); // the phone does not redraw the screen under a plan that is being edited
+    else card.removeAttribute('data-no-refresh');
     const d = data;
     const nav = h(
       'div',
