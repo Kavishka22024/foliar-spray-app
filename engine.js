@@ -2512,6 +2512,19 @@ function api_foliarCalendar(token, month) {
   });
 }
 
+/** What is already planned in each block (date + half) and each day from today to the end of the plan, for everybody's fields: the limits are for the drones. */
+function planLoad_(today, rows) {
+  const last = planHorizon_(today),
+    block = {},
+    day = {};
+  (rows || dbAll_(SHEETS.STAMPS)).forEach(function (s) {
+    if (s.status !== 'Active' || s.date < today || s.date > last) return;
+    block[s.date + ' ' + s.half] = round_((block[s.date + ' ' + s.half] || 0) + s.ha, 3);
+    day[s.date] = round_((day[s.date] || 0) + s.ha, 3);
+  });
+  return { block: block, day: day };
+}
+
 /** May this account look at the plan of coming days on the Foliar spray screen? (The calendar and scheduling powers include it.) */
 function foliarFutureAllowed_(c) {
   return hasTask_(c, 'foliar.future') || hasTask_(c, 'foliar.calendar') || hasTask_(c, 'foliar.schedule');
@@ -2526,7 +2539,7 @@ function planHorizon_(today) {
   return m + '-' + padNum_(monthDays_(m), 2);
 }
 
-/** Move a stamp to another day (today or later, up to the end of the month after next) and half-day. A stamp moved into another month belongs to that month from then on. Not a done stamp;
+/** Move a stamp to another day (today or later, up to the end of the month after next) and half-day, or back to the place the plan first had it. A stamp moved into another month belongs to that month from then on. Not a done stamp;
  *  not into a block or a day that would hold too much. */
 function api_moveFoliarStamp(token, p) {
   return wrap_(function () {
@@ -2546,8 +2559,9 @@ function api_moveFoliarStamp(token, p) {
         half = String(p.half || '');
       if (!isDate_(date)) fail_('Choose a day.', 'VALIDATION');
       if (HALVES.indexOf(half) < 0) fail_('Choose morning or evening.', 'VALIDATION');
-      if (date < today) fail_('A stamp can only be moved to today or a later day.', 'VALIDATION');
-      if (date > planHorizon_(today)) fail_('The plan reaches only to ' + planHorizon_(today) + '.', 'VALIDATION');
+      const back = date === cur.orig_date && half === cur.orig_half; // putting a block back where the plan first had it is always allowed (even if that day has passed: it is then delayed again)
+      if (date < today && !back) fail_('A stamp can only be moved to today or a later day.', 'VALIDATION');
+      if (date > planHorizon_(today) && !back) fail_('The plan reaches only to ' + planHorizon_(today) + '.', 'VALIDATION');
       const st = stampStates_(cur.month, today, rows).filter(function (s) {
         return s.stamp_id === cur.stamp_id;
       })[0];
@@ -2566,7 +2580,7 @@ function api_moveFoliarStamp(token, p) {
         day = others.reduce(function (t, s) {
           return t + s.ha;
         }, 0);
-      if (block + cur.ha > params.foliar_block_max_ha + 1e-9)
+      if (!(back && date < today) && block + cur.ha > params.foliar_block_max_ha + 1e-9)
         fail_(
           'The ' +
             (half === 'AM' ? 'morning' : 'evening') +
@@ -2579,7 +2593,7 @@ function api_moveFoliarStamp(token, p) {
             ' ha.',
           'VALIDATION'
         );
-      if (day + cur.ha > params.foliar_day_max_ha + 1e-9)
+      if (!(back && date < today) && day + cur.ha > params.foliar_day_max_ha + 1e-9)
         fail_(date + ' would hold ' + round_(day + cur.ha, 2) + ' ha; the most in a day is ' + params.foliar_day_max_ha + ' ha.', 'VALIDATION');
       const now = nowIso_();
       dbUpdate_(SHEETS.STAMPS, cur._row, { date: date, half: half, month: monthKey_(date), moved_by: c.user.username, moved_at: now });
@@ -4704,7 +4718,9 @@ function api_sprayDay(token, date) {
       can_move: foliarMoveAllowed_(c), // may drag a delayed or planned block to another day on this screen
       can_future: foliarFutureAllowed_(c), // may choose a coming day
       horizon_to: planHorizon_(today),
-      day_max_ha: params.foliar_day_max_ha
+      day_max_ha: params.foliar_day_max_ha,
+      block_max_ha: params.foliar_block_max_ha,
+      plan_load: planLoad_(today) // what is already planned in each block and day (for the places a block can be moved to)
     };
   });
 }

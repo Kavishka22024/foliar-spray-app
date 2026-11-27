@@ -2853,10 +2853,29 @@ th.nowrap {
 .st-undo {
   border: 0;
   border-radius: 6px;
-  padding: 4px;
+  padding: 3px 7px;
   background: var(--line);
   color: var(--ink);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+.st-undo svg {
+  width: 11px;
+  height: 11px;
+}
+.st-orig {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
 }
 .st-undo:hover {
   background: var(--line-strong);
@@ -3015,31 +3034,90 @@ th.nowrap {
   border: 1px solid var(--line);
   border-radius: var(--r-md) var(--r-md) 0 0;
 }
-.due-zones {
+.due-back {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   flex-wrap: wrap;
-  gap: 6px;
+  font-size: 13px;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+.due-gridbox {
+  max-height: 46vh;
+  overflow-y: auto;
   padding: 8px 10px 10px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-top: 0;
   border-radius: 0 0 var(--r-md) var(--r-md);
 }
+.due-grid {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr); /* the week, then the morning and the evening of that day side by side */
+  gap: 6px;
+  align-items: stretch;
+}
+.due-gh {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 2px;
+}
+.due-week {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+  font-size: 13px;
+}
+.due-week span {
+  color: var(--muted);
+  font-size: 12px;
+}
 .due-zone {
-  min-height: 40px;
-  padding: 6px 10px;
+  min-height: 46px;
+  padding: 6px;
   border: 1.5px dashed var(--line-strong);
   border-radius: 8px;
   background: var(--surface);
-  color: var(--ink);
+  color: var(--muted);
   font: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
 }
-.due-zone:hover,
+.due-zone.used {
+  border-style: solid;
+  color: var(--ink);
+}
+.due-zone:hover:not(:disabled),
 .due-zone.over {
   border-color: var(--good);
   background: var(--good-soft);
+  color: var(--ink);
+}
+.due-zone.full {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+  cursor: not-allowed;
+}
+.due-zone.here {
+  background: var(--tile);
+  border-style: solid;
+  cursor: default;
 }
 .due-chip small {
   color: var(--muted);
@@ -3052,6 +3130,63 @@ th.nowrap {
   .fc-day {
     min-height: 130px;
   }
+}
+/* the four compounds as a ratio: names in one row with colons between, the kg per hectare in a row below (the fourth name is a drop-down) */
+.ratio {
+  display: grid;
+  gap: 8px;
+}
+.ratio-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  align-items: center;
+}
+.ratio-row > * {
+  position: relative;
+  min-width: 0;
+}
+.ratio-row > *:not(:last-child)::after {
+  content: ':';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 700;
+  color: var(--muted);
+}
+.ratio .rn {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.25;
+}
+.ratio .rn select {
+  width: 100%;
+  font-weight: 700;
+  text-align: center;
+  text-align-last: center;
+}
+.ratio .rv {
+  text-align: center;
+}
+.ratio .rv input {
+  width: 100%;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.ratio .rv b {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.ratio-unit {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
 }
 .plan-tiles {
   display: grid;
@@ -11254,28 +11389,14 @@ VIEWS['spray.entry'] = function (root) {
       clear(targets);
       if (!canMove || !picked) return;
       const last = data.horizon_to || addDays(today, 62),
-        places = [];
-      [
-        ['AM', 'morning'],
-        ['PM', 'evening']
-      ].forEach(function (x) {
-        places.push({ date: today, half: x[0], label: 'Today ' + x[1] });
-      });
-      for (let k = 1; k <= 5; k++) {
-        const d = addDays(today, 7 * k);
-        if (d > last) break;
-        [
-          ['AM', 'morning'],
-          ['PM', 'evening']
-        ].forEach(function (x) {
-          places.push({ date: d, half: x[0], label: weekdayName(d).slice(0, 3) + ' ' + shortDate(d) + ' ' + x[1] });
-        });
-      }
+        load = data.plan_load || { block: {}, day: {} },
+        bmax = data.block_max_ha || 5,
+        dmax = data.day_max_ha || 9;
       targets.appendChild(
         h(
           'div',
           { class: 'due-move-h' },
-          h('span', null, 'Move ', h('b', null, picked.div_abbr + ' ' + picked.code), ' to:'),
+          h('span', null, 'Move ', h('b', null, picked.div_abbr + ' ' + picked.code), ' (' + r2(picked.ha) + ' ha) to an empty place:'),
           h(
             'button',
             {
@@ -11290,26 +11411,90 @@ VIEWS['spray.entry'] = function (root) {
           )
         )
       );
-      const row = h('div', { class: 'due-zones' });
-      places.forEach(function (p) {
-        const z = h('button', { type: 'button', class: 'due-zone', 'data-date': p.date, 'data-half': p.half }, p.label);
-        z.addEventListener('click', function () {
-          moveTo(p);
+      if (picked.moved) {
+        const where =
+          weekdayName(picked.orig_date).slice(0, 3) + ' ' + shortDate(picked.orig_date) + ' ' + (picked.orig_half === 'AM' ? 'morning' : 'evening');
+        targets.appendChild(
+          h(
+            'div',
+            { class: 'due-back' },
+            h('span', null, 'First planned: ' + where),
+            h(
+              'button',
+              {
+                type: 'button',
+                class: 'btn small',
+                'data-role': 'put-back',
+                onclick: function () {
+                  moveTo({ date: picked.orig_date, half: picked.orig_half, label: 'its first place (' + where + ')' });
+                }
+              },
+              'Put it back there'
+            )
+          )
+        );
+      }
+      // one row per week, in order: the same weekday as today, this week first; the two halves of that day side by side
+      const grid = h(
+        'div',
+        { class: 'due-grid', role: 'grid' },
+        h('div', { class: 'due-gh' }, ''),
+        h('div', { class: 'due-gh' }, 'Morning'),
+        h('div', { class: 'due-gh' }, 'Evening')
+      );
+      for (let k = 0; ; k++) {
+        const d = addDays(today, 7 * k);
+        if (d > last) break;
+        const dayUsed = (load.day[d] || 0) - (picked.date === d ? picked.ha : 0); // (the block being moved does not count against its own day)
+        grid.appendChild(
+          h(
+            'div',
+            { class: 'due-week', 'data-date': d },
+            h('b', null, k === 0 ? 'Today' : k === 1 ? 'Next week' : 'In ' + k + ' weeks'),
+            h('span', null, weekdayName(d).slice(0, 3) + ' ' + shortDate(d))
+          )
+        );
+        [
+          ['AM', 'morning'],
+          ['PM', 'evening']
+        ].forEach(function (x) {
+          const used = (load.block[d + ' ' + x[0]] || 0) - (picked.date === d && picked.half === x[0] ? picked.ha : 0),
+            here = picked.date === d && picked.half === x[0],
+            full = used + picked.ha > bmax + 1e-9 || dayUsed + picked.ha > dmax + 1e-9;
+          const p = { date: d, half: x[0], label: (k === 0 ? 'today' : weekdayName(d).slice(0, 3) + ' ' + shortDate(d)) + ' ' + x[1] };
+          const z = h(
+            'button',
+            {
+              type: 'button',
+              class: 'due-zone' + (full ? ' full' : '') + (here ? ' here' : '') + (used > 0 ? ' used' : ''),
+              'data-date': d,
+              'data-half': x[0],
+              disabled: full || here,
+              'aria-label':
+                p.label + (full ? ', full' : here ? ', where it is now' : used > 0 ? ', ' + r2(used) + ' of ' + bmax + ' ha planned' : ', empty')
+            },
+            h('span', { class: 'z-state' }, here ? 'is here' : full ? 'full' : used > 0 ? r2(used) + ' / ' + bmax + ' ha' : 'empty')
+          );
+          if (!full && !here) {
+            z.addEventListener('click', function () {
+              moveTo(p);
+            });
+            z.addEventListener('dragover', function (ev) {
+              ev.preventDefault();
+              z.classList.add('over');
+            });
+            z.addEventListener('dragleave', function () {
+              z.classList.remove('over');
+            });
+            z.addEventListener('drop', function (ev) {
+              ev.preventDefault();
+              moveTo(p);
+            });
+          }
+          grid.appendChild(z);
         });
-        z.addEventListener('dragover', function (ev) {
-          ev.preventDefault();
-          z.classList.add('over');
-        });
-        z.addEventListener('dragleave', function () {
-          z.classList.remove('over');
-        });
-        z.addEventListener('drop', function (ev) {
-          ev.preventDefault();
-          moveTo(p);
-        });
-        row.appendChild(z);
-      });
-      targets.appendChild(row);
+      }
+      targets.appendChild(h('div', { class: 'due-gridbox' }, grid));
     }
     function moveTo(p) {
       const s = picked;
@@ -14356,12 +14541,29 @@ VIEWS['foliar.plan'] = function (root) {
         clear(out).appendChild(msgBox('err', e.message));
       });
   }
-  function tile(name, kg, unit) {
+  /** The four compounds as a RATIO: their names in one row separated by colons, the kg per hectare in a row of boxes (or numbers) right below. */
+  function ratioView(p) {
+    const items = NAMES.map(function (n) {
+      return [n[1], p[n[0]]];
+    }).concat([[p.fourth_name, p.fourth]]);
     return h(
       'div',
-      { class: 'plan-tile' },
-      h('div', { class: 'pt-name' }, name),
-      h('div', { class: 'pt-kg' }, h('b', null, num(kg, 2)), ' ' + (unit || 'kg per ha'))
+      { class: 'ratio' },
+      h(
+        'div',
+        { class: 'ratio-row names' },
+        items.map(function (x) {
+          return h('span', { class: 'rn' }, x[0]);
+        })
+      ),
+      h(
+        'div',
+        { class: 'ratio-row vals' },
+        items.map(function (x) {
+          return h('span', { class: 'rv' }, h('b', null, num(x[1], 2)));
+        })
+      ),
+      h('div', { class: 'ratio-unit' }, 'kg per hectare')
     );
   }
   function currentCard(d) {
@@ -14376,15 +14578,7 @@ VIEWS['foliar.plan'] = function (root) {
       );
       return card;
     }
-    card.appendChild(
-      h(
-        'div',
-        { class: 'plan-tiles' },
-        NAMES.map(function (n) {
-          return tile(n[1], p[n[0]]);
-        }).concat([tile(p.fourth_name, p.fourth)])
-      )
-    );
+    card.appendChild(h('div', { class: 'plan-tiles' }, ratioView(p)));
     card.appendChild(
       h(
         'div',
@@ -14427,7 +14621,11 @@ VIEWS['foliar.plan'] = function (root) {
     NAMES.forEach(function (n) {
       inp[n[0]] = numInput(cur[n[0]] === undefined ? '' : cur[n[0]], { step: '0.01', 'aria-label': n[1] + ', kg per hectare', 'data-plan': n[0] });
     });
-    inp.fourth = numInput(cur.fourth === undefined ? '' : cur.fourth, { step: '0.01', 'data-plan': 'fourth' });
+    inp.fourth = numInput(cur.fourth === undefined ? '' : cur.fourth, {
+      step: '0.01',
+      'aria-label': 'Fourth compound, kg per hectare',
+      'data-plan': 'fourth'
+    });
     const fourthName = select(
       d.fourth_options.map(function (o) {
         return { value: o, label: o };
@@ -14437,7 +14635,6 @@ VIEWS['foliar.plan'] = function (root) {
     );
     const eff = h('input', { type: 'date', value: d.today, 'aria-label': 'Effective from', 'data-plan': 'effective_from' });
     const note = h('input', { type: 'text', maxlength: '200', placeholder: 'Optional note, e.g. December mix' });
-    const fourthLabel = h('span', null, fourthName.value + ' (kg per ha)');
     function example() {
       const v = function (k) {
         return Number(inp[k].value) || 0;
@@ -14454,7 +14651,6 @@ VIEWS['foliar.plan'] = function (root) {
         ' ' +
         num(v('fourth') * 10, 2) +
         ' kg.';
-      fourthLabel.textContent = fourthName.value + ' (kg per ha)';
     }
     Object.keys(inp).forEach(function (k) {
       inp[k].addEventListener('input', example);
@@ -14509,12 +14705,24 @@ VIEWS['foliar.plan'] = function (root) {
         field('Applies from', eff),
         h(
           'div',
-          { class: 'plan-grid' },
-          NAMES.map(function (n) {
-            return field(n[1] + ' (kg per ha)', inp[n[0]]);
-          }),
-          h('label', { class: 'f' }, 'Fourth compound', fourthName),
-          h('label', { class: 'f' }, fourthLabel, inp.fourth)
+          { class: 'ratio ratio-form' },
+          h(
+            'div',
+            { class: 'ratio-row names' },
+            NAMES.map(function (n) {
+              return h('span', { class: 'rn' }, n[1]);
+            }),
+            h('span', { class: 'rn' }, fourthName) // only the fourth compound is chosen: Urea or T65
+          ),
+          h(
+            'div',
+            { class: 'ratio-row vals' },
+            NAMES.map(function (n) {
+              return h('span', { class: 'rv' }, inp[n[0]]);
+            }),
+            h('span', { class: 'rv' }, inp.fourth)
+          ),
+          h('div', { class: 'ratio-unit' }, 'kg per hectare of each compound')
         ),
         field('Note', note),
         eg,
@@ -14750,8 +14958,8 @@ function foliarCalendarCard() {
     if (day > data.day_max + 1e-9) return 'This day would hold ' + Math.round(day * 100) / 100 + ' ha (most ' + data.day_max + ').';
     return '';
   }
-  function move(s, date, half) {
-    const problem = why(s, date, half);
+  function move(s, date, half, back) {
+    const problem = back ? '' : why(s, date, half);
     if (problem) {
       toast(problem, true);
       return;
@@ -14784,28 +14992,36 @@ function foliarCalendarCard() {
       });
   }
   function movable(s) {
-    return edit && data.can_edit && s.state !== 'done';
+    return edit && data.can_edit && s.state !== 'done' && (!filter || s.div_abbr === filter); // with a division chosen only ITS blocks can be moved; with All, every block
   }
 
-  /** The mark of a moved stamp. While editing, and when its first day is today or later, it is a button that puts the stamp back where the plan had it. */
-  function movedMark(s, mv) {
-    if (!mv || s.orig_date < data.today) return h('span', { class: 'st-mv', 'aria-label': 'moved' }, icon('refresh'));
-    const label = 'Put back on ' + shortDate(s.orig_date) + ' ' + (s.orig_half === 'AM' ? 'morning' : 'evening');
+  /** The mark of a moved stamp: a plain icon outside editing; while editing, a button row that puts the stamp back where the plan first had it (also when that day has passed: it is then delayed again). */
+  function movedMark(s) {
+    return h('span', { class: 'st-mv', 'aria-label': 'moved' }, icon('refresh'));
+  }
+  function putBackRow(s) {
+    const where = shortDate(s.orig_date) + ' ' + (s.orig_half === 'AM' ? 'morning' : 'evening');
     return h(
-      'button',
-      {
-        type: 'button',
-        class: 'st-mv st-undo',
-        'data-role': 'put-back',
-        'aria-label': label,
-        title: label,
-        draggable: 'false',
-        onclick: function (ev) {
-          ev.stopPropagation();
-          move(s, s.orig_date, s.orig_half);
-        }
-      },
-      icon('refresh')
+      'div',
+      { class: 'st-orig' },
+      h('span', null, 'was ' + where),
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'st-undo',
+          'data-role': 'put-back',
+          'aria-label': 'Put back on ' + where,
+          title: 'Put back on ' + where,
+          draggable: 'false',
+          onclick: function (ev) {
+            ev.stopPropagation();
+            move(s, s.orig_date, s.orig_half, true);
+          }
+        },
+        icon('refresh'),
+        'Put back'
+      )
     );
   }
 
@@ -14843,9 +15059,10 @@ function foliarCalendarCard() {
         { class: 'st-name' },
         h('span', { class: 'st-div' }, s.div_abbr),
         h('b', null, s.code),
-        s.state === 'done' ? icon('check') : s.moved ? movedMark(s, mv) : null
+        s.state === 'done' ? icon('check') : s.moved ? movedMark(s) : null
       ),
       h('div', { class: 'st-side drone' }, h('span', null, 'Drone'), h('span', null, num(s.ha, 2) + ' ha')),
+      mv && s.moved ? putBackRow(s) : null,
       s.done_ha > 0 && s.state !== 'done' ? h('div', { class: 'st-bar' }, h('i', { style: 'width:' + pctDone + '%' })) : null
     );
     if (mv) {
