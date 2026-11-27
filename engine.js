@@ -1041,6 +1041,15 @@ const PARAMS = [
     help: 'Nobody can add, edit or void records dated on or before this. Blank = no lock.'
   },
   {
+    key: 'spray_create_manual_only',
+    label: 'Create spray event offers the manual parts only',
+    group: 'Data entry',
+    type: 'bool',
+    def: true,
+    dated: false,
+    help: 'Yes: the Create spray event button records manual spraying only; the drone parts are recorded from the field tags of the drone plan on the Foliar spray screen. No: Create spray event offers both ways of spraying.'
+  },
+  {
     key: 'foliar_plan_tolerance_pct',
     label: 'Foliar: kg of a compound may differ from the plan by',
     group: 'Data entry',
@@ -2610,6 +2619,7 @@ function api_moveFoliarStamp(token, p) {
 
 /** What a person on the Foliar spray screen sees for a day, only on fields they may record:
  *   - the stamps planned for that day (a coming day only for an account that may look ahead);
+ *   - for TODAY, for whoever may move blocks, also the planned stamps of the same weekday in the coming weeks (the edit view shows those weeks as rows);
  *   - for TODAY also the DELAYED stamps of earlier days with the same weekday as today (on a Tuesday: the Tuesdays of last week, the week before, ... and of earlier months), each on its own day,
  *     so a delay shows up again on the weekday it was missed, not all at once. */
 function dueFor_(c, date, today, idx, sprayRows) {
@@ -2624,18 +2634,36 @@ function dueFor_(c, date, today, idx, sprayRows) {
       /* the screen still works without the plan */
     }
   }
-  const months = [dm];
-  if (date === today)
+  const months = [dm],
+    ahead = date === today && foliarMoveAllowed_(c); // whoever may move blocks also gets the coming weeks of this weekday (for the empty places of the edit view)
+  if (date === today) {
     rows.forEach(function (s) {
       if (s.status === 'Active' && s.month < cur && months.indexOf(s.month) < 0) months.push(s.month); // earlier months that hold stamps
     });
+    if (ahead)
+      [1, 2].forEach(function (k) {
+        const m = addMonths_(cur, k);
+        if (typeof __DEVICE__ === 'undefined') {
+          // (the months ahead are made on the server, when they are first looked at; a phone shows the ones it has and takes the others in with its next pull)
+          try {
+            if (ensureMonth_(m, today, rows)) rows = dbAll_(SHEETS.STAMPS);
+          } catch (e) {
+            /* the plan of that month simply is not there yet */
+          }
+        }
+        months.push(m);
+      });
+  }
   const wd = weekdayOf_(today),
+    last = planHorizon_(today),
     out = [];
   months.forEach(function (m) {
     stampStates_(m, today, rows, sprayRows).forEach(function (s) {
       const f = idx[s.field_id];
       if (!f || !inScope_(c, f)) return;
-      if (s.date === date || (date === today && s.state === 'overdue' && s.date < today && weekdayOf_(s.date) === wd)) out.push(shapeStamp_(s, idx));
+      const delayed = date === today && s.state === 'overdue' && s.date < today && weekdayOf_(s.date) === wd,
+        coming = ahead && s.date > today && s.date <= last && weekdayOf_(s.date) === wd;
+      if (s.date === date || delayed || coming) out.push(shapeStamp_(s, idx));
     });
   });
   return out.sort(function (a, b) {
@@ -4720,6 +4748,7 @@ function api_sprayDay(token, date) {
       horizon_to: planHorizon_(today),
       day_max_ha: params.foliar_day_max_ha,
       block_max_ha: params.foliar_block_max_ha,
+      create_manual_only: params.spray_create_manual_only, // Create spray event offers the manual parts only (the drone parts come from the plan's field tags)
       plan_load: planLoad_(today) // what is already planned in each block and day (for the places a block can be moved to)
     };
   });
