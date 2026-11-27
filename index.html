@@ -2520,8 +2520,35 @@ th.nowrap {
 }
 .mixgrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* the four compounds side by side in one row */
+  gap: 10px;
+  align-items: start;
+}
+.mixrow label.f > span:first-child {
+  font-size: 12.5px;
+  line-height: 1.25;
+  min-height: 2.5em; /* a name of two words (Epsom salt) wraps: the boxes stay level */
+  display: block;
+}
+.mixfourth {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.mixhints {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.mixhint:empty {
+  display: none;
+}
+.mixhint[data-name]:not(:empty)::before {
+  content: attr(data-name) ' - ';
+  font-weight: 700;
+  color: var(--ink);
 }
 .mixrow {
   display: grid;
@@ -2529,9 +2556,14 @@ th.nowrap {
   align-content: start;
 }
 .mixnum {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 6px;
+  min-width: 0;
+  width: 100%;
 }
 .mixhint {
   color: var(--muted);
@@ -2947,6 +2979,68 @@ th.nowrap {
   background: var(--bad-soft);
   border-color: var(--bad);
 }
+.due-chip.movable {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.due-chip.picked {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+  background: var(--good-soft);
+}
+.due-group.late {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+}
+.due-empty {
+  margin: 0 0 12px;
+}
+.due-move {
+  position: sticky;
+  bottom: 8px;
+  margin-top: 4px;
+}
+.due-move:empty {
+  display: none;
+}
+.due-move-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+.due-zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+}
+.due-zone {
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.due-zone:hover,
+.due-zone.over {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
 .due-chip small {
   color: var(--muted);
 }
@@ -2997,9 +3091,6 @@ th.nowrap {
   align-items: start;
 }
 @media (max-width: 760px) {
-  .mixgrid {
-    grid-template-columns: 1fr;
-  }
   .plan-tiles,
   .plan-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -8832,8 +8923,26 @@ function magnet(pct, lo, hi, extra) {
 }
 /** The marks under a slider track: 0 25 50 75 100. */
 /** A date typed or picked by hand: an empty or future day becomes today (entry is for today and earlier days only). */
-function validDay(v) {
-  return /^\d{4}-\d\d-\d\d$/.test(v) && v <= S.today ? v : S.today;
+/** A day written as yyyy-mm-dd, n days later (or earlier). */
+function addDays(date, n) {
+  const d = new Date(date + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function weekdayName(date) {
+  return WEEKDAY_NAMES[new Date(date + 'T00:00:00Z').getUTCDay()];
+}
+/** "1 week ago", "3 weeks ago", "2 months ago": how long ago a missed day was, in the words a person uses. */
+function agoText(date, today) {
+  const days = Math.round((new Date(today + 'T00:00:00Z') - new Date(date + 'T00:00:00Z')) / 86400000),
+    weeks = Math.round(days / 7);
+  if (weeks < 9) return weeks + (weeks === 1 ? ' week ago' : ' weeks ago');
+  const months = Math.round(days / 30.4);
+  return months + (months === 1 ? ' month ago' : ' months ago');
+}
+function validDay(v, last) {
+  return /^\d{4}-\d\d-\d\d$/.test(v) && v <= (last || S.today) ? v : S.today;
 }
 
 function sliderTicks() {
@@ -10131,7 +10240,7 @@ function openSprayEvent(o) {
   };
   MIX_KEYS.forEach(function (k) {
     mixIn[k] = numInput(st.mix[k], { step: '0.01', class: 'mixnum', 'data-mix': k, placeholder: '0' });
-    mixHint[k] = h('div', { class: 'mixhint small' });
+    mixHint[k] = h('div', { class: 'mixhint small', 'data-key': k });
     mixIn[k].addEventListener('input', function () {
       st.mix[k] = mixIn[k].value;
       st.mix.touched[k] = true;
@@ -10179,6 +10288,7 @@ function openSprayEvent(o) {
       if (mixLab[k]) mixLab[k].textContent = nameOf(k);
       const hint = mixHint[k];
       clear(hint);
+      hint.setAttribute('data-name', nameOf(k)); // (shown in front of the line by the style: the lines no longer sit under their own box)
       if (!plan) return;
       if (per === null) {
         hint.textContent = 'The plan has ' + plan.fourth_name + ' this month, not ' + (st.mix.fourth_name || 'this compound') + '.';
@@ -10254,20 +10364,17 @@ function openSprayEvent(o) {
               '. Enter the kg of each compound yourself and choose Urea or T65. Ask the person who plans the foliar to enter the plan under Foliar planning.'
           )
     );
-    const grid = h('div', { class: 'mixgrid' });
+    // the four compounds side by side in ONE row (a box each); the choice of the fourth and what the plan says about each one come under the row
+    const grid = h('div', { class: 'mixgrid' }),
+      hints = h('div', { class: 'mixhints' });
     MIX_KEYS.forEach(function (k) {
       mixLab[k] = h('span', { class: 'mix-name' }, nameOf(k));
-      grid.appendChild(
-        h(
-          'div',
-          { class: 'mixrow', 'data-key': k },
-          h('label', { class: 'f' }, h('span', null, mixLab[k], ' (kg)'), mixIn[k]),
-          k === 'fourth' ? fourthSeg : null,
-          mixHint[k]
-        )
-      );
+      grid.appendChild(h('div', { class: 'mixrow', 'data-key': k }, h('label', { class: 'f' }, h('span', null, mixLab[k], ' (kg)'), mixIn[k])));
+      hints.appendChild(mixHint[k]);
     });
     mixBox.appendChild(grid);
+    mixBox.appendChild(h('div', { class: 'mixfourth' }, h('span', { class: 'muted small' }, 'Fourth compound'), fourthSeg));
+    mixBox.appendChild(hints);
     renderFourth();
   }
 
@@ -10816,11 +10923,21 @@ VIEWS['spray.entry'] = function (root) {
   const readOnly = function () {
     return dateIn.value < S.today;
   };
+  const isFuture = function () {
+    return dateIn.value > S.today;
+  };
+  /** Who may look at the plan of coming days (the foliar powers; the server decides again) and how far: to the end of the month after next. */
+  const lookAhead = function () {
+    return hasTask('foliar.future') || hasTask('foliar.calendar') || hasTask('foliar.schedule');
+  };
+  const lastDay = function () {
+    return lookAhead() ? data.horizon_to || addDays(S.today, 62) : S.today;
+  };
   function shiftDay(n) {
     const d = new Date(dateIn.value + 'T00:00:00Z');
     d.setUTCDate(d.getUTCDate() + n);
     const v = d.toISOString().slice(0, 10);
-    if (v > S.today) return;
+    if (v > lastDay()) return;
     dateIn.value = v;
     loadAll();
   }
@@ -10882,9 +10999,10 @@ VIEWS['spray.entry'] = function (root) {
   root.appendChild(dueBox);
   root.appendChild(listBox);
   dateIn.addEventListener('change', function () {
-    dateIn.value = validDay(dateIn.value);
+    dateIn.value = validDay(dateIn.value, lastDay());
     loadAll();
   });
+  dateIn.max = lastDay();
   Sync.onChange(function () {
     if (!root.isConnected) return false;
     const waiting = Object.keys(Sync.waitingEvents(dateIn.value)).length;
@@ -10950,6 +11068,7 @@ VIEWS['spray.entry'] = function (root) {
   }
   function afterLoad() {
     hadQueue = Object.keys(Sync.waitingEvents(dateIn.value)).length > 0;
+    dateIn.max = lastDay();
     renderAll();
   }
   function renderAll() {
@@ -10960,112 +11079,254 @@ VIEWS['spray.entry'] = function (root) {
     renderList();
   }
 
-  /** The drone spray plan of the day (from the foliar calendar): the blocks planned for this day, and for today also what was planned earlier and is not sprayed yet. Each block is a button
-   *  that opens a new event with those fields already picked, set to the hectares of the plan (the sliders can still be changed). */
+  /** The drone spray plan of the day (from the foliar calendar): the blocks planned for the viewed day, Morning and Evening. Today also shows what was planned on EARLIER DAYS OF THE SAME
+   *  WEEKDAY and is not sprayed yet (on a Tuesday: the Tuesdays of last week, the week before ... and of earlier months), each on its own day, so a delay comes back on the weekday it was
+   *  missed. A block of today is a button that opens a new event with those fields already picked at the plan's hectares. Whoever may move blocks can pick a delayed or planned block (tap it, or
+   *  drag it) and put it on today or on the same weekday of a coming week; the foliar calendar shows the same change. A coming day (for whoever may look ahead) shows its plan, read only. */
+  let picked = null; // the block being moved
   function renderDue() {
     clear(dueBox);
     const due = data.due || [];
-    if (!due.length) return;
+    const date = dateIn.value,
+      today = S.today;
+    if (!due.length) {
+      if (date !== today && lookAhead() && !readOnly())
+        dueBox.appendChild(h('div', { class: 'muted small due-empty', 'data-role': 'due-empty' }, 'Nothing is planned for ' + shortDate(date) + '.'));
+      return;
+    }
     const byId = {};
     data.fields.forEach(function (f) {
       byId[f.field_id] = f;
     });
-    const date = dateIn.value,
-      draft = sprayDraft(date),
-      canDrone = (data.methods || []).indexOf('Drone') >= 0;
+    const draft = sprayDraft(date),
+      canDrone = (data.methods || []).indexOf('Drone') >= 0,
+      canMove = !!data.can_move && date === today;
+    const own = due.filter(function (s) {
+      return s.date === date;
+    });
+    const delayedDates = Array.from(
+      new Set(
+        due
+          .filter(function (s) {
+            return s.date < date;
+          })
+          .map(function (s) {
+            return s.date;
+          })
+      )
+    ).sort(function (a, b) {
+      return a < b ? 1 : -1;
+    }); // the most recent first
     const groups = [
       {
         title: 'Morning',
-        list: due.filter(function (s) {
-          return s.date === date && s.half === 'AM';
+        list: own.filter(function (s) {
+          return s.half === 'AM';
         })
       },
       {
         title: 'Evening',
-        list: due.filter(function (s) {
-          return s.date === date && s.half === 'PM';
+        list: own.filter(function (s) {
+          return s.half === 'PM';
         })
-      },
-      {
-        title: 'Planned earlier, not sprayed yet',
-        list: due.filter(function (s) {
-          return s.date < date;
-        }),
-        late: true
       }
-    ].filter(function (g) {
-      return g.list.length;
-    });
+    ].concat(
+      delayedDates.map(function (d) {
+        return {
+          title: 'Delayed: ' + weekdayName(d) + ' ' + shortDate(d),
+          sub: agoText(d, today),
+          late: true,
+          date: d,
+          list: due.filter(function (s) {
+            return s.date === d;
+          })
+        };
+      })
+    );
     const box = h(
       'div',
       { class: 'due', 'data-role': 'due' },
       h(
         'h3',
         null,
-        readOnly() ? 'Drone spray plan for ' + shortDate(date) : 'Drone spray plan for today',
+        date === today ? 'Drone spray plan for today' : 'Drone spray plan for ' + weekdayName(date) + ' ' + shortDate(date),
         ' ',
         help(
-          'The drone spray plan of the foliar calendar for your fields. After spraying a block tap Record this block: its fields are already chosen and set to the hectares of the plan; move a slider if less was sprayed. A field sprayed but not listed here: use Create spray event.'
+          'The drone spray plan of the foliar calendar for your fields. After spraying a block tap Record this block: its fields are already chosen and set to the hectares of the plan; move a slider if less was sprayed. Blocks missed on an earlier day show again on the same weekday, each under its own day. A field sprayed but not listed here: use Create spray event.'
         )
       )
     );
-    groups.forEach(function (g) {
-      const open = g.list.filter(function (s) {
-          return s.state !== 'done';
-        }),
-        ha = g.list.reduce(function (t, s) {
-          return t + s.ha;
-        }, 0);
-      const btn =
-        !readOnly() && open.length && canDrone
-          ? h(
-              'button',
-              {
-                type: 'button',
-                class: 'btn small primary',
-                'data-role': 'record-block',
-                disabled: !!draft,
-                title: draft ? 'Finish or discard the unfinished spray event first' : '',
-                onclick: function (ev) {
-                  startFrom(open, ev.currentTarget);
-                }
-              },
-              g.late ? 'Record these' : 'Record this block'
-            )
-          : null;
-      box.appendChild(
-        h(
-          'div',
-          { class: 'due-group' },
+    groups
+      .filter(function (g) {
+        return g.list.length;
+      })
+      .forEach(function (g) {
+        const open = g.list.filter(function (s) {
+            return s.state !== 'done';
+          }),
+          ha = g.list.reduce(function (t, s) {
+            return t + s.ha;
+          }, 0);
+        const btn =
+          !g.late && !readOnly() && !isFuture() && open.length && canDrone
+            ? h(
+                'button',
+                {
+                  type: 'button',
+                  class: 'btn small primary',
+                  'data-role': 'record-block',
+                  disabled: !!draft,
+                  title: draft ? 'Finish or discard the unfinished spray event first' : '',
+                  onclick: function (ev) {
+                    startFrom(open, ev.currentTarget);
+                  }
+                },
+                'Record this block'
+              )
+            : null;
+        box.appendChild(
           h(
             'div',
-            { class: 'due-head' },
+            { class: 'due-group' + (g.late ? ' late' : ''), 'data-role': g.late ? 'due-delayed' : 'due-block', 'data-date': g.late ? g.date : date },
             h(
               'div',
-              null,
-              h('b', null, g.title),
-              h('span', { class: 'sub' }, r2(ha).toFixed(2) + ' ha, ' + g.list.length + (g.list.length === 1 ? ' field' : ' fields'))
+              { class: 'due-head' },
+              h(
+                'div',
+                null,
+                h('b', null, g.title),
+                h(
+                  'span',
+                  { class: 'sub' },
+                  (g.sub ? g.sub + ', ' : '') + r2(ha).toFixed(2) + ' ha, ' + g.list.length + (g.list.length === 1 ? ' field' : ' fields')
+                )
+              ),
+              btn
             ),
-            btn
-          ),
+            h(
+              'div',
+              { class: 'due-chips' },
+              g.list.map(function (s) {
+                const movable = canMove && s.state !== 'done';
+                const chip = h(
+                  movable ? 'button' : 'span',
+                  {
+                    class: 'due-chip ' + s.state + (movable ? ' movable' : '') + (picked && picked.stamp_id === s.stamp_id ? ' picked' : ''),
+                    'data-field': s.field_id,
+                    'data-stamp': s.stamp_id,
+                    type: movable ? 'button' : null,
+                    draggable: movable ? 'true' : null,
+                    title: movable ? 'Tap, then choose the day to move it to. Or drag it.' : null
+                  },
+                  h('b', null, s.div_abbr + ' ' + s.code),
+                  r2(s.ha) + ' ha',
+                  s.state === 'done' ? icon('check') : null,
+                  s.moved && s.state !== 'done' ? h('small', null, 'moved') : null
+                );
+                if (movable) {
+                  chip.addEventListener('click', function () {
+                    picked = picked && picked.stamp_id === s.stamp_id ? null : s;
+                    renderDue();
+                  });
+                  chip.addEventListener('dragstart', function (ev) {
+                    picked = s;
+                    try {
+                      ev.dataTransfer.setData('text/plain', s.stamp_id);
+                      ev.dataTransfer.effectAllowed = 'move';
+                    } catch (e) {
+                      /* ignore */
+                    }
+                    showTargets();
+                  });
+                }
+                return chip;
+              })
+            )
+          )
+        );
+      });
+    const targets = h('div', { class: 'due-move', 'data-role': 'move-targets' });
+    box.appendChild(targets);
+    dueBox.appendChild(box);
+    showTargets();
+    /** Where the picked block can go: today (morning, evening) and the same weekday of the coming weeks, as far as the plan reaches. Each place takes a tap or a drop. */
+    function showTargets() {
+      clear(targets);
+      if (!canMove || !picked) return;
+      const last = data.horizon_to || addDays(today, 62),
+        places = [];
+      [
+        ['AM', 'morning'],
+        ['PM', 'evening']
+      ].forEach(function (x) {
+        places.push({ date: today, half: x[0], label: 'Today ' + x[1] });
+      });
+      for (let k = 1; k <= 5; k++) {
+        const d = addDays(today, 7 * k);
+        if (d > last) break;
+        [
+          ['AM', 'morning'],
+          ['PM', 'evening']
+        ].forEach(function (x) {
+          places.push({ date: d, half: x[0], label: weekdayName(d).slice(0, 3) + ' ' + shortDate(d) + ' ' + x[1] });
+        });
+      }
+      targets.appendChild(
+        h(
+          'div',
+          { class: 'due-move-h' },
+          h('span', null, 'Move ', h('b', null, picked.div_abbr + ' ' + picked.code), ' to:'),
           h(
-            'div',
-            { class: 'due-chips' },
-            g.list.map(function (s) {
-              return h(
-                'span',
-                { class: 'due-chip ' + s.state, 'data-field': s.field_id },
-                h('b', null, s.div_abbr + ' ' + s.code),
-                r2(s.ha) + ' ha',
-                s.state === 'done' ? icon('check') : null,
-                g.late ? h('small', null, shortDate(s.date)) : null
-              );
-            })
+            'button',
+            {
+              type: 'button',
+              class: 'btn small ghost',
+              onclick: function () {
+                picked = null;
+                renderDue();
+              }
+            },
+            'Cancel'
           )
         )
       );
-    });
-    dueBox.appendChild(box);
+      const row = h('div', { class: 'due-zones' });
+      places.forEach(function (p) {
+        const z = h('button', { type: 'button', class: 'due-zone', 'data-date': p.date, 'data-half': p.half }, p.label);
+        z.addEventListener('click', function () {
+          moveTo(p);
+        });
+        z.addEventListener('dragover', function (ev) {
+          ev.preventDefault();
+          z.classList.add('over');
+        });
+        z.addEventListener('dragleave', function () {
+          z.classList.remove('over');
+        });
+        z.addEventListener('drop', function (ev) {
+          ev.preventDefault();
+          moveTo(p);
+        });
+        row.appendChild(z);
+      });
+      targets.appendChild(row);
+    }
+    function moveTo(p) {
+      const s = picked;
+      if (!s) return;
+      picked = null;
+      renderDue();
+      api('api_moveFoliarStamp', { stamp_id: s.stamp_id, date: p.date, half: p.half }).then(
+        function (r) {
+          if (r.moved) toast('Moved to ' + p.label.toLowerCase());
+          loadAll();
+        },
+        function (e) {
+          toast(e.message, true);
+          loadAll();
+        }
+      );
+    }
     function startFrom(list, from) {
       if (sprayDraft(date)) {
         toast('Finish or discard the unfinished spray event first.');
@@ -11112,7 +11373,16 @@ VIEWS['spray.entry'] = function (root) {
   function renderBanners() {
     clear(bannerBox);
     if (offlineInfo) bannerBox.appendChild(msgBox('warn', offlineInfo));
-    if (readOnly())
+    if (isFuture())
+      bannerBox.appendChild(
+        h(
+          'div',
+          { class: 'msg warn' },
+          icon('calendar'),
+          h('div', null, 'Looking ahead to ' + shortDate(dateIn.value) + '. Spray events can only be recorded on the day.')
+        )
+      );
+    else if (readOnly())
       bannerBox.appendChild(
         h(
           'div',
@@ -11303,7 +11573,7 @@ VIEWS['spray.entry'] = function (root) {
 
   function renderCreate() {
     clear(createBox);
-    if (readOnly()) return;
+    if (readOnly() || isFuture()) return;
     const draft = sprayDraft(dateIn.value),
       n = draft ? Object.keys(draft.pct).length : 0;
     if (!data.fields.length) {
@@ -11374,7 +11644,11 @@ VIEWS['spray.entry'] = function (root) {
     if (!list.length) {
       listBox.appendChild(
         emptyState(
-          readOnly() ? 'No spray events were recorded on this day.' : 'No spray event yet today. Tap "Create spray event" to record the first one.',
+          isFuture()
+            ? 'Nothing is recorded yet: spray events are recorded on the day.'
+            : readOnly()
+              ? 'No spray events were recorded on this day.'
+              : 'No spray event yet today. Tap "Create spray event" to record the first one.',
           'droplet'
         )
       );

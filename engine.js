@@ -769,6 +769,18 @@ const TASKS = [
     desc: "Edit the month's drone spray plan: drag a grey or red stamp to another day (morning or evening). Includes seeing the calendar."
   },
   {
+    id: 'foliar.future',
+    group: 'Data entry',
+    label: 'Foliar plan of coming days',
+    desc: "On the Foliar spray screen, look ahead: choose a coming day and see the drone spray blocks planned for it (for the fields in the role's scope). Recording still opens only on the day. Included with Foliar calendar and Foliar scheduling."
+  },
+  {
+    id: 'foliar.move',
+    group: 'Data entry',
+    label: 'Move foliar blocks',
+    desc: 'On the Foliar spray screen, move a delayed or planned drone spray block to today or to a later day (the same weekday of a coming week), by drag and drop or by tapping. The change shows on the foliar calendar too. Without it a person sees the delayed blocks but cannot move them. Included with Foliar scheduling.'
+  },
+  {
     id: 'pluck.entry',
     group: 'Data entry',
     label: 'Plucking',
@@ -2323,7 +2335,7 @@ function ensureMonth_(month, today, stampRows) {
   const missingOf = function (tpl, rows) {
     const have = {};
     (rows || dbAll_(SHEETS.STAMPS)).forEach(function (s) {
-      if (s.month === month) have[s.template_id] = true;
+      if ((s.orig_date ? monthKey_(s.orig_date) : s.month) === month) have[s.template_id] = true; // (a stamp moved into another month still covers its own slot)
     });
     return tpl.filter(function (t) {
       return !have[t.slot_id] && nthWeekday_(month, t.weekday, t.week_no);
@@ -2500,10 +2512,25 @@ function api_foliarCalendar(token, month) {
   });
 }
 
-/** Move a stamp to another day (today or later, in the same month) and half-day. Not a done stamp; not into a block or a day that would hold too much. */
+/** May this account look at the plan of coming days on the Foliar spray screen? (The calendar and scheduling powers include it.) */
+function foliarFutureAllowed_(c) {
+  return hasTask_(c, 'foliar.future') || hasTask_(c, 'foliar.calendar') || hasTask_(c, 'foliar.schedule');
+}
+/** May this account move blocks on the Foliar spray screen? (Scheduling includes it.) */
+function foliarMoveAllowed_(c) {
+  return hasTask_(c, 'foliar.move') || hasTask_(c, 'foliar.schedule');
+}
+/** The last day that can be planned: the end of the month after next (the months that are made ahead). */
+function planHorizon_(today) {
+  const m = addMonths_(monthKey_(today), 2);
+  return m + '-' + padNum_(monthDays_(m), 2);
+}
+
+/** Move a stamp to another day (today or later, up to the end of the month after next) and half-day. A stamp moved into another month belongs to that month from then on. Not a done stamp;
+ *  not into a block or a day that would hold too much. */
 function api_moveFoliarStamp(token, p) {
   return wrap_(function () {
-    const c = authz_(token, ['foliar.schedule']);
+    const c = authz_(token, ['foliar.schedule', 'foliar.move']);
     p = p || {};
     const today = todayStr_(),
       params = getParams_(today);
@@ -2519,14 +2546,14 @@ function api_moveFoliarStamp(token, p) {
         half = String(p.half || '');
       if (!isDate_(date)) fail_('Choose a day.', 'VALIDATION');
       if (HALVES.indexOf(half) < 0) fail_('Choose morning or evening.', 'VALIDATION');
-      if (monthKey_(date) !== cur.month) fail_('A stamp can only be moved inside the month it belongs to.', 'VALIDATION');
       if (date < today) fail_('A stamp can only be moved to today or a later day.', 'VALIDATION');
+      if (date > planHorizon_(today)) fail_('The plan reaches only to ' + planHorizon_(today) + '.', 'VALIDATION');
       const st = stampStates_(cur.month, today, rows).filter(function (s) {
         return s.stamp_id === cur.stamp_id;
       })[0];
       if (st.state === 'done') fail_('This stamp is green: its spraying is done and it cannot be moved.', 'VALIDATION');
       if (cur.date === date && cur.half === half) return { moved: false };
-      const others = stampsOfMonth_(cur.month, rows).filter(function (s) {
+      const others = stampsOfMonth_(monthKey_(date), rows).filter(function (s) {
         return s.stamp_id !== cur.stamp_id && s.date === date;
       });
       const block = others
@@ -2555,7 +2582,7 @@ function api_moveFoliarStamp(token, p) {
       if (day + cur.ha > params.foliar_day_max_ha + 1e-9)
         fail_(date + ' would hold ' + round_(day + cur.ha, 2) + ' ha; the most in a day is ' + params.foliar_day_max_ha + ' ha.', 'VALIDATION');
       const now = nowIso_();
-      dbUpdate_(SHEETS.STAMPS, cur._row, { date: date, half: half, moved_by: c.user.username, moved_at: now });
+      dbUpdate_(SHEETS.STAMPS, cur._row, { date: date, half: half, month: monthKey_(date), moved_by: c.user.username, moved_at: now });
       audit_(c.user.username, 'FOLIAR_STAMP_MOVE', 'foliar_stamp', cur.stamp_id, {
         field: fieldLabel_(fld),
         ha: cur.ha,
@@ -2567,24 +2594,34 @@ function api_moveFoliarStamp(token, p) {
   });
 }
 
-/** What a person on the Foliar spray screen sees for a day: the stamps planned for that day (for today also every overdue stamp of this and last month), only on fields they may record. */
+/** What a person on the Foliar spray screen sees for a day, only on fields they may record:
+ *   - the stamps planned for that day (a coming day only for an account that may look ahead);
+ *   - for TODAY also the DELAYED stamps of earlier days with the same weekday as today (on a Tuesday: the Tuesdays of last week, the week before, ... and of earlier months), each on its own day,
+ *     so a delay shows up again on the weekday it was missed, not all at once. */
 function dueFor_(c, date, today, idx, sprayRows) {
-  const out = [],
-    months = [monthKey_(date)];
-  if (date === today) months.push(addMonths_(monthKey_(today), -1));
-  let rows = dbAll_(SHEETS.STAMPS); // read once for both months (and the spray lines come from the caller)
-  if (months[0] === monthKey_(today)) {
+  if (date > today && !foliarFutureAllowed_(c)) return [];
+  const cur = monthKey_(today);
+  let rows = dbAll_(SHEETS.STAMPS); // read once for every month (and the spray lines come from the caller)
+  const dm = monthKey_(date);
+  if (dm >= cur) {
     try {
-      if (ensureMonth_(months[0], today, rows)) rows = dbAll_(SHEETS.STAMPS);
+      if (ensureMonth_(dm, today, rows)) rows = dbAll_(SHEETS.STAMPS);
     } catch (e) {
       /* the screen still works without the plan */
     }
   }
+  const months = [dm];
+  if (date === today)
+    rows.forEach(function (s) {
+      if (s.status === 'Active' && s.month < cur && months.indexOf(s.month) < 0) months.push(s.month); // earlier months that hold stamps
+    });
+  const wd = weekdayOf_(today),
+    out = [];
   months.forEach(function (m) {
     stampStates_(m, today, rows, sprayRows).forEach(function (s) {
       const f = idx[s.field_id];
       if (!f || !inScope_(c, f)) return;
-      if (s.date === date || (date === today && s.state === 'overdue')) out.push(shapeStamp_(s, idx));
+      if (s.date === date || (date === today && s.state === 'overdue' && s.date < today && weekdayOf_(s.date) === wd)) out.push(shapeStamp_(s, idx));
     });
   });
   return out.sort(function (a, b) {
@@ -4664,6 +4701,9 @@ function api_sprayDay(token, date) {
       fourth_options: FOURTH_COMPOUNDS.slice(),
       tolerance_pct: params.foliar_plan_tolerance_pct,
       due: dueFor_(c, date, today, idx, lines),
+      can_move: foliarMoveAllowed_(c), // may drag a delayed or planned block to another day on this screen
+      can_future: foliarFutureAllowed_(c), // may choose a coming day
+      horizon_to: planHorizon_(today),
       day_max_ha: params.foliar_day_max_ha
     };
   });
