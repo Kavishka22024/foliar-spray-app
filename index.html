@@ -18,7 +18,7 @@
 <style>
 /* ================= Design tokens ================= */
 :root {
-  color-scheme: light dark;                       /* date boxes, selects and scrollbars follow the dark mode */
+  color-scheme: light dark; /* date boxes, selects and scrollbars follow the dark mode */
   --bg: #f3f6f4;
   --surface: #ffffff;
   --surface-2: #f7f9f8;
@@ -33,7 +33,7 @@
   --primary-ink: #ffffff;
   --primary-soft: #e3f1e9;
   --ring: rgba(29, 107, 71, 0.25);
-  --focus: #1d6b47;                                 /* a solid focus outline: the soft ring above is too faint to count as one */
+  --focus: #1d6b47; /* a solid focus outline: the soft ring above is too faint to count as one */
   --drone: #1a6aa6;
   --drone-soft: #e2effa;
   --drone-solid: #1a6aa6;
@@ -1524,8 +1524,6 @@ form.forced {
   border-top: 3px solid var(--primary);
 }
 
-
-
 /* ================= Admin helpers ================= */
 .pw {
   font:
@@ -2430,8 +2428,6 @@ th.nowrap {
   color: var(--muted);
 }
 
-
-
 .cov-x {
   border: 0;
   background: none;
@@ -2590,15 +2586,62 @@ th.nowrap {
 .fc-help {
   margin: 0 0 10px;
 }
+.fc-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+.fc-zlabel {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* the month is a canvas: .fc-grid is always 1060 px wide and is scaled (transform) inside .fc-zoomer, which takes the scaled size so the scroll area is right */
 .fc-scroll {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 75vh;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
+  touch-action: pan-x pan-y; /* one finger scrolls, two fingers zoom the canvas (script), not the whole page */
+  overscroll-behavior: contain;
+}
+.fc-zoomer {
+  position: relative;
+  margin: 0 auto;
 }
 .fc-grid {
   display: grid;
-  grid-template-columns: 78px repeat(7, minmax(140px, 1fr));
-  min-width: 1060px;
+  grid-template-columns: 78px repeat(7, minmax(0, 1fr));
+  width: 1060px;
+  transform-origin: 0 0;
+}
+.fcal.fc-full {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  margin: 0;
+  border-radius: 0;
+  border: 0;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.fcal.fc-full .fc-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.fcal.fc-full .fc-sum {
+  display: none;
+}
+.fcal.fc-full .fc-nav {
+  margin: 6px 0;
 }
 .fc-corner,
 .fc-wd {
@@ -3935,8 +3978,6 @@ thead .mon-field {
   color: var(--ink-2);
 }
 
-
-
 .exp-chart .legend {
   margin: 0 0 6px;
   padding: 0;
@@ -3951,10 +3992,6 @@ thead .mon-field {
   align-items: center;
   gap: 7px;
 }
-
-
-
-
 
 .exp-val {
   fill: var(--ink);
@@ -4212,8 +4249,6 @@ thead .mon-field {
   opacity: 0.85;
 }
 
-
-
 @media (max-width: 900px) {
   .exp-heads,
   .exp-grid.two {
@@ -4259,10 +4294,6 @@ nav.tabs button.sub.on::after {
   grid-column: 1 / -1;
 }
 
-
-
-
-
 .exp-body {
   margin-top: 14px;
   background: var(--surface);
@@ -4288,7 +4319,6 @@ nav.tabs button.sub.on::after {
   align-items: center;
   gap: 7px;
 }
-
 
 /* ---- KPI cards (v2): the percentage as a picture, the graph attached underneath ---- */
 .exp-heads {
@@ -5580,11 +5610,6 @@ nav.tabs button.sub.on::after {
   border-top: 1px solid var(--line);
 }
 
-
-
-
-
-
 .hm-by {
   margin-left: auto;
   display: inline-flex;
@@ -5612,10 +5637,6 @@ nav.tabs button.sub.on::after {
   font-weight: 800;
   font-style: normal;
 }
-
-
-
-
 
 .hm-none {
   padding: 14px 4px 4px;
@@ -13473,6 +13494,11 @@ function hasTask(id) {
   );
 }
 const FC_WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const FC_GRID_W = 1060; // width of the calendar grid at 100% (the same number as .fc-grid in the CSS)
+const FC_Z_MIN = 0.2,
+  FC_Z_MAX = 2.5,
+  FC_Z_FIT_MAX = 1.4,
+  FC_Z_STEP = 1.25;
 const FC_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const FC_STATE_TEXT = { done: 'Sprayed', overdue: 'Not sprayed on its day', due: 'Planned for today', planned: 'Planned' };
 function fcMonthLabel(m) {
@@ -13490,7 +13516,11 @@ function foliarCalendarCard() {
     data = null,
     edit = false,
     selected = null,
-    filter = '';
+    filter = '',
+    zoom = 0, // 0 = fit the month to the screen; otherwise the scale of the canvas (1 = 100%)
+    full = false, // the calendar covers the whole screen
+    canvas = null, // { scroll, zoomer, grid, zlabel } of the month on screen
+    hooked = false;
   const card = h('div', { class: 'card fcal' });
   load();
   return card;
@@ -13498,10 +13528,11 @@ function foliarCalendarCard() {
   function load(m) {
     return api('api_foliarCalendar', m || month || '')
       .then(function (d) {
+        const changed = d.month !== month;
         data = d;
         month = d.month;
         selected = null;
-        draw();
+        draw(changed);
       })
       .catch(function (e) {
         clear(card).appendChild(msgBox('err', e.message));
@@ -13683,8 +13714,143 @@ function foliarCalendarCard() {
     return sec;
   }
 
-  function draw() {
+  // ---- the month as a canvas: zoom with the buttons, two fingers or Ctrl + wheel; "Fit" shows the whole month; "Full screen" uses the whole screen
+  /** Scale now on screen: the chosen one, or the one that makes the month fit (full screen: the whole month, otherwise its width). */
+  function zoomNow() {
+    if (zoom) return zoom;
+    const w = (canvas && canvas.scroll.clientWidth) || window.innerWidth - 40;
+    let z = w / FC_GRID_W;
+    if (full && canvas && canvas.scroll.clientHeight && canvas.grid.offsetHeight)
+      z = Math.min(z, canvas.scroll.clientHeight / canvas.grid.offsetHeight);
+    return Math.max(FC_Z_MIN, Math.min(FC_Z_FIT_MAX, z));
+  }
+  function zoomApply() {
+    if (!canvas) return;
+    const z = zoomNow();
+    canvas.grid.style.transform = 'scale(' + z + ')';
+    canvas.zoomer.style.width = Math.round(FC_GRID_W * z) + 'px';
+    canvas.zoomer.style.height = Math.round(canvas.grid.offsetHeight * z) + 'px';
+    canvas.zlabel.textContent = Math.round(z * 100) + '%';
+  }
+  /** Zoom to scale nz keeping the point (cx, cy) of the visible area (default: its middle) where it is. */
+  function zoomTo(nz, cx, cy) {
+    if (!canvas) return;
+    const s = canvas.scroll,
+      old = zoomNow();
+    if (cx === undefined) {
+      cx = s.clientWidth / 2;
+      cy = s.clientHeight / 2;
+    }
+    const x = (s.scrollLeft + cx) / old,
+      y = (s.scrollTop + cy) / old;
+    zoom = Math.max(FC_Z_MIN, Math.min(FC_Z_MAX, nz));
+    zoomApply();
+    s.scrollLeft = x * zoom - cx;
+    s.scrollTop = y * zoom - cy;
+  }
+  function zoomBar(zlabel) {
+    const btn = function (text, label, onclick, cls) {
+      return h('button', { type: 'button', class: 'btn small' + (cls || ''), 'aria-label': label, title: label, onclick: onclick }, text);
+    };
+    return h(
+      'div',
+      { class: 'fc-zoom' },
+      btn('−', 'Zoom out', function () {
+        zoomTo(zoomNow() / FC_Z_STEP);
+      }),
+      zlabel,
+      btn('+', 'Zoom in', function () {
+        zoomTo(zoomNow() * FC_Z_STEP);
+      }),
+      btn(
+        'Fit',
+        'Fit the whole month on the screen',
+        function () {
+          zoom = 0;
+          zoomApply();
+          if (canvas) {
+            canvas.scroll.scrollLeft = 0;
+            canvas.scroll.scrollTop = 0;
+          }
+        },
+        ' fc-fit'
+      ),
+      btn('100%', 'Normal size', function () {
+        zoomTo(1);
+      })
+    );
+  }
+  /** Two fingers or Ctrl + wheel zoom the canvas around the fingers; one finger scrolls it as before. */
+  function wireCanvas(s) {
+    let p0 = 0,
+      z0 = 1;
+    const dist = function (t) {
+        return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+      },
+      at = function (x, y) {
+        const r = s.getBoundingClientRect();
+        return [x - r.left, y - r.top];
+      };
+    s.addEventListener(
+      'touchstart',
+      function (e) {
+        if (e.touches.length === 2) {
+          p0 = dist(e.touches);
+          z0 = zoomNow();
+        }
+      },
+      { passive: true }
+    );
+    s.addEventListener(
+      'touchmove',
+      function (e) {
+        if (e.touches.length !== 2 || !p0) return;
+        e.preventDefault();
+        const m = at((e.touches[0].clientX + e.touches[1].clientX) / 2, (e.touches[0].clientY + e.touches[1].clientY) / 2);
+        zoomTo((z0 * dist(e.touches)) / p0, m[0], m[1]);
+      },
+      { passive: false }
+    );
+    s.addEventListener('touchend', function (e) {
+      if (e.touches.length < 2) p0 = 0;
+    });
+    s.addEventListener(
+      'wheel',
+      function (e) {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const m = at(e.clientX, e.clientY);
+        zoomTo(zoomNow() * Math.exp(-e.deltaY / 200), m[0], m[1]);
+      },
+      { passive: false }
+    );
+  }
+  /** Keep "Fit" fitting when the phone is turned, and let Esc leave full screen; both stop when the calendar is no longer on the page. */
+  function hook() {
+    if (hooked) return;
+    hooked = true;
+    const onResize = function () {
+        if (!card.isConnected) return window.removeEventListener('resize', onResize);
+        if (!zoom) zoomApply();
+      },
+      onKey = function (e) {
+        if (!card.isConnected) return document.removeEventListener('keydown', onKey);
+        if (full && e.key === 'Escape') {
+          full = false;
+          draw();
+        }
+      };
+    window.addEventListener('resize', onResize);
+    document.addEventListener('keydown', onKey);
+  }
+
+  function draw(newMonth) {
+    const old = card.querySelector('.fc-scroll'),
+      keepL = old && !newMonth ? old.scrollLeft : 0, // a redraw (a stamp tapped, a filter) keeps the place on the canvas
+      keepT = old && !newMonth ? old.scrollTop : 0;
     clear(card);
+    canvas = null;
+    card.classList.toggle('fc-full', full);
     const d = data;
     const nav = h(
       'div',
@@ -13727,6 +13893,23 @@ function foliarCalendarCard() {
       )
     );
     const tools = h('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' });
+    tools.appendChild(
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'btn fc-fullbtn',
+          'data-role': 'full-screen',
+          'aria-pressed': full ? 'true' : 'false',
+          title: full ? 'Back to the page' : 'Use the whole screen for the calendar',
+          onclick: function () {
+            full = !full;
+            draw();
+          }
+        },
+        full ? 'Exit full screen' : 'Full screen'
+      )
+    );
     if (d.can_edit && d.stamps.length)
       tools.appendChild(
         h(
@@ -13873,7 +14056,17 @@ function foliarCalendarCard() {
         );
       }
     }
-    card.appendChild(h('div', { class: 'fc-scroll' }, grid));
+    const zoomer = h('div', { class: 'fc-zoomer' }, grid),
+      scroll = h('div', { class: 'fc-scroll' }, zoomer),
+      zlabel = h('span', { class: 'fc-zlabel', 'aria-live': 'polite' });
+    card.appendChild(zoomBar(zlabel));
+    card.appendChild(scroll);
+    canvas = { scroll: scroll, zoomer: zoomer, grid: grid, zlabel: zlabel };
+    zoomApply();
+    scroll.scrollLeft = keepL;
+    scroll.scrollTop = keepT;
+    wireCanvas(scroll);
+    hook();
     if (selected) mark();
   }
 }
