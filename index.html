@@ -367,7 +367,18 @@ nav.tabs button svg.ico {
   width: 40px;
   height: 40px;
 }
+/* a screen being drawn quietly: laid out like the real one (same width) but out of sight, then swapped in at once */
+main.content.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
 .maincol {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -1614,6 +1625,18 @@ table.grid-edit tr.incomplete td:first-child {
   background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 37%, var(--line) 63%);
   background-size: 400% 100%;
   animation: sk 1.3s ease infinite;
+}
+/* the loading placeholder only appears if the data takes longer than a blink: a quick answer (the phone's own copy) never flashes it */
+div[aria-busy='true'] {
+  animation: skin 0.2s ease-out 0.2s both;
+}
+@keyframes skin {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes sk {
   0% {
@@ -6225,7 +6248,30 @@ function add(e, kid) {
   }
   e.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
 }
+/** Calls from the screens that are still waiting (a screen being drawn quietly waits for them), and when the last one ended. */
+const Net = { n: 0, last: 0 };
+/** A big block that is emptied to be filled again keeps its height for a moment, so the page below it does not jump up and down (and the scroll position is not thrown off) while the new content is on its way. */
+function holdHeight(e) {
+  if (!e.firstChild || !e.isConnected || (e.style.minHeight && !e._held)) return;
+  const hgt = e.offsetHeight;
+  if (hgt < 160) return;
+  if (!e._held || hgt > e._heldH) {
+    e.style.minHeight = hgt + 'px';
+    e._heldH = hgt;
+  }
+  e._held = true;
+  clearTimeout(e._holdT);
+  const t0 = Date.now();
+  (function tick() {
+    e._holdT = setTimeout(function () {
+      if ((Net.n > 0 || Date.now() - Net.last < 150) && Date.now() - t0 < 2500) return tick();
+      e.style.minHeight = '';
+      e._held = false;
+    }, 150);
+  })();
+}
 function clear(e) {
+  holdHeight(e);
   while (e.firstChild) e.removeChild(e.firstChild);
   return e;
 }
@@ -6495,8 +6541,14 @@ function transport(name, args, ok, fail) {
 }
 /** A call from a screen: the phone's own copy answers it when it can (at once, with or without signal); otherwise the server does (or, without signal, the saved windows). */
 function callServer(name, args) {
-  if (typeof Phone !== 'undefined' && Phone.handles(name)) return callLocal(name, args);
-  return callRemote(name, args);
+  Net.n++;
+  const done = function () {
+    Net.n--;
+    Net.last = Date.now();
+  };
+  const p = typeof Phone !== 'undefined' && Phone.handles(name) ? callLocal(name, args) : callRemote(name, args);
+  p.then(done, done);
+  return p;
 }
 function callLocal(name, args) {
   return Phone.call(name, args).then(
@@ -6959,7 +7011,8 @@ function checkNewDay() {
   const t = Local.today();
   if (!S.me || t === S.today) return;
   S.today = t;
-  if (S.go && S.tab && !document.querySelector('.overlay') && !document.querySelector('input:focus,textarea:focus,select:focus')) S.go(S.tab);
+  if (S.go && S.tab && !document.querySelector('.overlay') && !document.querySelector('input:focus,textarea:focus,select:focus'))
+    (S.refresh || S.go)(S.tab);
 }
 
 function enterApp() {
@@ -7011,12 +7064,21 @@ function renderShell() {
     return id === 'home' || (labels[id] && VIEWS[id]);
   });
   const nav = h('nav', { class: 'tabs', 'aria-label': 'Main' });
-  const main = h('main', { class: 'content' });
+  let main = h('main', { class: 'content' });
   const title = h('div', { class: 'title' });
   const closeNav = function () {
     document.body.classList.remove('nav-open');
   };
+  let staging = null, // the screen being drawn out of sight by refresh()
+    again = false, // newer data arrived while it was being drawn: draw once more afterwards
+    gen = 0; // counts the screens opened: a quiet redraw of an older one is dropped
   function go(id, keepScroll) {
+    gen++;
+    again = false;
+    if (staging) {
+      staging.remove();
+      staging = null;
+    }
     S.today = Local.today();
     S.tab = id;
     store('tab', id);
@@ -7036,6 +7098,120 @@ function renderShell() {
     if (!keepScroll) window.scrollTo(0, 0);
   }
   S.go = go;
+  /** Parts of a screen that were scrolled on their own (a wide table, the calendar): found again in the new screen by their place. */
+  function scrolled(root) {
+    const out = [];
+    Array.prototype.forEach.call(root.querySelectorAll('*'), function (el, i) {
+      if (el.scrollTop || el.scrollLeft) out.push({ i: i, tag: el.tagName, cls: el.className, top: el.scrollTop, left: el.scrollLeft });
+    });
+    return out;
+  }
+  /** Show the same screen again from the newest data WITHOUT a flicker or a jump: the new screen is built out of sight, put in place in one step once its data has arrived (and only when it looks different), and the page stays exactly where it was. */
+  function refresh(tries) {
+    if (!S.tab || !VIEWS[S.tab]) return;
+    if (staging) {
+      again = true;
+      return;
+    }
+    tries = typeof tries === 'number' ? tries : 0;
+    /** Not now (a dialog is open, somebody is typing or editing, or the person just touched the screen): the screen is left alone and drawn again a little later. */
+    function later() {
+      if (tries < 12)
+        setTimeout(function () {
+          refresh(tries + 1);
+        }, 700);
+    }
+    if (
+      document.querySelector('.overlay') ||
+      document.querySelector('[data-no-refresh]') ||
+      document.querySelector('input:focus,textarea:focus,select:focus')
+    ) {
+      later();
+      return;
+    }
+    const id = S.tab,
+      old = main,
+      mine = gen,
+      touched = S.touched,
+      stage = h('main', { class: 'content stage', 'aria-hidden': 'true' });
+    staging = stage;
+    S.today = Local.today();
+    const hadStale = Offline.staleAt;
+    Offline.staleAt = ''; // (not painted: the bar stays as it is until the new screen says whether it is still old data)
+    old.parentNode.appendChild(stage);
+    function finish(ok) {
+      if (staging === stage) staging = null;
+      const more = again && gen === mine && ok;
+      again = false;
+      if (more) {
+        stage.remove(); // newer data came meanwhile: this drawing is already old, draw again instead of showing it
+        setTimeout(refresh, 0);
+        return;
+      }
+      if (ok && gen === mine && S.touched !== touched) {
+        // the person did something while it was being drawn: this drawing may not know about it yet, so it is thrown away and the screen is drawn again a moment later (never over what they just did)
+        stage.remove();
+        if (!Offline.staleAt) Offline.staleAt = hadStale;
+        Offline.paint();
+        later();
+        return;
+      }
+      if (!ok || gen !== mine || !old.isConnected) {
+        stage.remove();
+        if (gen === mine && !Offline.staleAt) Offline.staleAt = hadStale; // not drawn: nothing changed on screen
+        Offline.paint();
+        return;
+      }
+      if (stage.innerHTML === old.innerHTML) {
+        stage.remove(); // nothing to see: the screen is left alone
+        Offline.paint();
+        return;
+      }
+      const y = window.scrollY,
+        sc = scrolled(old);
+      stage.classList.remove('stage');
+      stage.removeAttribute('aria-hidden');
+      old.replaceWith(stage);
+      main = stage;
+      window.scrollTo(0, y);
+      const all = stage.querySelectorAll('*');
+      sc.forEach(function (s0) {
+        const el = all[s0.i];
+        if (el && el.tagName === s0.tag && el.className === s0.cls) {
+          el.scrollTop = s0.top;
+          el.scrollLeft = s0.left;
+        }
+      });
+      Offline.paint();
+    }
+    try {
+      VIEWS[id](stage);
+    } catch (e) {
+      finish(false);
+      return;
+    }
+    const t0 = Date.now();
+    (function wait() {
+      if (gen !== mine) return finish(false);
+      const quiet = Net.n === 0 && Date.now() - Net.last > 90 && Date.now() - t0 > 90;
+      if (quiet) return finish(true);
+      if (Date.now() - t0 > 4000) return finish(false); // too slow: leave the screen as it is (the next change tries again)
+      setTimeout(wait, 40);
+    })();
+  }
+  S.refresh = function () {
+    refresh(0);
+  };
+  S.touched = 0; // counts what the person does on the screen: a quiet redraw that was started before is not put over it
+  ['pointerdown', 'click', 'keydown', 'input', 'change', 'dragstart', 'drop'].forEach(function (t) {
+    document.addEventListener(
+      t,
+      function () {
+        S.touched++;
+      },
+      true
+    );
+  });
   let lastGroup = null;
   tabs.forEach(function (id) {
     const g = TASK_GROUP[id] || null;
@@ -7656,8 +7832,12 @@ const Sync = {
 // ---------- sync status pill + panel
 function syncPill(extra) {
   const el = h('button', { type: 'button', class: 'syncpill', onclick: openSyncPanel, 'aria-label': 'Upload status' });
+  let shown = '';
   function paint() {
-    const s = Sync.status();
+    const s = Sync.status(),
+      key = s.kind + '|' + s.text;
+    if (key === shown) return; // nothing changed: the pill is not redrawn (its dot keeps pulsing smoothly)
+    shown = key;
     el.className = 'syncpill ' + s.kind + (extra ? ' ' + extra : '');
     clear(el);
     add(el, [h('span', { class: 'sdot' }), h('span', { class: 'stext' }, s.text)]);
@@ -8028,14 +8208,17 @@ const Offline = {
     return h('div', { class: 'stalebar', role: 'status', hidden: true });
   },
   paint: function () {
-    const self = this;
+    const self = this,
+      text = self.staleAt ? 'No signal. Showing what this phone saved ' + self.when(self.staleAt) + '.' : '';
     Array.prototype.forEach.call(document.querySelectorAll('.stalebar'), function (el) {
+      if (el._text === text) return; // unchanged: leave it alone (no redraw, no blink)
+      el._text = text;
       clear(el);
-      if (!self.staleAt) {
+      if (!text) {
         el.hidden = true;
         return;
       }
-      add(el, [h('span', { class: 'sdot' }), h('span', null, 'No signal. Showing what this phone saved ' + self.when(self.staleAt) + '.')]);
+      add(el, [h('span', { class: 'sdot' }), h('span', null, text)]);
       el.hidden = false;
     });
   },
@@ -8066,8 +8249,12 @@ const Offline = {
       }
       self._backoff = Math.min((self._backoff || 0) * 2 || 1, 8);
       self._wait = self._backoff; // when there is still no signal the next tries are further apart
-      self.resetStale();
-      S.go(S.tab, true); // shows fresh data, or the saved copy again (and the bar) when still no signal; the page stays where it is
+      if (S.refresh)
+        S.refresh(); // shows fresh data (or the saved copy again) in one step; the page stays where it is and the bar does not blink
+      else {
+        self.resetStale();
+        S.go(S.tab, true);
+      }
     }
     window.addEventListener('online', function () {
       setTimeout(tryRefresh, 1200);
@@ -8881,7 +9068,7 @@ const Phone = {
     clearTimeout(this._refresh);
     this._refresh = setTimeout(function () {
       if (document.querySelector('.overlay') || document.querySelector('[data-no-refresh]')) return;
-      S.go(S.tab, true);
+      (S.refresh || S.go)(S.tab, true); // drawn out of sight and swapped in one step: no flicker
     }, 400);
   },
 
@@ -8891,6 +9078,7 @@ const Phone = {
     const self = this,
       write = self.WRITES.indexOf(name) >= 0;
     const opId = write ? 'OP-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10) : undefined;
+    if (write) S.touched = (S.touched || 0) + 1; // (a quiet redraw that is under way must not be put over this)
     return self.rpc('run', { fn: name, args: args, opId: opId }).then(
       function (r) {
         if (write && r.result && r.result.ok) {
