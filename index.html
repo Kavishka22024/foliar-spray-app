@@ -2328,11 +2328,24 @@ th.nowrap {
   cursor: default;
 }
 @media (max-width: 520px) {
+  .wz {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 4px;
+    gap: 6px;
+  }
+  .wz.on {
+    flex: 3 1 0;
+  }
   .wz-t {
     display: none;
   }
   .wz.on .wz-t {
     display: inline;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 .methodline {
@@ -6209,6 +6222,55 @@ nav.tabs button.sub.on::after {
 @media (max-width: 760px) {
   .hm-ecgrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ================= fit any window width =================
+   Nothing may be wider than the screen: long words break, rows of buttons wrap, cards on a phone let their cells wrap. */
+.btn {
+  max-width: 100%;
+}
+.msg {
+  flex-wrap: wrap;
+}
+.msg > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 340px) {
+  /* very small windows: the date bar wraps and the Home cards stack */
+  .datepick {
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+  }
+  .datepick input {
+    width: 130px;
+    min-width: 0;
+  }
+  .hm-cards {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 560px) {
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+  .msg > div {
+    flex: 1 1 150px;
+  }
+  .badge {
+    white-space: normal;
+    text-align: left;
+  }
+  .tablewrap:not(.scroll) td {
+    flex-wrap: wrap;
+  }
+  .tablewrap:not(.scroll) td > * {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 }
 </style>
@@ -10669,11 +10731,7 @@ function openSprayEvent(o) {
             h(
               'div',
               null,
-              'Foliar plan from ' +
-                shortDate(plan.effective_from) +
-                ' ' +
-                plan.effective_from.slice(0, 4) +
-                ': Zinc ' +
+              'Active foliar ratio: Zinc ' +
                 r2(plan.zinc) +
                 ', Epsom salt ' +
                 r2(plan.epsom) +
