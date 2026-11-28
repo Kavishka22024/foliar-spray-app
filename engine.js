@@ -1502,8 +1502,7 @@ function checkPricing_(c, rep) {
   const noPlan = act.filter(function (e) {
     return mixOf_(e) && !e.plan_id;
   });
-  if (noPlan.length)
-    rep.warn('spray events recorded with no foliar plan in force on their day', noPlan.length + ', first ' + checkFirstDate_(noPlan));
+  if (noPlan.length) rep.warn('spray events recorded when no foliar plan had been entered', noPlan.length + ', first ' + checkFirstDate_(noPlan));
   none(
     c.activeLeaf,
     function (r) {
@@ -2080,30 +2079,31 @@ function api_saveFields(token, divisionId, rows) {
 // ---- FoliarPlan.gs
 /** The FOLIAR PLAN: what is mixed for ONE hectare.
  *
- *  The foliar is four compounds mixed with water: Zinc, Epsom salt, Wuxal and (depending on the month) Urea or T65. Once a month it is decided how many kg of each
- *  compound go on one hectare. A plan row holds those four kg per ha and the date from which it applies; the plan in force on a day is the latest one whose date is on or
- *  before that day. The spray entry screen multiplies the plan by the hectares sprayed to suggest the kg of each compound; the person can change the kg (what was really
- *  mixed is what is stored) and an event that is far from the plan is flagged.
- *  Plans are never deleted: a plan entered for the same date replaces the earlier one, and a wrong plan can be voided (the audit trail keeps both).
+ *  The foliar is four compounds mixed with water: Zinc, Epsom salt, Wuxal and (depending on the month) Urea or T65. It is decided how many kg of each compound go on one
+ *  hectare. The ACTIVE plan is simply the one that was entered LAST (no effective dates: whatever was entered last is the ratio in use, whenever it was entered). The spray
+ *  entry screen multiplies it by the hectares sprayed to suggest the kg of each compound; the person can change the kg (what was really mixed is what is stored) and an
+ *  event that is far from the plan is flagged. Earlier plans stay in the sheet and in the audit log (never deleted), but only the active one is shown.
  */
 
-/** The active plans, oldest first (the later row wins when two have the same date). */
+/** The active plans in the order they were entered, oldest first (the last one is THE active plan). */
 function plansAll_() {
   return dbAll_(SHEETS.PLANS)
     .filter(function (p) {
-      return p.status === 'Active' && isDate_(p.effective_from);
+      return p.status === 'Active';
     })
     .sort(function (a, b) {
-      return a.effective_from === b.effective_from ? a._row - b._row : a.effective_from < b.effective_from ? -1 : 1;
+      return a._row - b._row;
     });
 }
-/** The plan in force on a date (from plansAll_()), or null. */
+/** The active plan: the one entered last, whatever its date (the date argument is only there for the callers that ask "on this day"). */
 function planOn_(date, plans) {
-  let best = null;
-  (plans || plansAll_()).forEach(function (p) {
-    if (p.effective_from <= date) best = p;
-  });
-  return best;
+  const list = plans || plansAll_();
+  return list.length ? list[list.length - 1] : null;
+}
+/** The active plan as a list of one (or none) for the screens. */
+function activePlanList_() {
+  const p = planOn_(todayStr_(), plansAll_());
+  return p ? [shapePlan_(p)] : [];
 }
 function shapePlan_(p) {
   return {
@@ -2120,33 +2120,15 @@ function shapePlan_(p) {
   };
 }
 
-/** The Foliar planning screen: the plan in force today and the whole history. */
+/** The Foliar planning screen: the active plan (the one entered last). */
 function api_listPlans(token) {
   return wrap_(function () {
     authz_(token, ['foliar.plan']);
-    const today = todayStr_(),
-      all = dbAll_(SHEETS.PLANS),
-      act = plansAll_(),
-      cur = planOn_(today, act);
-    const next = act.filter(function (p) {
-      return p.effective_from > today;
-    })[0];
+    const cur = planOn_(todayStr_(), plansAll_());
     return {
-      today: today,
+      today: todayStr_(),
       fourth_options: FOURTH_COMPOUNDS.slice(),
-      current: cur ? shapePlan_(cur) : null,
-      next: next ? shapePlan_(next) : null,
-      history: all
-        .slice()
-        .reverse()
-        .map(function (p) {
-          const o = shapePlan_(p);
-          o.status = p.status;
-          o.void_reason = p.void_reason;
-          o.voided_by = p.voided_by;
-          o.in_force = !!cur && cur.plan_id === p.plan_id;
-          return o;
-        })
+      current: cur ? shapePlan_(cur) : null
     };
   });
 }
@@ -2155,9 +2137,7 @@ function api_savePlan(token, p) {
   return wrap_(function () {
     const c = authz_(token, ['foliar.plan']);
     p = p || {};
-    const eff = String(p.effective_from || todayStr_());
-    if (!isDate_(eff)) fail_('Choose the date from which this plan applies.', 'VALIDATION');
-    if (eff > addDays_(todayStr_(), 366)) fail_('The date is more than a year ahead. Check it.', 'VALIDATION');
+    const eff = todayStr_(); // (only the day it was entered: nothing depends on it, the last plan entered is the active one)
     const vals = {};
     MIX_FIXED.forEach(function (m) {
       vals[m.key] = cleanNum_(p[m.key], m.name + ' (kg per ha)', { required: true, min: 0, max: 10000 });
@@ -2168,20 +2148,7 @@ function api_savePlan(token, p) {
     if (!(vals.zinc + vals.epsom + vals.wuxal + fourth > 0)) fail_('Enter the kg per hectare of at least one compound.', 'VALIDATION');
     const note = cleanText_(p.note, 200, 'Note', false);
     return withLock_(function () {
-      const now = nowIso_(),
-        replaced = [];
-      dbAll_(SHEETS.PLANS).forEach(function (old) {
-        if (old.status === 'Active' && old.effective_from === eff) {
-          // one plan per date: the new one replaces the old one
-          dbUpdate_(SHEETS.PLANS, old._row, {
-            status: 'Voided',
-            void_reason: 'Replaced by a new plan for the same date',
-            voided_by: c.user.username,
-            voided_at: now
-          });
-          replaced.push(old.plan_id);
-        }
-      });
+      const now = nowIso_();
       const id = newId_('PLN');
       dbAppend_(SHEETS.PLANS, [
         {
@@ -2204,26 +2171,9 @@ function api_savePlan(token, p) {
         epsom: vals.epsom,
         wuxal: vals.wuxal,
         fourth_name: fourthName,
-        fourth: fourth,
-        replaced: replaced
+        fourth: fourth
       });
-      return { plan_id: id, replaced: replaced.length };
-    });
-  });
-}
-
-function api_voidPlan(token, planId, reason) {
-  return wrap_(function () {
-    const c = authz_(token, ['foliar.plan']);
-    const why = cleanText_(reason, 200, 'Reason', false) || 'Voided by ' + c.user.username;
-    return withLock_(function () {
-      const p = dbAll_(SHEETS.PLANS).filter(function (x) {
-        return x.plan_id === String(planId || '');
-      })[0];
-      if (!p || p.status !== 'Active') fail_('Plan not found.', 'VALIDATION');
-      dbUpdate_(SHEETS.PLANS, p._row, { status: 'Voided', void_reason: why, voided_by: c.user.username, voided_at: nowIso_() });
-      audit_(c.user.username, 'FOLIAR_PLAN_VOID', 'foliar_plan', p.plan_id, { effective_from: p.effective_from, reason: why });
-      return true;
+      return { plan_id: id };
     });
   });
 }
@@ -2241,7 +2191,7 @@ function mixOf_(r) {
 
 /** What to check an event's compounds against: flags (text) for every compound whose kg is further than the tolerance from plan kg/ha x ha. */
 function planFlags_(plan, mix, totalHa, tolPct) {
-  if (!plan) return ['NO FOLIAR PLAN FOR THIS DATE'];
+  if (!plan) return ['NO FOLIAR PLAN ENTERED'];
   const out = [],
     tol = (Number(tolPct) || 0) / 100;
   const check = function (name, actual, perHa) {
@@ -4739,7 +4689,7 @@ function api_sprayDay(token, date) {
       methods: allowedMethods_(c),
       today: today,
       editable_from: addDays_(today, -params.sync_grace_days),
-      plans: plansAll_().map(shapePlan_),
+      plans: activePlanList_(), // [the active plan] (the one entered last), or []
       fourth_options: FOURTH_COMPOUNDS.slice(),
       tolerance_pct: params.foliar_plan_tolerance_pct,
       due: dueFor_(c, date, today, idx, lines),
@@ -4867,7 +4817,7 @@ function lineArea_(label, method, mixed, ext, pp, pctAsked) {
   return { area: area, pct_total: round_(((pp.done + area) / pp.ext) * 100, 1) };
 }
 
-/** What is unusual about an event: flags are shown, never a reason to refuse. Returns {flags, plan} (plan = the foliar plan in force that day, none for an older one-total event). */
+/** What is unusual about an event: flags are shown, never a reason to refuse. Returns {flags, plan} (plan = the active foliar plan, the one entered last, none for an older one-total event). */
 function eventFlags_(params, method, total, hours, events, id, mix, date) {
   const flags = [],
     hi = params[PER_HR_MAX_PARAM[method]];

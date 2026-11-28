@@ -10394,13 +10394,9 @@ function mixText(list) {
         .join('  |  ') + ' kg'
     : '';
 }
-/** The foliar plan in force on a date from the list the server sent (oldest first; a later one with the same date wins). */
-function planFor(plans, date) {
-  let best = null;
-  (plans || []).forEach(function (p) {
-    if (p.effective_from <= date && (!best || p.effective_from >= best.effective_from)) best = p;
-  });
-  return best;
+/** The active foliar plan from the list the server sent: the one entered last (no dates). */
+function planFor(plans) {
+  return plans && plans.length ? plans[plans.length - 1] : null;
 }
 
 /** The unfinished spray event of a day, made safe to use: a draft saved by an older version of the app may lack parts of the state. */
@@ -10498,7 +10494,7 @@ function openSprayEvent(o) {
   Object.keys(st.pct).forEach(function (id) {
     if (!byId[id] || sprayPart(byId[id], st.method).ha <= 0) delete st.pct[id];
   }); // a field that is no longer yours, or has no part for this method
-  const plan = planFor(o.plans, st.date),
+  const plan = planFor(o.plans),
     fourthOpts = o.fourth && o.fourth.length ? o.fourth : MIX_FOURTH,
     tol = o.tolerance === undefined || o.tolerance === null ? 10 : Number(o.tolerance);
   if (!st.mix.fourth_name && plan) st.mix.fourth_name = plan.fourth_name;
@@ -14789,13 +14785,13 @@ VIEWS['params.manage'] = function (root) {
 };
 
 // ---------------------------------------------------------------- Foliar planning
-/** What is mixed for ONE hectare: kg of Zinc, Epsom salt, Wuxal and Urea or T65, from an effective date. The Foliar spray screen multiplies it by the hectares sprayed. */
+/** What is mixed for ONE hectare: kg of Zinc, Epsom salt, Wuxal and Urea or T65. The ratio entered last is the active one (no dates). The Foliar spray screen multiplies it by the hectares sprayed. */
 VIEWS['foliar.plan'] = function (root) {
   const out = h('div');
   root.appendChild(
     pageHead(
       'Foliar planning',
-      'Once a month the kg of each compound for one hectare is decided. Enter it here with the date from which it applies. When the AFOs record a spray event, the app multiplies these kg by the hectares sprayed and fills in the kg of each compound for them.'
+      'The kg of each compound for one hectare. The ratio entered last is the active one. When the AFOs record a spray event, the app multiplies these kg by the hectares sprayed and fills in the kg of each compound for them.'
     )
   );
   root.appendChild(out);
@@ -14812,7 +14808,7 @@ VIEWS['foliar.plan'] = function (root) {
     api('api_listPlans')
       .then(function (d) {
         clear(out);
-        add(out, [currentCard(d), formCard(d), historyCard(d)]);
+        add(out, [currentCard(d), formCard(d)]);
       })
       .catch(function (e) {
         clear(out).appendChild(msgBox('err', e.message));
@@ -14845,12 +14841,12 @@ VIEWS['foliar.plan'] = function (root) {
   }
   function currentCard(d) {
     const p = d.current;
-    const card = h('div', { class: 'card' }, h('h2', null, 'In force today'));
+    const card = h('div', { class: 'card' }, h('h2', null, 'Active ratio'));
     if (!p) {
       card.appendChild(
         msgBox(
           'warn',
-          'No foliar plan is in force today. Spray events will show "no plan" and the AFOs have to type every kg themselves. Enter the plan below.'
+          'No ratio has been entered yet. Spray events will show "no plan" and the AFOs have to type every kg themselves. Enter the ratio below.'
         )
       );
       return card;
@@ -14860,36 +14856,11 @@ VIEWS['foliar.plan'] = function (root) {
       h(
         'div',
         { class: 'muted small', style: 'margin-top:10px' },
-        'Applies from ' + p.effective_from + (p.note ? '  |  ' + p.note : '') + '  |  set by ' + p.set_by
+        'Entered ' + String(p.set_at || '').slice(0, 10) + (p.note ? '  |  ' + p.note : '') + '  |  by ' + p.set_by
       )
     );
-    if (d.next)
-      card.appendChild(
-        h(
-          'div',
-          { class: 'msg warn', style: 'margin-top:10px' },
-          icon('clock'),
-          h('div', null, 'A newer plan starts on ' + d.next.effective_from + ': ' + planLine(d.next))
-        )
-      );
     return card;
   }
-  function planLine(p) {
-    return (
-      'Zinc ' +
-      num(p.zinc, 2) +
-      ', Epsom salt ' +
-      num(p.epsom, 2) +
-      ', Wuxal ' +
-      num(p.wuxal, 2) +
-      ', ' +
-      p.fourth_name +
-      ' ' +
-      num(p.fourth, 2) +
-      ' kg per ha'
-    );
-  }
-
   function formCard(d) {
     const cur = d.current || {},
       inp = {},
@@ -14910,7 +14881,6 @@ VIEWS['foliar.plan'] = function (root) {
       cur.fourth_name || d.fourth_options[0],
       { 'aria-label': 'Fourth compound', 'data-plan': 'fourth_name' }
     );
-    const eff = h('input', { type: 'date', value: d.today, 'aria-label': 'Effective from', 'data-plan': 'effective_from' });
     const note = h('input', { type: 'text', maxlength: '200', placeholder: 'Optional note, e.g. December mix' });
     function example() {
       const v = function (k) {
@@ -14944,7 +14914,6 @@ VIEWS['foliar.plan'] = function (root) {
           clear(err);
           run(save, function () {
             return api('api_savePlan', {
-              effective_from: eff.value,
               zinc: inp.zinc.value,
               epsom: inp.epsom.value,
               wuxal: inp.wuxal.value,
@@ -14953,7 +14922,7 @@ VIEWS['foliar.plan'] = function (root) {
               note: note.value
             })
               .then(function (r) {
-                toast(r.replaced ? 'Saved. It replaced the plan that started on the same date.' : 'Foliar plan saved');
+                toast('Saved. This is now the active ratio.');
                 refresh();
               })
               .catch(function (e) {
@@ -14962,7 +14931,7 @@ VIEWS['foliar.plan'] = function (root) {
           });
         }
       },
-      'Save plan'
+      'Save ratio'
     );
     return h(
       'div',
@@ -14970,16 +14939,15 @@ VIEWS['foliar.plan'] = function (root) {
       h(
         'h2',
         null,
-        'New plan',
+        'Change the ratio',
         ' ',
         help(
-          'The kg to mix for ONE hectare. Zinc, Epsom salt and Wuxal are always in the mix; the fourth compound is Urea or T65, whichever the month needs. The plan applies to spray events on or after the date. A plan for a date that already has one replaces it.'
+          'The kg to mix for ONE hectare. Zinc, Epsom salt and Wuxal are always in the mix; the fourth compound is Urea or T65, whichever is needed. What you save becomes the active ratio at once, for every spray event from then on.'
         )
       ),
       h(
         'div',
         { class: 'plan-form' },
-        field('Applies from', eff),
         h(
           'div',
           { class: 'ratio ratio-form' },
@@ -15009,146 +14977,7 @@ VIEWS['foliar.plan'] = function (root) {
     );
   }
 
-  function historyCard(d) {
-    return h(
-      'div',
-      { class: 'card' },
-      h('h2', null, 'All plans'),
-      table(
-        [
-          {
-            label: 'From',
-            cls: 'nowrap',
-            render: function (r) {
-              return r.effective_from;
-            }
-          },
-          {
-            label: 'Zinc',
-            cls: 'num',
-            render: function (r) {
-              return num(r.zinc, 2);
-            }
-          },
-          {
-            label: 'Epsom salt',
-            cls: 'num',
-            render: function (r) {
-              return num(r.epsom, 2);
-            }
-          },
-          {
-            label: 'Wuxal',
-            cls: 'num',
-            render: function (r) {
-              return num(r.wuxal, 2);
-            }
-          },
-          {
-            label: 'Urea / T65',
-            cls: 'num',
-            render: function (r) {
-              return r.fourth_name + ' ' + num(r.fourth, 2);
-            }
-          },
-          {
-            label: 'Note',
-            cls: 'hide-sm',
-            render: function (r) {
-              return h('span', { class: 'small' }, r.note || '');
-            }
-          },
-          {
-            label: 'Set by',
-            cls: 'hide-sm nowrap',
-            render: function (r) {
-              return r.set_by;
-            }
-          },
-          {
-            label: 'Status',
-            cls: 'nowrap',
-            render: function (r) {
-              return r.status !== 'Active'
-                ? badge('Voided', 'bad')
-                : r.in_force
-                  ? badge('In force', 'good')
-                  : r.effective_from > d.today
-                    ? badge('Starts later', 'warn')
-                    : badge('Earlier plan');
-            }
-          },
-          {
-            label: '',
-            cls: 'nowrap',
-            render: function (r) {
-              return r.status === 'Active'
-                ? h(
-                    'button',
-                    {
-                      type: 'button',
-                      class: 'btn small danger',
-                      onclick: function () {
-                        askVoid(r);
-                      }
-                    },
-                    'Void'
-                  )
-                : null;
-            }
-          }
-        ],
-        d.history
-      )
-    );
-  }
-  function askVoid(r) {
-    const why = h('input', { type: 'text', maxlength: '200', placeholder: 'Why (optional)' }),
-      err = h('div');
-    modal(
-      'Void this plan?',
-      h(
-        'div',
-        { class: 'stack' },
-        h(
-          'div',
-          null,
-          'The plan from ' +
-            r.effective_from +
-            ' (' +
-            planLine(r) +
-            ') will no longer be used. Spray events already recorded keep the kg that were entered. A record of this is kept.'
-        ),
-        field('Reason', why),
-        err
-      ),
-      [
-        {
-          label: 'Keep it',
-          onclick: function (m) {
-            m.close();
-          }
-        },
-        {
-          label: 'Void plan',
-          kind: 'danger',
-          onclick: function (m, btn) {
-            run(btn, function () {
-              return api('api_voidPlan', r.plan_id, why.value)
-                .then(function () {
-                  m.close();
-                  toast('Plan voided');
-                  refresh();
-                })
-                .catch(function (e) {
-                  clear(err).appendChild(msgBox('err', e.message));
-                });
-            });
-          }
-        }
-      ]
-    );
-  }
+  /* (the list of earlier plans and the Void button are gone: only the active ratio is shown; every change is kept in the audit log) */
 };
 
 // ---------------------------------------------------------------- Foliar calendar: the month's drone spray plan as a grid of stamps
